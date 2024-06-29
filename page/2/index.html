@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>A Pythonista Learning Rust</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://apythonistalearningrust.com/style.css">
+    <link rel="stylesheet" href="https://apythonistalearningrust.com/color/blue.css">
+
+    <link rel="stylesheet" href="https://apythonistalearningrust.com/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="A Pythonista Learning Rust">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://apythonistalearningrust.com/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="A Pythonista Learning Rust">
+    <meta property="twitter:domain" content="apythonistalearningrust.com">
+    <meta property="twitter:url" content="https://apythonistalearningrust.com/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://apythonistalearningrust.com/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            A Pythonista Learning Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://apythonistalearningrust.com">Home</a></li>
+            
+                <li><a href="https://apythonistalearningrust.com/pages/archive">Archive</a></li>
+            
+                <li><a href="https://apythonistalearningrust.com/pages/search">Search</a></li>
+            
+                <li><a href="https://apythonistalearningrust.com/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            
+                <li><a href="https://pybit.es" target="_blank" rel="noopener noreferrer">Pybites</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://apythonistalearningrust.com/tts-in-rust/">Alarm clock part II - text to speech</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-21
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>I tweaked <a href="/play-alarm-from-command-line">my alarm clock app</a> today to add text-to-speech (TTS).</p>
+<p>I started with the obvious choice: <a href="https://crates.io/crates/tts">tts crate</a>, but it did not work on my Mac, no audio.</p>
+<h2 id="adding-text-to-speech">Adding text-to-speech</h2>
+<p>So I got a bit creative and ended up with this function:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">speak_message</span><span>(</span><span style="color:#bf616a;">message</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">macos</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">say</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(message)
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute say command on macOS</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">windows</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">powershell</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">-Command</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(&amp;format!(&quot;</span><span style="color:#a3be8c;">Add-Type –TypeDefinition </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">using System.Speech; var synth = new Speech.Synthesis.SpeechSynthesizer(); synth.Speak(&#39;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&#39;);</span><span style="color:#96b5b4;">\&quot;</span><span>&quot;, message))
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute PowerShell TTS on Windows</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">linux</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">espeak</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(message)
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute espeak on Linux</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        eprintln!(&quot;</span><span style="color:#a3be8c;">Unsupported operating system for TTS</span><span>&quot;);
+</span><span>    }
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<ul>
+<li>
+<p>On macOS, it uses the <code>say</code> command (built-in / ships by default with macOS). For Windows, it uses PowerShell to speak the message. And on Linux, it uses <code>espeak</code>. Note that I mostly care about a Mac solution right now, so I have not tested the Windows + Linux ones yet ...</p>
+</li>
+<li>
+<p><code>cfg!(target_os = &quot;...&quot;)</code> is a Rust macro that checks the target operating system (similar how you can use the <code>platform</code> module in Python). It is a compile-time check, so the code for other operating systems will not be included in the binary.</p>
+</li>
+<li>
+<p>The <code>expect</code> method is used to panic if the command fails. I probably should handle the error more gracefully, I will improve this later.</p>
+</li>
+<li>
+<p><code>println!</code> prints to standard output. To print to standard error, you can use <code>eprintln!</code> and it's good practice to use it for error messages.</p>
+</li>
+<li>
+<p>The return type is <code>Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;</code> to indicate that the function can return an error. The <code>Box&lt;dyn std::error::Error&gt;</code> is a trait object that can hold any type that implements the <code>Error</code> trait. I am seeing this pattern quite a bit in Rust code.</p>
+</li>
+</ul>
+<h2 id="new-command-line-arguments">New command-line arguments</h2>
+<p>The message to speak is a new (Clap) command-line argument:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">DEFAULT_MESSAGE</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">You set an alarm, time is up!</span><span>&quot;;
+</span><span>...
+</span><span>
+</span><span style="color:#65737e;">/// Message to speak instead of playing an audio file
+</span><span>#[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;M&#39;, long, required = true, default_value = DEFAULT_MESSAGE)]
+</span><span>message: String,
+</span></code></pre>
+<p>And I play it a couple of times, another new command-line argument:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">TIMES_TO_PLAY</span><span>: </span><span style="color:#b48ead;">usize </span><span>= </span><span style="color:#d08770;">3</span><span>;
+</span><span>...
+</span><span>
+</span><span style="color:#65737e;">/// Times to play the alarm sound
+</span><span>#[</span><span style="color:#bf616a;">arg</span><span>(short, long, default_value_t = TIMES_TO_PLAY)]
+</span><span>times: </span><span style="color:#b48ead;">usize</span><span>,
+</span></code></pre>
+<p>I added this loop to play the message multiple times:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">for </span><span>_ in </span><span style="color:#d08770;">0</span><span>..args.times {
+</span><span>    </span><span style="color:#96b5b4;">speak_message</span><span>(&amp;args.message).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>}
+</span></code></pre>
+<p>The nice thing about <code>usize</code> (and typing in general) is that it excludes invalid options.</p>
+<p>For example, if the user enters a negative number, the program will not compile. The <code>usize</code> type is an unsigned integer, meaning that it cannot be negative.</p>
+<h2 id="ranges-in-rust-vs-python">Ranges in Rust (vs Python)</h2>
+<p>The <code>0..N</code> construct is similar to <code>range</code> in Python, where the upper bound is also exclusive. Also in both languages, the lower bound is inclusive. To make the upper bound inclusive, you can use <code>0..=N</code> in Rust. So I could also write <code>1..=args.times</code> to play the message <code>args.times</code> times.</p>
+<p>You can also use <code>std::iter::repeat</code> here I learned:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>std::iter::repeat(()).</span><span style="color:#96b5b4;">take</span><span>(args.times).</span><span style="color:#96b5b4;">for_each</span><span>(|_| {
+</span><span>    </span><span style="color:#96b5b4;">speak_message</span><span>(&amp;args.message).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>});
+</span></code></pre>
+<p>But that seems more verbose and complicated than the more concise and readable <code>for</code> loop so I stuck with that.</p>
+<p>So running the program like this it will say &quot;Wake up&quot; 3 times after 3 seconds:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run -- -M &quot;</span><span style="color:#a3be8c;">Wake up</span><span>&quot; -s 3
+</span><span style="color:#65737e;"># says &quot;Wake up&quot; three times
+</span></code></pre>
+<p>Why 3 times? By not specifying the number of times, it will default to 3 (see the <code>TIMES_TO_PLAY</code> constant).</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I like the current 0.3.0 (available on crates.io) better than the previous ones, where I was playing an alarm file. This had the added complexity of downloading and playing an audio file.</p>
+<p>The text-to-speech feature is less code relatively and actually tells the user what the alarm is about. The only thing is compatibility, I need to test it on Windows and Linux still ...</p>
+<p>As usual, by building things I've learned more about interesting Rust features and idioms. I am also getting more comfortable with the language and its ecosystem. 😍 📈</p>
+<p>I will probably use this project to write some more posts about 1. code structuring (modularizing your code), 2. testing and 3. documentation. Stay tuned! 🚀</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://apythonistalearningrust.com/python-builtins-rust-chaining/">Python Built-ins vs. Rust method chaining (and how it works)</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-20
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>If you're familiar with Python, you know how powerful its built-in functions for iterables can be.</p>
+<p>Functions like <code>map</code>, <code>filter</code>, and <code>reduce</code> provide a simple and expressive way to handle collections.</p>
+<p>Rust offers similar functionality through iterators and method chaining, which, while different in syntax, provide equally powerful capabilities.</p>
+<p>This post explores how Python built-ins translate to Rust's method chaining with iterators.</p>
+<h2 id="python-built-ins-vs-rust-method-chaining">Python Built-ins vs. Rust Method Chaining</h2>
+<h3 id="python-s-approach">Python's Approach</h3>
+<p>Python provides many built-in functions to operate on iterables, such as <code>map</code>, <code>filter</code>, <code>zip</code>, <code>enumerate</code>, <code>all</code>, <code>any</code>, etc.</p>
+<p>These functions are easy to use and understand, making them a staple in Python programming. I did an overview video of them you can watch <a href="https://www.youtube.com/watch?v=ejvql4eKev4">here</a>.</p>
+<h3 id="rust-s-approach">Rust's Approach</h3>
+<p>Rust, on the other hand, implements these functionalities as methods on iterator types.</p>
+<p>This approach leverages Rust's strengths in type safety and performance. By chaining methods, Rust allows you to build complex operations in a concise and readable manner.</p>
+<h2 id="example-comparisons">Example Comparisons</h2>
+<p>Let's compare some common operations using Python built-ins and Rust method chaining:</p>
+<h3 id="map"><code>map</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>numbers = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>squared = </span><span style="color:#bf616a;">list</span><span>(</span><span style="color:#96b5b4;">map</span><span>(</span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">x</span><span>: x**</span><span style="color:#d08770;">2</span><span>, numbers))
+</span><span style="color:#96b5b4;">print</span><span>(squared)  </span><span style="color:#65737e;"># Output: [1, 4, 9]
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span style="color:#b48ead;">let</span><span> squared: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x).</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, squared);  </span><span style="color:#65737e;">// Output: [1, 4, 9]
+</span></code></pre>
+<h3 id="filter"><code>filter</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>numbers = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>]
+</span><span>even = </span><span style="color:#bf616a;">list</span><span>(</span><span style="color:#96b5b4;">filter</span><span>(</span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">x</span><span>: x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>, numbers))
+</span><span style="color:#96b5b4;">print</span><span>(even)  </span><span style="color:#65737e;"># Output: [2, 4]
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>];
+</span><span style="color:#b48ead;">let</span><span> even: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">filter</span><span>(|&amp;&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>).</span><span style="color:#96b5b4;">copied</span><span>().</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, even);  </span><span style="color:#65737e;">// Output: [2, 4]
+</span></code></pre>
+<h3 id="zip"><code>zip</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>list1 = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>list2 = [&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;]
+</span><span style="color:#b48ead;">for </span><span>item1, item2 </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">zip</span><span>(list1, list2):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(item1, item2)  </span><span style="color:#65737e;"># Output: 1 a, 2 b, 3
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> list1 = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span style="color:#b48ead;">let</span><span> list2 = vec![&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;];
+</span><span style="color:#b48ead;">for </span><span>(item1, item2) in list1.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">zip</span><span>(list2.</span><span style="color:#96b5b4;">iter</span><span>()) {
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{} {}</span><span>&quot;, item1, item2);  </span><span style="color:#65737e;">// Output: 1 a, 2 b, 3 c
+</span><span>}
+</span></code></pre>
+<h3 id="enumerate"><code>enumerate</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>items = [&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;]
+</span><span style="color:#b48ead;">for </span><span>index, value </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">enumerate</span><span>(items):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(index, value)  </span><span style="color:#65737e;"># Output: 0 a, 1 b, 2 c
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> items = vec![&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;];
+</span><span style="color:#b48ead;">for </span><span>(index, value) in items.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">enumerate</span><span>() {
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{} {}</span><span>&quot;, index, value);  </span><span style="color:#65737e;">// Output: 0 a, 1 b, 2 c
+</span><span>}
+</span></code></pre>
+<h2 id="how-method-chaining-works-in-rust">How Method Chaining Works in Rust</h2>
+<p>Rust’s method chaining is possible because each method in the iterator chain returns another iterator. This allows you to call multiple methods in sequence. Here's a deeper dive into how this works:</p>
+<h3 id="example-chaining-map-and-filter">Example: Chaining <code>map</code> and <code>filter</code></h3>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>];
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> result: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers
+</span><span>    .</span><span style="color:#96b5b4;">iter</span><span>()                   </span><span style="color:#65737e;">// Creates an iterator over the elements of the vector
+</span><span>    .</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x)          </span><span style="color:#65737e;">// Applies the closure to each item, returns an iterator of squared values
+</span><span>    .</span><span style="color:#96b5b4;">filter</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>)  </span><span style="color:#65737e;">// Filters the items, returning only those that are even
+</span><span>    .</span><span style="color:#96b5b4;">collect</span><span>();               </span><span style="color:#65737e;">// Collects the iterator into a vector
+</span><span>
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, result);  </span><span style="color:#65737e;">// Output: [4, 16]
+</span></code></pre>
+<p>Quite elegant, isn't it? Let's break down the steps:</p>
+<h3 id="step-by-step-breakdown">Step-by-Step Breakdown</h3>
+<ol>
+<li>
+<p><strong>Creating the Iterator</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>numbers.</span><span style="color:#96b5b4;">iter</span><span>()
+</span></code></pre>
+<p>This creates an iterator over the references to the elements of the vector <code>numbers</code>.</p>
+</li>
+<li>
+<p><strong>Mapping Values</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x)
+</span></code></pre>
+<p>The <code>map</code> method creates a new iterator that applies the given closure to each item, in this case, squaring the values.</p>
+</li>
+<li>
+<p><strong>Filtering Values</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">filter</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>)
+</span></code></pre>
+<p>The <code>filter</code> method creates another iterator that only yields items for which the given predicate is <code>true</code>, in this case, retaining even numbers.</p>
+</li>
+<li>
+<p><strong>Collecting Results</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">collect</span><span>()
+</span></code></pre>
+<p>The <code>collect</code> method consumes the iterator and collects the resulting items into a new collection, in this case, a vector.</p>
+</li>
+</ol>
+<h3 id="how-it-works-internally">How It Works Internally</h3>
+<p>Each method (<code>map</code>, <code>filter</code>, etc.) returns a new iterator type. For example:</p>
+<ul>
+<li><code>numbers.iter()</code> returns an <code>Iter</code> iterator.</li>
+<li><code>Iter</code> has a method <code>map</code> that returns a <code>Map&lt;Iter, F&gt;</code> iterator.</li>
+<li><code>Map&lt;Iter, F&gt;</code> has a method <code>filter</code> that returns a <code>Filter&lt;Map&lt;Iter, F&gt;, G&gt;</code> iterator.</li>
+</ul>
+<p>These iterator types (<code>Iter</code>, <code>Map</code>, <code>Filter</code>) all implement the <code>Iterator</code> trait, allowing them to be chained together seamlessly.</p>
+<p>In Python we really like generators and <em>lazy</em> operations (meaning any computation is only done when needed). Rust iterators are also lazy by default, which can lead to significant performance improvements, especially when working with large collections.</p>
+<hr />
+<p><em>Traits</em> are a fundamental feature in Rust that allow you to define shared behavior across different types. A trait is a collection of methods defined for an unknown type: <code>Self</code>. Traits can be implemented for any data type. In this case, the <code>Iterator</code> trait provides a common interface for all iterators, enabling method chaining.</p>
+<p>By implementing the <code>Iterator</code> trait, a type gains the ability to be iterated over using methods like <code>map</code>, <code>filter</code>, and <code>collect</code>. This trait-based approach ensures that any type that implements <code>Iterator</code> can seamlessly integrate with Rust's powerful iterator combinators, promoting code reuse and modularity.</p>
+<p>A dedicated article to follow on this topic...</p>
+<h2 id="benefits-of-chaining">Benefits of Chaining</h2>
+<ol>
+<li><strong>Readability</strong>: Method chaining provides a clear and concise way to express a series of operations on a collection.</li>
+<li><strong>Performance</strong>: Iterators in Rust are lazy and can be highly optimized by the compiler. Operations are performed only when needed.</li>
+<li><strong>Extensibility</strong>: By implementing the <code>Iterator</code> trait for custom types, you can leverage all the powerful methods available on iterators.</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>So what are Python's robust and performant built-ins in Rust? You'll often find them as methods on iterator types, allowing you to chain operations together in a fluent and efficient manner. 😍 📈</p>
+<p>I hope this comparison has given you a better understanding of how Rust's method chaining with iterators can be a powerful tool in your programming arsenal. Happy coding! 🦀 🚀</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://apythonistalearningrust.com/play-alarm-from-command-line/">A little alarm clock CLI app in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-19
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>The other day I pushed my second crate to crates.io. It's called <a href="https://crates.io/crates/cli-alarm">cli-alarm</a> and it's a simple command line tool to play an alarm sound after a specified amount of time. It has an option to repeat the alarm at regular intervals as well.</p>
+<h2 id="why-this-project">Why this project?</h2>
+<p>I created it because I wanted to play an alarm sound from the terminal as a reminder to take a break from the computer every hour, we progammers tend to sit for too long without moving which is really bad!</p>
+<p>I had built this with Python before, but I wanted to try it with Rust this time. And that's actually a good way to learn a new language: by building something you've already built with another language. You already know what you want to build, so you can focus on the new language.</p>
+<h2 id="how-to-use-it">How to use it?</h2>
+<p>Here's how you can use it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install cli-alarm
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> alarm</span><span style="color:#bf616a;"> -m</span><span> 1
+</span><span style="color:#bf616a;">Alarm</span><span> set to go off in 1 minutes.
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">plays</span><span> sound once after 1 minute
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> alarm</span><span style="color:#bf616a;"> -m</span><span> 1</span><span style="color:#bf616a;"> -r
+</span><span style="color:#bf616a;">Recurring</span><span> alarm set for every 1 minutes.
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">plays</span><span> sound every minute
+</span><span style="color:#bf616a;">...
+</span></code></pre>
+<p>Curious how it got this alias? It's because of the <code>[[bin]]</code> section in the <code>Cargo.toml</code> file:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[[bin]]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">alarm</span><span>&quot;
+</span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;
+</span></code></pre>
+<h2 id="learnings">Learnings</h2>
+<p>Code so far <a href="https://github.com/bbelderbos/cli_alarm">here</a>.</p>
+<p>A couple of cool things I learned while building this:</p>
+<ul>
+<li>I used <a href="https://crates.io/crates/clap">clap</a>  again for the CLI, great library, see also <a href="/command-line-apps-with-clap">this article</a>.</li>
+</ul>
+<p>Like last time I am using attributes (derive macros) to define the CLI interface which is pretty concise:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">derive</span><span>(Parser, Debug)]
+</span><span>#[</span><span style="color:#bf616a;">command</span><span>(author, version, about, long_about = None)]
+</span><span style="color:#b48ead;">struct </span><span>Cli {
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;m&#39;, long, required = true)]
+</span><span>    </span><span style="color:#bf616a;">minutes</span><span>: </span><span style="color:#b48ead;">u64</span><span>,
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;r&#39;, long, default_value_t = false)]
+</span><span>    </span><span style="color:#bf616a;">repeat</span><span>: </span><span style="color:#b48ead;">bool</span><span>,
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short, long, env = &quot;</span><span style="color:#a3be8c;">ALARM_FILE</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">file</span><span>: Option&lt;String&gt;,
+</span><span>}
+</span></code></pre>
+<p>This time around I learned that clap also supports environment variables. Here I use it to set the alarm sound file if not provided as an argument.</p>
+<ul>
+<li>I used the <a href="https://crates.io/crates/rodio">rodio</a> crate to play the alarm sound. It's a simple and easy-to-use audio library. Next step is to figure out how to play an audio message in addition to the alarm sound.</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>rodio::{Decoder, OutputStream, source::Source};
+</span><span>...
+</span><span style="color:#b48ead;">let </span><span>(_stream, stream_handle) = OutputStream::try_default().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> file = File::open(audio_file).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> source = Decoder::new(BufReader::new(file)).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>stream_handle.</span><span style="color:#96b5b4;">play_raw</span><span>(source.</span><span style="color:#96b5b4;">convert_samples</span><span>()).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span></code></pre>
+<p>That's a lot of unwrapping, I should probably handle the errors more gracefully, still a lot to learn ...</p>
+<ul>
+<li>I used the <a href="https://crates.io/crates/chrono">chrono</a> crate to print the current time in the log messages:</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>chrono::Local;
+</span><span>...
+</span><span>println!(&quot;</span><span style="color:#a3be8c;">Playing alarm at </span><span style="color:#d08770;">{}</span><span>&quot;, Local::now().</span><span style="color:#96b5b4;">format</span><span>(&quot;</span><span style="color:#a3be8c;">%Y-%m-%d %H:%M:%S</span><span>&quot;));
+</span></code></pre>
+<p>Unlike Python's <code>datetime</code>, Rust doesn't have a built-in way to format dates and times, so you need to use a crate for that. This is a common pattern in Rust: the standard library is kept small and you use crates for additional functionality.</p>
+<p>Other notable Python Standard Library packages you'll miss as a Pythonista for example are: <code>random</code>, <code>re</code>, <code>csv</code>, and <code>json</code>, but once you get used to just <code>cargo add</code>ing the crates you need, you hardly notice the difference.</p>
+<ul>
+<li>
+<p>I used the <a href="https://crates.io/crates/reqwest">reqwest</a> crate to download the default alarm sound. It's a simple and easy-to-use HTTP client, which I had already used for my <em>Pybites Search</em> app, see <a href="/pybites-search-in-rust">here</a>.</p>
+</li>
+<li>
+<p>Where in Python you use <code>while True:</code> to create an infinite loop, in Rust you use <code>loop { ... }</code>.</p>
+</li>
+<li>
+<p>You can use <code>thread::sleep</code> to pause the execution of the program for a specified amount of time, which seems a fit for this app.</p>
+</li>
+<li>
+<p>Like Python, Rust has a <code>Path</code> struct (object) to work with file paths in a platform-independent way. I like structs in Rust, see also <a href="/namedtuple-in-rust-struct">here</a>.</p>
+</li>
+<li>
+<p>I use <code>cfg!(target_os = &quot;windows&quot;)</code> to check if the OS is Windows. This is a built-in macro in Rust (in Python you'd use <code>sys.platform</code> or the <code>platform</code> module).</p>
+</li>
+</ul>
+<h2 id="improvement-ideas-next-steps">Improvement ideas / next steps</h2>
+<p>Although this is not very good Rust code yet, I'm happy with the progress so far, specially having a working program that does something useful.</p>
+<p>Some things to improve:</p>
+<ul>
+<li>
+<p>Play an audio message as mentioned.</p>
+</li>
+<li>
+<p>Download the default alarm file to a sensible location or maybe a temp dir to not clutter the user's filesystem.</p>
+</li>
+<li>
+<p>Handle errors more gracefully, e.g. using <code>Result</code> instead of <code>unwrap</code> to better propagate errors.</p>
+</li>
+<li>
+<p>Modularize the code more to learn how to work with multiple files / modules.</p>
+</li>
+<li>
+<p>Linting and formatting (and automate this with a pre-commit hook as I tend to do with Python, see <a href="https://www.youtube.com/watch?v=XFyLzr5Ehf0">here</a>).</p>
+</li>
+<li>
+<p>Add documentation (and host it somewhere, e.g. GitHub Pages).</p>
+</li>
+<li>
+<p>Add tests (although this app being heavy on IO and time-based, probably not the best app to start to learn about testing in Rust lol).</p>
+</li>
+</ul>
+<p>So good for a couple of more articles here ...</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The best way to learn is to build small projects! This way you learn to put things together which is an important skill in programming. You can also gradually increase the complexity of the projects you build.</p>
+<p>I'm happy with the progress so far and how this way of learning Rust constantly challenges me to learn more about the language and tooling. I'm looking forward to diving into more advanced topics like error handling, testing, modularization, and more ...</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://apythonistalearningrust.com/constants-python-vs-rust/">Constants in Python vs Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-18
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In Python you define constants using uppercase variable names (dictated by PEP8), for example:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#bf616a;">TIMEOUT </span><span>= </span><span style="color:#d08770;">10
+</span><span style="color:#bf616a;">ENDPOINT </span><span>= &quot;</span><span style="color:#a3be8c;">https://codechalleng.es/api/content/</span><span>&quot;
+</span><span style="color:#bf616a;">CACHE_FILE_NAME </span><span>= &quot;</span><span style="color:#a3be8c;">.pybites-search-cache.json</span><span>&quot;
+</span><span style="color:#bf616a;">DEFAULT_CACHE_DURATION </span><span>= </span><span style="color:#d08770;">86400  </span><span style="color:#65737e;"># Cache API response for 1 day
+</span></code></pre>
+<p>Nothing prevents you from overriding these values, but it's a convention to treat them as constants.</p>
+<p>To add a layer of immutability, you can use type hints with the <code>Final</code> qualifier from the <code>typing</code> module:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">from </span><span>typing </span><span style="color:#b48ead;">import </span><span>Final
+</span><span>
+</span><span style="color:#bf616a;">TIMEOUT</span><span>: Final[int] = </span><span style="color:#d08770;">10
+</span><span style="color:#bf616a;">ENDPOINT</span><span>: Final[str] = &quot;</span><span style="color:#a3be8c;">https://codechalleng.es/api/content/</span><span>&quot;
+</span><span style="color:#bf616a;">CACHE_FILE_NAME</span><span>: Final[str] = &quot;</span><span style="color:#a3be8c;">.pybites-search-cache.json</span><span>&quot;
+</span><span style="color:#bf616a;">DEFAULT_CACHE_DURATION</span><span>: Final[int] = </span><span style="color:#d08770;">86400  </span><span style="color:#65737e;"># Cache API response for 1 day
+</span></code></pre>
+<p>When you try to override these values mypy will raise an error. Your IDE might also proactively warn you about it.</p>
+<p>Overall type hints are a good practice in Python, they make your code more readable and bring some of Rust's strictness to Python. 💡 😍 📈</p>
+<p>Another example of enforcing immutability in Python is using <code>frozen=True</code> on a <code>dataclass</code>.</p>
+<p>Now let's look at Rust. You define constants using the <code>const</code> keyword and define the type explicitly:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">TIMEOUT</span><span>: </span><span style="color:#b48ead;">u64 </span><span>= </span><span style="color:#d08770;">10</span><span>;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">ENDPOINT</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">https://codechalleng.es/api/content/</span><span>&quot;;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">CACHE_FILE_NAME</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">.pybites-search-cache.json</span><span>&quot;;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">DEFAULT_CACHE_DURATION</span><span>: </span><span style="color:#b48ead;">u64 </span><span>= </span><span style="color:#d08770;">86400</span><span>; </span><span style="color:#65737e;">// Cache API response for 1 day
+</span></code></pre>
+<p>The <code>&amp;str</code> type is a reference to a string, which avoids copying data around. In contrast, <code>String</code> is a heap-allocated string.</p>
+<p><code>&amp;str</code> does not allocate memory itself; it references an existing string slice. This is more efficient for passing around string literals, which are stored in the program's binary and are immutable, making <code>&amp;str</code> ideal for constants.</p>
+<p>The key point is that you cannot override these values; the compiler will raise an error.</p>
+<p>Rust also has a <code>static</code> keyword which is used for global variables, but that's a topic for another article.</p>
+<p>In both Python and Rust, you can define enums to group related constants together, but that's a topic for another article too.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Both Python and Rust have clear conventions for defining constants. Rust enforces immutability strictly at the language level, while in Python, you can achieve a similar level of strictness by using type hints.</p>
+<p>Each language offers tools and conventions that help maintain the integrity of your constants, ensuring reliable and predictable behavior in your programs.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://apythonistalearningrust.com/resizing-images/">How to resize images in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-17
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>The other day <a href="https://apythonistalearningrust.com/resizing-images/building-website-axum.md">I built a simple website</a> and needed to resize some images so I decided to figure out how to do this in Rust.</p>
+<p>I found a crate called <code>image</code> that made this easy. Here's how I did it.</p>
+<p>Full code <a href="https://github.com/bbelderbos/resize-images">in this repo</a>.</p>
+<p>After adding <code>image</code> to your <code>Cargo.toml</code> or doing a <code>cargo add image</code> you can use it like this.</p>
+<p>First you make an <code>image</code> object:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> input_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop.jpg</span><span>&quot;);
+</span><span style="color:#b48ead;">let</span><span> img = image::open(input_path)?;
+</span></code></pre>
+<p>Here is the original image:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://apythonistalearningrust.com/images/workshop_original.jpg" alt="Image to make a thumb of" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>The <code>?</code> operator is a concise way to handle errors, if <code>image::open</code> fails it will return an error and the function will return early.</p>
+<p>Next we can use the <code>resize_exact</code> method to resize the image to the desired width and height:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize_exact</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span></code></pre>
+<p>The <code>FilterType</code> is optional, it defaults to <code>Lanczos3</code> which is a high-quality resampling filter.</p>
+<p>Finally we can save the resized image to disk:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> output_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop_thumbnail.jpg</span><span>&quot;);
+</span><span>thumbnail.</span><span style="color:#96b5b4;">save</span><span>(output_path)?;
+</span></code></pre>
+
+  
+  
+    
+    
+  
+  <img src="https://apythonistalearningrust.com/images/workshop_thumbnail_exact.jpg" alt="200 x 200 thumbnail image" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>That's a bit skewed though, because the original image was 800x600 and we resized it to 200x200. If you want to keep the aspect ratio you can use the <code>resize</code> method instead of <code>resize_exact</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span></code></pre>
+<p>That leads to an image of 200x150 in my case which looks better:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://apythonistalearningrust.com/images/workshop_thumbnail.jpg" alt="200 x 150 thumbnail image" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>Putting it all together:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>image::ImageError;
+</span><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), ImageError&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> input_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop.jpg</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> img = image::open(input_path)?;
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// Resize image to fit within 200x200 while maintaining aspect ratio
+</span><span>    </span><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop_thumbnail.jpg</span><span>&quot;);
+</span><span>    thumbnail.</span><span style="color:#96b5b4;">save</span><span>(output_path)?;
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<p>Note that because we're using the <code>?</code> operator we need to update the return type of our function to <code>Result&lt;(), ImageError&gt;</code>.</p>
+<p>The repo has some other interesting things:</p>
+<ul>
+<li>
+<p>I use <code>clap</code> to parse command line arguments, see also <a href="https://apythonistalearningrust.com/resizing-images/mcommand-line-apps-with-clap">this article</a>.</p>
+</li>
+<li>
+<p>I use <code>img.save_with_format(output_path, ImageFormat::Png)?;</code> to save the image in a different format (ChatGPT gave me <code>webp</code> fake images so I converted them to <code>png</code>).</p>
+</li>
+<li>
+<p>It uses <code>glob</code> (similar to Python's <code>glob</code>) with a pattern (<code>&quot;{}/*{}&quot;</code>) to find all files in a directory with a certain extension, which can be provided as an argument to the program.</p>
+</li>
+<li>
+<p>I use the <code>match</code> statement to handle errors and print messages to the console in various places.</p>
+</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>There you go, a quick way to resize images in Rust.</p>
+<p>The <code>image</code> crate is powerful and easy to use, similar to <code>Pillow</code> in Python. 😍 📈</p>
+<p>You can use the <code>resize</code> method to keep the aspect ratio or <code>resize_exact</code> to resize to an exact width and height.</p>
+<p>Again, the full code of this mini project is <a href="https://github.com/bbelderbos/resize-images">here</a>.</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://apythonistalearningrust.com/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Newer posts</span>
+                        </a>
+                    </span>
+                
+                    <span class="button next">
+                        <a href="https://apythonistalearningrust.com/page/3/">
+                            <span class="button__text">Older posts</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2024
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>
