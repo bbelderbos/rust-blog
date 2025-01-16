@@ -31,9 +31,9 @@ page_titles = "combined"
 menu_items = [
     {name = "Home", url = "$BASE_URL"},
     {name = "Archive", url = "$BASE_URL/pages/archive"},
+    {name = "Excercises", url = "https://rustplatform.com", newtab = true},
     {name = "Search", url = "$BASE_URL/pages/search"},
     {name = "About", url = "$BASE_URL/pages/about"},
     {name = "GitHub", url = "https://github.com/bbelderbos", newtab = true},
-    {name = "Pybites", url = "https://pybit.es", newtab = true},
 ]
 exclude_from_feed = ["pages"]
