@@ -1,0 +1,21 @@
+.searchContainer {
+    clear: both;
+    margin: 40px 0;
+}
+.form-control {
+    width: 600px;
+    padding: 10px;
+    border-radius: 8px;
+}
+.search-results {
+    margin-top: 20px;
+}
+.search-result {
+    margin-bottom: 10px;
+}
+.search-result a {
+    text-decoration: none;
+}
+.search-result a:hover {
+    text-decoration: underline;
+}
