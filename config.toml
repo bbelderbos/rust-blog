@@ -1,5 +1,5 @@
-base_url = "https://apythonistalearningrust.com"
-title = "A Pythonista Learning Rust"
+base_url = "https://rsbit.es"
+title = "Bite‑sized Rust learning, powered by Pybites"
 description = "Documenting the journey of a Pythonista learning Rust with bite-sized posts."
 theme = "terminimal"
 compile_sass = true
@@ -12,7 +12,7 @@ highlight_code = true
 
 [extra]
 default_language = "en"
-logo_text = "A Pythonista Learning Rust"
+logo_text = "Bite-sized Rust"
 logo_home_link = "/"
 author = "Bob Belderbos"
 

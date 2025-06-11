@@ -1,4 +1,4 @@
-# A Pythonista learning Rust blog
+# rsbit.es – bite‑sized Rust learning, powered by Pybites
 
 ```
 brew install zola
@@ -9,4 +9,4 @@ make checkout-theme
 # build and serve blog
 make dev
 ```
-For more details on Zola and my setup see [this blog post](https://apythonistalearningrust.com/blog-with-zola/)
+For more details on Zola and my setup see [this blog post](https://rsbit.es/blog-with-zola/)
