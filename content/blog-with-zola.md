@@ -27,8 +27,8 @@ Maybe something more but these were the main steps.
 This is my `config.toml`:
 
 ```toml
-base_url = "https://apythonistalearningrust.com"
-title = "A Pythonista Learning Rust"
+base_url = "https://rsbit.es"
+title = "Bite‑sized Rust learning, powered by Pybites"
 description = "Documenting the journey of a Pythonista learning Rust with bite-sized posts."
 theme = "terminimal"
 compile_sass = true
@@ -40,7 +40,7 @@ feed_filename = "atom.xml"
 highlight_code = true
 
 [extra]
-logo_text = "A Pythonista Learning Rust"
+logo_text = "Bite-sized Rust"
 logo_home_link = "/"
 author = "Bob Belderbos"
 
@@ -230,7 +230,7 @@ Apart from mentioned `base_url` in the `config.toml`, you also need to add a `CN
 
 ```bash
 $ cat static/CNAME
-apythonistalearningrust.com
+rsbit.es
 ```
 
 Then under the repo's Settings > GitHub Pages, you can add the custom domain. You can also turn on HTTPS there.

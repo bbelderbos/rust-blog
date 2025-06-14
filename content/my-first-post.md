@@ -3,7 +3,7 @@ title = "Hello World"
 date = 2024-06-01
 +++
 
-Welcome to my first blog post on _A Pythonista Learning Rust_ where I'll share my journey of learning Rust as a Python developer.
+Welcome to my first blog post on _A Pythonista Learning Rust_ (update: I changed it to a more Pybites-like name now in 2025: rsbit.es): where I'll share my journey of learning Rust as a Python developer.
 
 ## Why Rust?
 

@@ -1,5 +1,5 @@
-base_url = "https://apythonistalearningrust.com"
-title = "A Pythonista Learning Rust"
+base_url = "https://rsbit.es"
+title = "Bite‑sized Rust learning, powered by Pybites"
 description = "Documenting the journey of a Pythonista learning Rust with bite-sized posts."
 theme = "terminimal"
 compile_sass = true
@@ -12,7 +12,7 @@ highlight_code = true
 
 [extra]
 default_language = "en"
-logo_text = "A Pythonista Learning Rust"
+logo_text = "Bite-sized Rust"
 logo_home_link = "/"
 author = "Bob Belderbos"
 
@@ -31,9 +31,9 @@ page_titles = "combined"
 menu_items = [
     {name = "Home", url = "$BASE_URL"},
     {name = "Archive", url = "$BASE_URL/pages/archive"},
+    {name = "Excercises", url = "https://rustplatform.com", newtab = true},
     {name = "Search", url = "$BASE_URL/pages/search"},
     {name = "About", url = "$BASE_URL/pages/about"},
     {name = "GitHub", url = "https://github.com/bbelderbos", newtab = true},
-    {name = "Pybites", url = "https://pybit.es", newtab = true},
 ]
 exclude_from_feed = ["pages"]
