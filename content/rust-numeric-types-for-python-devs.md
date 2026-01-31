@@ -83,7 +83,3 @@ Small but worth noting: Python uses `True` and `False` (capitalized). Rust uses 
 ## Practice this
 
 Try the [Simple Calculations exercise on Pybites Rust Platform](https://rustplatform.com/simple-calculations) — implement a temperature converter and an even-number checker to get comfortable with Rust's numeric types and expression-based returns.
-
----
-
-*This post is part of a series where we explore Rust concepts through the lens of Python. Follow along at [rsbit.es](https://rsbit.es).*

@@ -106,7 +106,3 @@ Here's a quick reference for the adapter methods you've seen so far:
 ## Practice this
 
 Try the [Palindrome Check exercise on Pybites Rust Platform](https://rustplatform.com/palindrome-check) — it puts everything together: filtering, lowercasing with `flat_map`, reversing, and comparing strings.
-
----
-
-*This post is part of a series where we explore Rust concepts through the lens of Python. Follow along at [rsbit.es](https://rsbit.es).*

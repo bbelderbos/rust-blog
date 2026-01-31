@@ -126,7 +126,3 @@ Rust's `match` trades that flexibility for guarantees. Every case is covered, ev
 ## Practice this
 
 Try the [Fibonacci Sequence exercise on Pybites Rust Platform](https://rustplatform.com/fibonacci-sequence) — use `match` with guards to handle base cases, recursion, and invalid input.
-
----
-
-*This post is part of a series where we explore Rust concepts through the lens of Python. Follow along at [rsbit.es](https://rsbit.es).*
