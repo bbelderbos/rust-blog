@@ -77,7 +77,7 @@ Three methods, zero allocations beyond the final `String`. The iterator pipeline
 
 ## Practice this
 
-Try the [Reverse String exercise on RsBit.es](https://rustplatform.com/reverse-a-string) — a clean exercise to practice `.collect()` and iterator adapters.
+Try the [Reverse String exercise on Pybites Rust Platform](https://rustplatform.com/reverse-a-string) — a clean exercise to practice `.collect()` and iterator adapters.
 
 ---
 

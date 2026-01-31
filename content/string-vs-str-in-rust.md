@@ -78,7 +78,7 @@ This pattern shows up everywhere in Rust, not just with strings. It's the first 
 
 ## Practice this
 
-Try the [Hello World exercise on RsBit.es](https://rustplatform.com/hello-world) — it's a gentle first step into returning owned strings from functions.
+Try the [Hello World exercise on Pybites Rust Platform](https://rustplatform.com/hello-world) — it's a gentle first step into returning owned strings from functions.
 
 ---
 

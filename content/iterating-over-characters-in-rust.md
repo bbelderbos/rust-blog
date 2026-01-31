@@ -77,7 +77,7 @@ This makes sense once you're thinking in iterators — you're processing one cha
 
 ## Practice this
 
-Try the [Count Vowels exercise on RsBit.es](https://rustplatform.com/vowel-counter) — it's a focused exercise on iterating over characters and filtering with closures.
+Try the [Count Vowels exercise on Pybites Rust Platform](https://rustplatform.com/vowel-counter) — it's a focused exercise on iterating over characters and filtering with closures.
 
 ---
 

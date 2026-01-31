@@ -105,7 +105,7 @@ Here's a quick reference for the adapter methods you've seen so far:
 
 ## Practice this
 
-Try the [Palindrome Check exercise on RsBit.es](https://rustplatform.com/palindrome-check) — it puts everything together: filtering, lowercasing with `flat_map`, reversing, and comparing strings.
+Try the [Palindrome Check exercise on Pybites Rust Platform](https://rustplatform.com/palindrome-check) — it puts everything together: filtering, lowercasing with `flat_map`, reversing, and comparing strings.
 
 ---
 

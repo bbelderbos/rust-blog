@@ -103,7 +103,7 @@ One difference: HashMap iteration order is **not guaranteed** in Rust (same as P
 
 ## Practice this
 
-Try the [Word Count exercise on RsBit.es](https://rustplatform.com/word-count) — build a word frequency counter from scratch using `HashMap` and the entry API.
+Try the [Word Count exercise on Pybites Rust Platform](https://rustplatform.com/word-count) — build a word frequency counter from scratch using `HashMap` and the entry API.
 
 ---
 
