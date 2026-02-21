@@ -27,7 +27,7 @@ let api_key = env::var("PYBITES_API_KEY").ok();
 
 `env::var` returns `Result<String, VarError>`. Calling `.ok()` converts it to `Option<String>` — `Some("the-key")` if set, `None` if not. No error handling needed because a missing key is a valid state, not an error.
 
-Coming from Python where you'd write `os.environ.get("KEY")` and get `None` back, I found this two-step dance surprising at first. But it makes sense — Rust forces you to acknowledge that reading an env var can fail, then lets you explicitly opt into treating "missing" as `None`.
+Coming from Python where you'd write `os.environ.get("KEY")` and get `None` back, I found this two-step dance surprising at first. But it makes sense — Rust forces you to acknowledge that reading an env var can fail, then lets you explicitly opt into treating "missing" as `None` (related exercise: [Option Handling](https://rustplatform.com/option-handling)).
 
 ## Conditional Header
 
@@ -49,7 +49,7 @@ fn build_request(
 
 The function takes `Option<&str>` rather than `Option<String>` — the caller passes `api_key.as_deref()` to borrow rather than move the value. This keeps ownership with `main()` so the key can be used elsewhere (like in status messages).
 
-I initially passed `Option<String>` and hit a "value used after move" error. In Python you never think about this — everything is a reference. In Rust, I learned to reach for borrows (`&str`) by default and only pass owned data when the function needs to keep it.
+I initially passed `Option<String>` and hit a "value used after move" error. In Python you never think about this — everything is a reference. In Rust, I learned to reach for borrows (`&str`) by default and only pass owned data when the function needs to keep it (learn about Ownership and Borrowing in [our exercise track](https://rustplatform.com/track/ownership/)).
 
 ## User Feedback
 
@@ -130,7 +130,7 @@ It reminded me how much you learn from open source collaboration — and how nic
 If you have a CLI that talks to an API, try adding optional authentication. The pattern is always the same: env var to `Option`, conditional header, clear status message.
 
 ---
-If you're a Pythonista curious about Rust, you'll feel right at home — `Option` is like Python's `Optional`, pattern matching replaces your `if/else` chains, and Cargo works the way you wish pip always did. Our [exercises at rustplatform.com](https://rustplatform.com) are designed with that Python-to-Rust journey in mind.
+If you're a Pythonista curious about Rust, you'll feel right at home — `Option` is like Python's `Optional`, pattern matching replaces your `if/else` chains, and Cargo works like the beloved uv. Our [exercises at rustplatform.com](https://rustplatform.com) are designed with that Python-to-Rust bridging in mind.
 
 Use the [exercise downloader](https://github.com/PyBites-Open-Source/pybites_rust) to code locally — it's a real-world Rust CLI you can learn from too:
 
@@ -141,3 +141,5 @@ pybites-rust-download
 # premium exercises with API key
 PYBITES_API_KEY=your_key pybites-rust-download
 ```
+
+Happy coding!
