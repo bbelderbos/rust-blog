@@ -1,5 +1,5 @@
 +++
-title = Adding API Key Authentication to a Rust CLI
+title = "Adding API Key Authentication to a Rust CLI"
 date = 2026-02-21
 +++
 
