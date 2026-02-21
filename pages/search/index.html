@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Search | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Search | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/pages/search/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Search | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/pages/search/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/elasticlunr.min.js"></script>
+    <script src="/search_index.en.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const idx = elasticlunr.Index.load(window.searchIndex);
+
+            document.getElementById('search').addEventListener('input', function() {
+                const query = this.value;
+                const results = idx.search(query, {
+                    fields: {
+                        title: {boost: 2},
+                        body: {boost: 1},
+                    },
+                    expand: true,
+                });
+
+                const resultsDiv = document.getElementById('search-results');
+                resultsDiv.innerHTML = '';
+
+                results.forEach(result => {
+                    const item = idx.documentStore.getDoc(result.ref);
+                    const element = document.createElement('div');
+                    element.className = 'search-result';
+                    element.innerHTML = `<a href="${item.id}">${item.title}</a>`;
+                    resultsDiv.appendChild(element);
+                });
+            });
+        });
+    </script>
+</head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        <nav class="menu">
+            <ul class="menu__inner">
+                <li><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li class="active"><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="content">
+        <div class="searchContainer">
+            <input class="form-control" type="search"
+                   id="search" name="search" placeholder="Search posts...">
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

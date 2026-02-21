@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsbit.es/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/ownership-and-borrowing/">Ownership and borrowing in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-09
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In Python, this code runs just fine:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">print_person</span><span>(</span><span style="color:#bf616a;">s</span><span>):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Inside function: </span><span>{s}&quot;)
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">main</span><span>():
+</span><span>    person = &quot;</span><span style="color:#a3be8c;">John</span><span>&quot;
+</span><span>    </span><span style="color:#bf616a;">print_person</span><span>(person)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Hello, </span><span>{person}</span><span style="color:#a3be8c;">!</span><span>&quot;)  </span><span style="color:#65737e;"># person still accessible
+</span><span>
+</span><span style="color:#bf616a;">main</span><span>()
+</span></code></pre>
+<p>When I pass <code>person</code> to <code>print_person</code>, the ownership of <code>person</code> is not moved to the function. I can still use <code>person</code> after the function call.</p>
+<p>In Rust, the same code will not compile:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">print_person</span><span>(</span><span style="color:#bf616a;">s</span><span>: String) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Inside function: </span><span style="color:#d08770;">{}</span><span>&quot;, s);
+</span><span>    </span><span style="color:#65737e;">// s goes out of scope here and is dropped
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;);
+</span><span>    </span><span style="color:#96b5b4;">print_person</span><span>(person);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, person); </span><span style="color:#65737e;">// compile-time error
+</span><span>}
+</span></code></pre>
+<p>The Rust compiler gives this nicely descriptive error message:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">7 </span><span>|     </span><span style="color:#96b5b4;">let</span><span> person = String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;);
+</span><span>  |         </span><span style="color:#bf616a;">------</span><span> move occurs because `</span><span style="color:#bf616a;">person</span><span>` has type `</span><span style="color:#bf616a;">String</span><span>`, which does not implement the `</span><span style="color:#bf616a;">Copy</span><span>` trait
+</span><span style="color:#bf616a;">8 </span><span>|     </span><span style="color:#bf616a;">print_person</span><span>(person);
+</span><span>  |                  </span><span style="color:#bf616a;">------</span><span> value moved here
+</span><span style="color:#bf616a;">9 </span><span>|     </span><span style="color:#bf616a;">println!</span><span>(&quot;</span><span style="color:#a3be8c;">Hello, {}!</span><span>&quot;, person); </span><span style="color:#bf616a;">//</span><span> compile-time error
+</span><span>  |                            </span><span style="color:#bf616a;">^^^^^^</span><span> value borrowed here after move
+</span></code></pre>
+<p>What happens here is that <code>person</code> is moved to <code>print_person</code>, and I can't use it after that. This is because Rust is strict about ownership and borrowing.</p>
+<p>This definitely takes some time to get used to, but it's a powerful and important feature of Rust.</p>
+<p>It helps prevent memory-related bugs (e.g., use-after-free, double-free, dangling pointers, memory leaks) that are common in other languages that manage memory manually (e.g., C and C++).</p>
+<p>The solution is to borrow <code>person</code> instead of moving it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">print_person</span><span>(</span><span style="color:#bf616a;">s</span><span>: &amp;String) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Inside function: </span><span style="color:#d08770;">{}</span><span>&quot;, s);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;);
+</span><span>    </span><span style="color:#96b5b4;">print_person</span><span>(&amp;person);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, person); </span><span style="color:#65737e;">// now person is still usable
+</span><span>}
+</span></code></pre>
+<p>Here we pass a reference instead of the value itself. Note that you have to express this explicitly with <code>&amp;</code> in the function signature and when calling the function.</p>
+<p>In Rust speak <code>person</code> is <em>borrowed</em> by <code>print_person</code>. This way the function can use <code>person</code> without taking <em>ownership</em> of it.</p>
+<h2 id="key-takeaways">Key Takeaways:</h2>
+<ul>
+<li>
+<p>In Rust, passing <em>ownership</em> to a function means the original variable can no longer be used. This is to prevent multiple owners of the same data, which can lead to bugs and memory leaks. It also helps with performance and concurrency.</p>
+</li>
+<li>
+<p>In Python, variables are references, so they remain valid after being passed to functions. Additionally, you don't have to worry about memory management because Python's garbage collector automatically handles the allocation and deallocation of memory (it tracks object references and uses reference counting and cyclic garbage collection to free memory that is no longer needed).</p>
+</li>
+<li>
+<p>Rust's <em>borrowing</em> allows you to pass references to functions without transferring ownership, preserving the original variable’s validity.</p>
+</li>
+</ul>
+<h2 id="mutability-and-borrowing">Mutability and borrowing</h2>
+<p>In Rust, you can have multiple immutable references to the same data, but only one mutable reference. Additionally, you have to explicitly declare that you want to mutate the data.</p>
+<p>In Python, the burden is on the programmer to ensure that data is not modified when it shouldn't be. Python doesn't distinguish between mutable and immutable references explicitly.</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">modify_data</span><span>(</span><span style="color:#bf616a;">data</span><span>):
+</span><span>    data.</span><span style="color:#bf616a;">append</span><span>(</span><span style="color:#d08770;">4</span><span>)
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">main</span><span>():
+</span><span>    my_list = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>    </span><span style="color:#bf616a;">modify_data</span><span>(my_list)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Modified list: </span><span>{my_list}&quot;)  </span><span style="color:#65737e;"># my_list is modified
+</span><span>
+</span><span style="color:#bf616a;">main</span><span>()
+</span></code></pre>
+<p>For example here <code>my_list</code> is modified inside <code>modify_data</code> function. In Rust, this would not compile because <code>my_list</code> is borrowed immutably by <code>modify_data</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">modify_data</span><span>(</span><span style="color:#bf616a;">data</span><span>: &amp;Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt;) {
+</span><span>    data.</span><span style="color:#96b5b4;">push</span><span>(</span><span style="color:#d08770;">4</span><span>);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> my_list = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span>    </span><span style="color:#96b5b4;">modify_data</span><span>(&amp;my_list);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Modified list: </span><span style="color:#d08770;">{:?}</span><span>&quot;, my_list); </span><span style="color:#65737e;">// compile-time error
+</span><span>}
+</span></code></pre>
+<p>The Rust compiler will give this error:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">2 </span><span>|     </span><span style="color:#bf616a;">data.push</span><span>(4);
+</span><span>  |     </span><span style="color:#bf616a;">^^^^ </span><span>`</span><span style="color:#bf616a;">data</span><span>` is a `&amp;` reference, so the data it refers to cannot be borrowed as mutable
+</span><span>  |
+</span><span style="color:#bf616a;">help:</span><span> consider changing this to be a mutable reference
+</span><span>  |
+</span><span style="color:#bf616a;">1 </span><span>| </span><span style="color:#bf616a;">fn</span><span> modify_data(data: &amp;</span><span style="color:#bf616a;">mut</span><span> Vec&lt;i32&gt;) {
+</span><span>  |                       </span><span style="color:#bf616a;">+++
+</span></code></pre>
+<p>In Rust, to modify data within a function, you must pass a mutable reference using <code>&amp;mut</code>. This ensures that only one mutable reference exists at a time, preventing data races and ensuring memory safety.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">modify_data</span><span>(</span><span style="color:#bf616a;">data</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt;) {
+</span><span>    data.</span><span style="color:#96b5b4;">push</span><span>(</span><span style="color:#d08770;">4</span><span>);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> my_list = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span>    </span><span style="color:#96b5b4;">modify_data</span><span>(&amp;</span><span style="color:#b48ead;">mut</span><span> my_list);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Modified list: </span><span style="color:#d08770;">{:?}</span><span>&quot;, my_list); </span><span style="color:#65737e;">// now it works
+</span><span>}
+</span></code></pre>
+<p><strong>Note</strong>: <em>This is for example's sake. I don't like mutating outer scope data inside functions. A more functional approach would be to return the modified data.</em></p>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice these concepts on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/ownership-and-borrowing">Ownership and Borrowing</a></li>
+<li><a href="https://rustplatform.com/move-semantics">Move Semantics</a></li>
+<li><a href="https://rustplatform.com/shared-references">Shared References</a></li>
+<li><a href="https://rustplatform.com/mutable-references">Mutable References</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>Understanding ownership and borrowing is a key concept in Rust. It can be frustrating at first, but it's a powerful feature that helps prevent bugs and makes your code more reliable. Rust achieves a balance between performance and safety, leveraging its strict ownership model to prevent common programming errors while still being highly performant.</p>
+<p>Python uses a different approach to memory management, relying on garbage collection to handle memory allocation and deallocation so you generally don't have to worry about these details.</p>
+<p>I still have a lot to learn about the nuances of ownership and borrowing in Rust, but I hope this post gives you a good starting point.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/namedtuple-in-rust-struct/">Does Rust have a similar NamedTuple type?</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-08
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>When exploring a new language after Python, one of the first things you might look for is a similar Python types, and one of my favorite ones is the <code>namedtuple</code>.</p>
+<p>It's a simple way to create a class with named fields, and it's very useful when you want to create a simple data structure.</p>
+<h2 id="python-named-tuples">Python named tuples</h2>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#65737e;"># old way
+</span><span style="color:#b48ead;">from </span><span>collections </span><span style="color:#b48ead;">import </span><span>namedtuple
+</span><span>Person = </span><span style="color:#bf616a;">namedtuple</span><span>(&#39;</span><span style="color:#a3be8c;">Person</span><span>&#39;, [&#39;</span><span style="color:#a3be8c;">name</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">age</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">email</span><span>&#39;])
+</span><span>p = </span><span style="color:#bf616a;">Person</span><span>(&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#96b5b4;">print</span><span>(p.name, p.age, p.email)
+</span><span>
+</span><span style="color:#65737e;"># more modern way with type hints I prefer:
+</span><span style="color:#b48ead;">from </span><span>typing </span><span style="color:#b48ead;">import </span><span>NamedTuple
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">Person</span><span style="color:#eff1f5;">(</span><span style="color:#a3be8c;">NamedTuple</span><span style="color:#eff1f5;">):
+</span><span>    name: str
+</span><span>    age: int
+</span><span>    email: str
+</span><span>
+</span><span>p = </span><span style="color:#bf616a;">Person</span><span>(&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#96b5b4;">print</span><span>(p.name, p.age, p.email)
+</span><span style="color:#65737e;"># p.name = &#39;John Doe&#39;  # AttributeError... -&gt; named tuples are immutable
+</span></code></pre>
+<h2 id="named-tuples-are-more-readable">Named tuples are more readable</h2>
+<p>I am such a big fan of named tuples because unlike regular tuples they let you access the fields by name, which makes your code more readable and less error-prone.</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#65737e;"># regular tuple
+</span><span>person = (&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#65737e;"># what field is at what index?
+</span><span style="color:#96b5b4;">print</span><span>(person[</span><span style="color:#d08770;">0</span><span>], person[</span><span style="color:#d08770;">1</span><span>], person[</span><span style="color:#d08770;">2</span><span>])
+</span><span>
+</span><span style="color:#65737e;"># named tuple
+</span><span>Person = </span><span style="color:#bf616a;">namedtuple</span><span>(&#39;</span><span style="color:#a3be8c;">Person</span><span>&#39;, [&#39;</span><span style="color:#a3be8c;">name</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">age</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">email</span><span>&#39;])
+</span><span>person = </span><span style="color:#bf616a;">Person</span><span>(&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#65737e;"># instantly readable
+</span><span style="color:#96b5b4;">print</span><span>(person.name, person.age, person.email)
+</span></code></pre>
+<h2 id="named-tuples-are-immutable">Named tuples are immutable</h2>
+<p>Named tuples are also immutable, which is a good thing because it makes the code safer (you can't accidentally change the values).</p>
+<p>This is a core concept in Rust I learned, where data structures are immutable by default. If you want mutability, you have to explicitly make them mutable. We'll see how to do that in the Rust in a bit ...</p>
+<h2 id="rust-offers-structs">Rust offers structs</h2>
+<p>In Rust, you can use a <code>struct</code> with named fields to create the same Person type as before. Here's how you can do it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">struct </span><span>Person {
+</span><span>    </span><span style="color:#bf616a;">name</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">age</span><span>: </span><span style="color:#b48ead;">u32</span><span>,
+</span><span>    </span><span style="color:#bf616a;">email</span><span>: String,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = Person {
+</span><span>        name: String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;),
+</span><span>        age: </span><span style="color:#d08770;">30</span><span>,
+</span><span>        email: String::from(&quot;</span><span style="color:#a3be8c;">john@example.com</span><span>&quot;),
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// struct is immutable by default
+</span><span>    </span><span style="color:#65737e;">// person.age = 31;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Name: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Age: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Email: </span><span style="color:#d08770;">{}</span><span>&quot;, person.name, person.age, person.email);
+</span><span>}
+</span></code></pre>
+<p>This prints:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">Name:</span><span> John, Age: 30, Email: john@example.com
+</span></code></pre>
+<p>(Ommitting the cargo run command from here on.)</p>
+<p>Notice that if I uncomment the line <code>person.age = 31;</code> the Rust compiler will complain. I am really impressed by with how helpful the Rust compiler is. It gives you very helpful and specific error messages. Here's what it says in this case:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">...
+</span><span>  </span><span style="color:#bf616a;">--</span><span>&gt; src/main.rs:15:5
+</span><span>   |
+</span><span style="color:#bf616a;">15 </span><span>|     </span><span style="color:#bf616a;">person.age</span><span> = 31;
+</span><span>   |     </span><span style="color:#bf616a;">^^^^^^^^^^^^^^^</span><span> cannot assign
+</span><span>   |
+</span><span style="color:#bf616a;">help:</span><span> consider changing this to be mutable
+</span><span>   |
+</span><span style="color:#bf616a;">8  </span><span>|     </span><span style="color:#96b5b4;">let</span><span> mut person = Person {
+</span><span>   |         </span><span style="color:#bf616a;">+++
+</span><span>
+</span><span style="color:#bf616a;">...
+</span></code></pre>
+<p>So as per the error message, you can make the <code>struct</code> mutable by adding the <code>mut</code> keyword before the variable name:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> person = Person {
+</span><span>        name: String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;),
+</span><span>        age: </span><span style="color:#d08770;">30</span><span>,
+</span><span>        email: String::from(&quot;</span><span style="color:#a3be8c;">john@example.com</span><span>&quot;),
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// This is allowed because `person` is mutable.
+</span><span>    person.age = </span><span style="color:#d08770;">31</span><span>;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Name: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Age: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Email: </span><span style="color:#d08770;">{}</span><span>&quot;, person.name, person.age, person.email);
+</span><span>}
+</span></code></pre>
+<p>This works and prints:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">Name:</span><span> John, Age: 31, Email: john@example.com
+</span></code></pre>
+<h2 id="implement-methods">Implement methods</h2>
+<p>Optionally you can implement methods on the <code>struct</code> to make it more powerful. Here's an example:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">struct </span><span>Person {
+</span><span>    </span><span style="color:#bf616a;">name</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">age</span><span>: </span><span style="color:#b48ead;">u32</span><span>,
+</span><span>    </span><span style="color:#bf616a;">email</span><span>: String,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>Person {
+</span><span>    </span><span style="color:#65737e;">// Method to display a greeting
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">greet</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) {
+</span><span>        println!(&quot;</span><span style="color:#a3be8c;">Hello, my name is </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> and I am </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> years old. You can contact me at </span><span style="color:#d08770;">{}</span><span>&quot;, </span><span style="color:#bf616a;">self</span><span>.name, </span><span style="color:#bf616a;">self</span><span>.age, </span><span style="color:#bf616a;">self</span><span>.email);
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = Person {
+</span><span>        name: String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;),
+</span><span>        age: </span><span style="color:#d08770;">30</span><span>,
+</span><span>        email: String::from(&quot;</span><span style="color:#a3be8c;">john@example.com</span><span>&quot;),
+</span><span>    };
+</span><span>
+</span><span>    person.</span><span style="color:#96b5b4;">greet</span><span>();
+</span><span>}
+</span></code></pre>
+<p>Which prints:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">Hello,</span><span> my name is John and I am 30 years old. You can contact me at john@example.com
+</span></code></pre>
+<p>In Rust, you can enhance your structs by implementing methods using the <code>impl</code> block. This allows you to define functions that operate on instances of your struct, providing a cleaner and more encapsulated way to manage data + associated behaviors (think properties and methods in Python classes).</p>
+<p>The <code>greet(&amp;self)</code> method is an instance method that takes an immutable reference to the struct (= <code>&amp;self</code>), similar to how Python methods take <code>self</code> as their first parameter. This method simply prints a greeting using the <code>struct</code>'s fields.</p>
+<p>The <em>reference</em> part here touches upon the concept of <em>ownership</em> and <em>borrowing</em> in Rust. <em>Ownership</em> is a big and important concept in Rust, and I'll cover it here more in detail when I have a better understanding of it ...</p>
+<h2 id="practice-this">Practice This</h2>
+<p>Try the <a href="https://rustplatform.com/basic-structs">Basic Structs</a> and <a href="https://rustplatform.com/variables-and-mutability">Variables and Mutability</a> exercises on the Pybites Rust Platform.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In Rust, you can use a <code>struct</code> with named fields to achieve the same thing as a Python <code>namedtuple</code>.</p>
+<p>Structs are immutable by default, but you can make them mutable by adding the <code>mut</code> keyword before the variable name.</p>
+<p>Optionally, you can implement methods on the <code>struct</code> using the <code>impl</code> block. 🦀😎</p>
+<p>I find the Rust compiler very helpful with its detailed and specific error messages. It helps a lot, specially when you're learning the language. 😍💡📈</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/pybites-search-caching-serde-json/">Enhancing Pybites Search caching using serde_json</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-07
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>I made a <a href="/pybites-search-in-rust">Pybites search command-line tool</a> the other day, only to find out that the caching was in-memory which was not very useful for a CLI tool.</p>
+<p>So I decided to add caching manually to it using <code>serde_json</code>. Here's how I did it (with the help of ChatGPT).</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">save_to_cache</span><span>(</span><span style="color:#bf616a;">items</span><span>: &amp;Vec&lt;Item&gt;) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_path = </span><span style="color:#96b5b4;">get_cache_file_path</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_data = CacheData {
+</span><span>        timestamp: SystemTime::now().</span><span style="color:#96b5b4;">duration_since</span><span>(</span><span style="color:#d08770;">UNIX_EPOCH</span><span>)?.</span><span style="color:#96b5b4;">as_secs</span><span>(),
+</span><span>        items: items.</span><span style="color:#96b5b4;">clone</span><span>(),
+</span><span>    };
+</span><span>    </span><span style="color:#b48ead;">let</span><span> serialized = serde_json::to_string(&amp;cache_data)?;
+</span><span>    fs::write(cache_path, serialized)?;
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">load_from_cache</span><span>(</span><span style="color:#bf616a;">cache_duration</span><span>: </span><span style="color:#b48ead;">u64</span><span>) -&gt; Result&lt;Vec&lt;Item&gt;, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_path = </span><span style="color:#96b5b4;">get_cache_file_path</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> data = fs::read_to_string(cache_path)?;
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_data: CacheData = serde_json::from_str(&amp;data)?;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> current_time = SystemTime::now().</span><span style="color:#96b5b4;">duration_since</span><span>(</span><span style="color:#d08770;">UNIX_EPOCH</span><span>)?.</span><span style="color:#96b5b4;">as_secs</span><span>();
+</span><span>    </span><span style="color:#b48ead;">if</span><span> current_time - cache_data.timestamp &lt;= cache_duration {
+</span><span>        Ok(cache_data.items)
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        Err(&quot;</span><span style="color:#a3be8c;">Cache expired</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>())
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Deserialize, Serialize)]
+</span><span style="color:#b48ead;">struct </span><span>CacheData {
+</span><span>    </span><span style="color:#bf616a;">timestamp</span><span>: </span><span style="color:#b48ead;">u64</span><span>,
+</span><span>    </span><span style="color:#bf616a;">items</span><span>: Vec&lt;Item&gt;,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">get_cache_file_path</span><span>() -&gt; PathBuf {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> path = </span><span style="color:#96b5b4;">home_dir</span><span>().</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Could not find home directory</span><span>&quot;);
+</span><span>    path.</span><span style="color:#96b5b4;">push</span><span>(</span><span style="color:#d08770;">CACHE_FILE_NAME</span><span>);
+</span><span>    path
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/bbelderbos/pybites-search/blob/main/src/main.rs">Full code</a></p>
+<ul>
+<li>I added a <code>CacheData</code> struct to hold the timestamp and the items.</li>
+<li>I added a <code>save_to_cache</code> function to save the items to a file (using the <code>CACHE_FILE_NAME</code> constant to define the file name).</li>
+<li>I added a <code>load_from_cache</code> function to load the items from a file with a cache duration check.</li>
+<li>I added a <code>get_cache_file_path</code> function to get the path to the cache file (using the <code>home_dir</code> function from the <code>dirs</code> crate).</li>
+<li>The cache duration is set to 24 hours by default (<code>DEFAULT_CACHE_DURATION</code> constant) but can be overridden by setting the <code>CACHE_DURATION</code> environment variable. I like how you can chain methods in Rust, it's very concise and readable 😍 📈</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>    </span><span style="color:#b48ead;">let</span><span> cache_duration = env::var(&quot;</span><span style="color:#a3be8c;">CACHE_DURATION</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">ok</span><span>()
+</span><span>        .</span><span style="color:#96b5b4;">and_then</span><span>(|</span><span style="color:#bf616a;">v</span><span>| v.</span><span style="color:#96b5b4;">parse</span><span>().</span><span style="color:#96b5b4;">ok</span><span>())
+</span><span>        .</span><span style="color:#96b5b4;">unwrap_or</span><span>(</span><span style="color:#d08770;">DEFAULT_CACHE_DURATION</span><span>);
+</span></code></pre>
+<p>Now it works well: the items are saved to the cache file and loaded from it till the cache expires. Apart from the first run, when the cache is created, the search results are now almost instant!</p>
+<p>First install the crate (see <a href="/shipped-first-crate">my previous article</a> how to publish Rust code to crates.io):</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo install pybites-search
+</span></code></pre>
+<p>Then run it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time psearch pixi
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">[podcast] </span><span style="color:#65737e;">#141 - Wolf Vollprecht: Making Conda More Poetic With Pixi
+</span><span style="color:#bf616a;">https://www.pybitespodcast.com/14040203/14040203-141-wolf-vollprecht-making-conda-more-poetic-with-pixi
+</span><span>
+</span><span style="color:#bf616a;">psearch</span><span> pixi  0.06s user 0.06s system 5% cpu 2.323 total
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> time psearch pixi
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">[podcast] </span><span style="color:#65737e;">#141 - Wolf Vollprecht: Making Conda More Poetic With Pixi
+</span><span style="color:#bf616a;">https://www.pybitespodcast.com/14040203/14040203-141-wolf-vollprecht-making-conda-more-poetic-with-pixi
+</span><span>
+</span><span style="color:#bf616a;">psearch</span><span> pixi  0.01s user 0.01s system 82% cpu 0.018 total
+</span></code></pre>
+<p>After the caching it's almost instant!</p>
+<p>I compared it to <a href="https://pypi.org/project/pybites-search/">our Python search tool</a> and it's now faster than that one:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time search all pixi
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">search</span><span> all pixi  0.33s user 0.06s system 96% cpu 0.410 total
+</span></code></pre>
+<p>That's like 20x faster. 🤯</p>
+<p>But that might not be fair, because it uses requests-cache with sqlite and I also started a new API endpoint on our platform specially for the Rust search tool.</p>
+<p>So I had ChatGPT translate the Rust code <a href="https://gist.github.com/pybites/9717243b4d573ffa4e6f5ff987f22e2f">to Python</a> and after a few Pythonic tweaks and fixes it was faster and more comparable to the Rust tool:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time python script.py pixi
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">python</span><span> script.py pixi  0.18s user 0.03s system 98% cpu 0.214 total
+</span></code></pre>
+<p>That's faster but not as fast as the Rust tool. 🚀😎</p>
+<h2 id="practice-this">Practice This</h2>
+<p>This post uses <code>serde_json</code> for serialization and deserialization. Try the <a href="https://rustplatform.com/json-serialization">JSON Serialization</a> exercise on the Pybites Rust Platform to practice these patterns.</p>
+<hr />
+<p>I still have a lot of Rust fundamentals to learn, but by building practical tools I am learning much more, faster and seeing results like these is way more fun and gratifying than only studying or even doing exercises.</p>
+<p>So if you're learning Rust or any other language, I recommend building real-world tools with it. It really works! 🛠️</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/shipped-first-crate/">How to ship code to crates.io and automate it with GitHub Actions</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-06
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In the previous post, I made a little Rust script to search Pybites content. In this post I share how I deployed this <em>crate</em> (the Rust term for a package) to crates.io (the Rust package index). 🎉</p>
+<p>Next I will show you how I streamlined it using GitHub Actions. 🚀</p>
+<h2 id="setup">Setup</h2>
+<p>First you need to make an account on <a href="https://crates.io/">crates.io</a>, confirm your email, and create an API token. You can find this under your account settings.</p>
+<p>Next you login from the command line:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo login your_token
+</span></code></pre>
+<h2 id="publishing">Publishing</h2>
+<p>Then you can publish your crate, from your project directory:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo publish
+</span><span>   </span><span style="color:#bf616a;">Uploading</span><span> pybites-search v0.1.0 (/Users/bbelderbos/code/rust/pybites-search)
+</span><span>    </span><span style="color:#bf616a;">Uploaded</span><span> pybites-search v0.1.0 to registry `</span><span style="color:#bf616a;">crates-io</span><span>`
+</span><span style="color:#bf616a;">note:</span><span> waiting for `</span><span style="color:#bf616a;">pybites-search</span><span> v0.1.0` to be available at registry `</span><span style="color:#bf616a;">crates-io</span><span>`.
+</span><span style="color:#bf616a;">You</span><span> may press ctrl-c to skip waiting; </span><span style="color:#bf616a;">the</span><span> crate should be available shortly.
+</span><span>   </span><span style="color:#bf616a;">Published</span><span> pybites-search v0.1.0 at registry `</span><span style="color:#bf616a;">crates-io</span><span>`
+</span></code></pre>
+<p>It takes the version from your <code>Cargo.toml</code> file. If you want to publish a new version, you need to update this file.</p>
+<h2 id="installing-the-crate">Installing the crate</h2>
+<p>As a user you can now install your crate:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo install pybites-search
+</span><span>    </span><span style="color:#bf616a;">Updating</span><span> crates.io index
+</span><span>  </span><span style="color:#bf616a;">Downloaded</span><span> pybites-search v0.1.0
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">...
+</span><span>  </span><span style="color:#bf616a;">Installing</span><span> /Users/bbelderbos/.cargo/bin/psearch
+</span><span>   </span><span style="color:#bf616a;">Installed</span><span> package `</span><span style="color:#bf616a;">pybites-search</span><span> v0.1.0` (executable `</span><span style="color:#bf616a;">psearch</span><span>`)
+</span></code></pre>
+<p>I added a <code>[[bin]]</code> section to my <code>Cargo.toml</code> file, so the binary is installed as <code>psearch</code>:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[[bin]]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">psearch</span><span>&quot;
+</span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;
+</span></code></pre>
+<p>Now when people install the crate, they can run <code>psearch</code> from the command line. 🏃</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> psearch
+</span><span style="color:#bf616a;">Usage:</span><span> search &lt;search_term&gt; </span><span style="color:#b48ead;">[</span><span>&lt;content_type&gt;</span><span style="color:#b48ead;">] [</span><span>--title-only</span><span style="color:#b48ead;">]
+</span></code></pre>
+<h2 id="automating-with-github-actions">Automating with GitHub Actions</h2>
+<p>Of course manually pushing to crates.io is not ideal. You can automate this with GitHub Actions. Here is the workflow I use:</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Release to crates.io
+</span><span>
+</span><span style="color:#d08770;">on</span><span>:
+</span><span>  </span><span style="color:#bf616a;">push</span><span>:
+</span><span>    </span><span style="color:#bf616a;">tags</span><span>:
+</span><span>      - &#39;</span><span style="color:#a3be8c;">v*.*.*</span><span>&#39;  </span><span style="color:#65737e;"># Matches tags like v1.0.0, v2.1.3, etc.
+</span><span>
+</span><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">release</span><span>:
+</span><span>    </span><span style="color:#bf616a;">runs-on</span><span>: </span><span style="color:#a3be8c;">ubuntu-latest
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Checkout code
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/checkout@v2
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Set up Rust
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions-rs/toolchain@v1
+</span><span>        </span><span style="color:#bf616a;">with</span><span>:
+</span><span>          </span><span style="color:#bf616a;">toolchain</span><span>: </span><span style="color:#a3be8c;">stable
+</span><span>          </span><span style="color:#bf616a;">override</span><span>: </span><span style="color:#d08770;">true
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo registry
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>        </span><span style="color:#bf616a;">with</span><span>:
+</span><span>          </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">~/.cargo/registry
+</span><span>          </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-registry
+</span><span>          </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">            ${{ runner.os }}-cargo-registry
+</span><span style="color:#a3be8c;">
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo index
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>        </span><span style="color:#bf616a;">with</span><span>:
+</span><span>          </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">~/.cargo/git
+</span><span>          </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-index
+</span><span>          </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">            ${{ runner.os }}-cargo-index
+</span><span style="color:#a3be8c;">
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build the project
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">cargo build --release
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Publish to crates.io
+</span><span>        </span><span style="color:#bf616a;">env</span><span>:
+</span><span>          </span><span style="color:#bf616a;">CARGO_REGISTRY_TOKEN</span><span>: </span><span style="color:#a3be8c;">${{ secrets.CARGO_REGISTRY_TOKEN }}
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">cargo publish
+</span></code></pre>
+<p>This workflow triggers on a tag push, so you can tag your releases with <code>vX.Y.Z</code> and it will automatically publish your crate to crates.io (when you do a <code>git push --tags</code>) 🏷️</p>
+<p>2 simple steps to publish your crate:</p>
+<ul>
+<li>Update your <code>Cargo.toml</code> file with the new version.</li>
+<li>Tag your release with <code>vX.Y.Z</code> and push it to GitHub: <code>git tag v0.2.0 &amp;&amp; git push --tags</code></li>
+</ul>
+<p>Also note that you'll need the <code>CARGO_REGISTRY_TOKEN</code> secret for this workflow to work. You can add this in your GitHub repository settings under <code>Settings</code> -&gt; <code>Secrets</code> -&gt; <code>New repository secret</code>. 🤫</p>
+<p><a href="https://github.com/bbelderbos/pybites-search/actions/runs/9388676698/job/25854404928">Job run example</a>.</p>
+<hr />
+<p>That's it! Now you can easily share your Rust projects with the world. 🚀</p>
+<p>And if you happen to follow my Python work, next time install the <code>pybites-search</code> crate and run <code>psearch</code> from the command line. 🐍 📈</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/pybites-search-in-rust/">Building Pybites Search in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-05
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <blockquote>
+<p>&quot;The only way to learn a new programming language is by writing programs in it.&quot;</p>
+<ul>
+<li>Dennis Ritchie</li>
+</ul>
+</blockquote>
+<p>So true! Hence after my morning reading I picked up the laptop and tried to re-build <a href="https://pypi.org/project/pybites-search/">Pybites search</a> in Rust :)</p>
+<p>I came up with the following, iterating over code and learning Rust with ChatGPT (repo <a href="https://github.com/bbelderbos/pybites-search">here</a>).</p>
+<p><em>Note that I first consolidated 5 endpoints (articles, bites, videos, podcasts and tips) on our platform to one endpoint, so I only had to do a single request.</em></p>
+<h2 id="the-rust-script">The Rust script</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>cached::proc_macro::cached;
+</span><span style="color:#b48ead;">use</span><span> reqwest;
+</span><span style="color:#b48ead;">use </span><span>serde::Deserialize;
+</span><span style="color:#b48ead;">use </span><span>regex::Regex;
+</span><span style="color:#b48ead;">use </span><span>std::env;
+</span><span style="color:#b48ead;">use </span><span>std::time::Duration;
+</span><span>
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">TIMEOUT</span><span>: </span><span style="color:#b48ead;">u64 </span><span>= </span><span style="color:#d08770;">10</span><span>;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">ENDPOINT</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">http://localhost:8000/api/content</span><span>&quot;;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Deserialize, Debug, Clone)]
+</span><span style="color:#b48ead;">struct </span><span>Item {
+</span><span>    </span><span style="color:#bf616a;">content_type</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">title</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">summary</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">link</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> args: Vec&lt;String&gt; = env::args().</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>    </span><span style="color:#b48ead;">if</span><span> args.</span><span style="color:#96b5b4;">len</span><span>() &lt; </span><span style="color:#d08770;">2 </span><span>|| args.</span><span style="color:#96b5b4;">len</span><span>() &gt; </span><span style="color:#d08770;">4 </span><span>{
+</span><span>        eprintln!(&quot;</span><span style="color:#a3be8c;">Usage: search &lt;search_term&gt; [&lt;content_type&gt;] [--title-only]</span><span>&quot;);
+</span><span>        </span><span style="color:#b48ead;">return </span><span>Ok(());
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> search_term = &amp;args[</span><span style="color:#d08770;">1</span><span>];
+</span><span>    </span><span style="color:#b48ead;">let</span><span> content_type = </span><span style="color:#b48ead;">if</span><span> args.</span><span style="color:#96b5b4;">len</span><span>() &gt;= </span><span style="color:#d08770;">3 </span><span>&amp;&amp; !args[</span><span style="color:#d08770;">2</span><span>].</span><span style="color:#96b5b4;">starts_with</span><span>(&quot;</span><span style="color:#a3be8c;">--</span><span>&quot;) { Some(&amp;args[</span><span style="color:#d08770;">2</span><span>]) } </span><span style="color:#b48ead;">else </span><span>{ None };
+</span><span>    </span><span style="color:#b48ead;">let</span><span> title_only = args.</span><span style="color:#96b5b4;">contains</span><span>(&amp;&quot;</span><span style="color:#a3be8c;">--title-only</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> items = </span><span style="color:#b48ead;">match </span><span style="color:#96b5b4;">fetch_items</span><span>(</span><span style="color:#d08770;">ENDPOINT</span><span>.</span><span style="color:#96b5b4;">to_string</span><span>()).await {
+</span><span>        Ok(items) =&gt; items,
+</span><span>        Err(e) =&gt; {
+</span><span>            eprintln!(&quot;</span><span style="color:#a3be8c;">Error fetching items: </span><span style="color:#d08770;">{:?}</span><span>&quot;, e);
+</span><span>            </span><span style="color:#b48ead;">return </span><span>Err(e.</span><span style="color:#96b5b4;">into</span><span>());
+</span><span>        }
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">search_items</span><span>(&amp;items, search_term, content_type.</span><span style="color:#96b5b4;">map</span><span>(String::as_str), title_only);
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">cached</span><span>(time = 600, result = true, sync_writes = true)]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fetch_items</span><span>(</span><span style="color:#bf616a;">endpoint</span><span>: String) -&gt; Result&lt;Vec&lt;Item&gt;, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> client = reqwest::Client::new();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> response = client
+</span><span>        .</span><span style="color:#96b5b4;">get</span><span>(&amp;endpoint)
+</span><span>        .</span><span style="color:#96b5b4;">timeout</span><span>(Duration::from_secs(</span><span style="color:#d08770;">TIMEOUT</span><span>))
+</span><span>        .</span><span style="color:#96b5b4;">send</span><span>()
+</span><span>        .await?
+</span><span>        .</span><span style="color:#96b5b4;">error_for_status</span><span>()? </span><span style="color:#65737e;">// Ensure the response status is a success
+</span><span>        .json::&lt;Vec&lt;Item&gt;&gt;()
+</span><span>        .await?;
+</span><span>    Ok(response)
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">search_items</span><span>(</span><span style="color:#bf616a;">items</span><span>: &amp;[Item], </span><span style="color:#bf616a;">search_term</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">content_type</span><span>: Option&lt;&amp;</span><span style="color:#b48ead;">str</span><span>&gt;, </span><span style="color:#bf616a;">title_only</span><span>: </span><span style="color:#b48ead;">bool</span><span>) {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> re = Regex::new(&amp;format!(&quot;</span><span style="color:#a3be8c;">(?i)</span><span style="color:#d08770;">{}</span><span>&quot;, regex::escape(search_term))).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">for</span><span> item in items {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> matches = </span><span style="color:#b48ead;">if</span><span> title_only {
+</span><span>            re.</span><span style="color:#96b5b4;">is_match</span><span>(&amp;item.title)
+</span><span>        } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>            re.</span><span style="color:#96b5b4;">is_match</span><span>(&amp;item.title) || re.</span><span style="color:#96b5b4;">is_match</span><span>(&amp;item.summary)
+</span><span>        };
+</span><span>        </span><span style="color:#b48ead;">if</span><span> content_type.</span><span style="color:#96b5b4;">map_or</span><span>(</span><span style="color:#d08770;">true</span><span>, |</span><span style="color:#bf616a;">t</span><span>| t.</span><span style="color:#96b5b4;">eq_ignore_ascii_case</span><span>(&amp;item.content_type)) &amp;&amp; matches {
+</span><span>            </span><span style="color:#b48ead;">if</span><span> content_type.</span><span style="color:#96b5b4;">is_none</span><span>() {
+</span><span>                println!(&quot;</span><span style="color:#a3be8c;">Type: </span><span style="color:#d08770;">{}</span><span>&quot;, item.content_type);
+</span><span>            }
+</span><span>            println!(&quot;</span><span style="color:#a3be8c;">Title: </span><span style="color:#d08770;">{}</span><span>&quot;, item.title);
+</span><span>            println!(&quot;</span><span style="color:#a3be8c;">Link: </span><span style="color:#d08770;">{}</span><span style="color:#96b5b4;">\n</span><span>&quot;, item.link);
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Note this is AI generated code so it might not be as idiomatic as it could be. But that doesn't matter, I can always refactor it later. The point is I got a working script in Rust that searches our content. 🦀</p>
+<p>Plus I feel I learned a lot in the process, a lot faster by just consuming tutorials and reading books! 💡</p>
+<h2 id="some-things-i-learned">Some things I learned</h2>
+<ul>
+<li>How to make requests with <code>reqwest</code> (and <code>tokio</code> for async requests)</li>
+<li>How to cache requests with <code>cached</code> (note that this is a simple in-memory cache so it turned out to not be that useful for this script, in a later revision I added manual memoization, see <a href="/pybites-search-caching-serde-json">this post</a>)</li>
+<li>How to use <code>serde</code> to deserialize JSON</li>
+<li>Handle command line arguments</li>
+<li>Use <code>regex</code> to search for a term in a string</li>
+<li>Print to stdout and stderr</li>
+<li>Method chaining in Rust</li>
+<li>Some error handling in Rust</li>
+<li>Simple things like how to best define constants</li>
+</ul>
+<h2 id="config">Config</h2>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="background-color:#bf616a;color:#2b303b;">$ cat Cargo.toml</span><span>
+</span><span>[package]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">pybites-search</span><span>&quot;
+</span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1.0</span><span>&quot;
+</span><span style="color:#bf616a;">authors </span><span>= [&quot;</span><span style="color:#a3be8c;">Bob Belderbos &lt;bob@pybit.es&gt;</span><span>&quot;]
+</span><span style="color:#bf616a;">edition </span><span>= &quot;</span><span style="color:#a3be8c;">2021</span><span>&quot;
+</span><span style="color:#bf616a;">description </span><span>= &quot;</span><span style="color:#a3be8c;">A command-line search tool for Pybites content</span><span>&quot;
+</span><span style="color:#bf616a;">license </span><span>= &quot;</span><span style="color:#a3be8c;">MIT</span><span>&quot;
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">cached </span><span>= &quot;</span><span style="color:#a3be8c;">0.34.0</span><span>&quot;
+</span><span style="color:#bf616a;">reqwest </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.11</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">json</span><span>&quot;] }
+</span><span style="color:#bf616a;">tokio </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">full</span><span>&quot;] }
+</span><span style="color:#bf616a;">serde </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">derive</span><span>&quot;] }
+</span><span style="color:#bf616a;">serde_json </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;
+</span><span style="color:#bf616a;">regex </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;
+</span><span>
+</span><span>[[bin]]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">psearch</span><span>&quot;
+</span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;
+</span></code></pre>
+<ul>
+<li>There is some metadata at the top about the package.</li>
+<li>Below I listed the dependencies I used in the script.</li>
+<li>I also defined the binary name and path to the script, that's why you see me running <code>./target/release/psearch</code> below aafter the build step.</li>
+</ul>
+<h2 id="compiling-and-running-the-script">Compiling and running the script</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> cargo build</span><span style="color:#bf616a;"> --release
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch
+</span><span style="color:#bf616a;">Usage:</span><span> search &lt;search_term&gt; </span><span style="color:#b48ead;">[</span><span>&lt;content_type&gt;</span><span style="color:#b48ead;">] [</span><span>--title-only</span><span style="color:#b48ead;">]
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch rust
+</span><span style="color:#bf616a;">Type:</span><span> article
+</span><span style="color:#bf616a;">Title:</span><span> Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://pybit.es/articles/jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust/
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> article
+</span><span style="color:#bf616a;">Title:</span><span> Talking to API&#39;</span><span style="color:#a3be8c;">s and goodlooking tools
+</span><span style="color:#a3be8c;">Link: https://pybit.es/articles/guest-talking-to-apis-goodlooking-tools
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">Type: bite
+</span><span style="color:#a3be8c;">Title: Create Wikipedia Lorem Ipsum text
+</span><span style="color:#a3be8c;">Link: http://localhost:8000/bites/364
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">...
+</span><span style="color:#a3be8c;">...
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">√ search (main) $ ./target/release/psearch rust article
+</span><span style="color:#a3be8c;">Title: Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#a3be8c;">Link: https://pybit.es/articles/jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust/
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">Title: Talking to API</span><span>&#39;s and goodlooking tools
+</span><span style="color:#bf616a;">Link:</span><span> https://pybit.es/articles/guest-talking-to-apis-goodlooking-tools
+</span><span>
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch rust</span><span style="color:#bf616a;">  --title-only
+</span><span style="color:#bf616a;">Type:</span><span> article
+</span><span style="color:#bf616a;">Title:</span><span> Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://pybit.es/articles/jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust/
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> video
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 146 - Armin Ronacher: Flask 3.0, Open Source, Rust and Developer Mindset
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=yV4OXDy_DwE
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> video
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 105 - Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=LojYjASdOHk
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> podcast
+</span><span style="color:#bf616a;">Title: </span><span style="color:#65737e;">#146 - Armin Ronacher: Flask 3.0, Open Source, Rust and Developer Mindset
+</span><span style="color:#bf616a;">Link:</span><span> https://www.pybitespodcast.com/14165010/14165010-146-armin-ronacher-flask-3-0-open-source-rust-and-developer-mindset
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> podcast
+</span><span style="color:#bf616a;">Title: </span><span style="color:#65737e;">#105 - Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://www.pybitespodcast.com/12368334/12368334-105-jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch rust video</span><span style="color:#bf616a;"> --title-only
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 146 - Armin Ronacher: Flask 3.0, Open Source, Rust and Developer Mindset
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=yV4OXDy_DwE
+</span><span>
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 105 - Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=LojYjASdOHk
+</span></code></pre>
+<p>TIL we DO have some Rust content on Pybites! 🦀 😎</p>
+<p>Next steps:</p>
+<ul>
+<li>Deploy the new endpoint on our platform and have the script point to it</li>
+<li>Add some tests</li>
+<li>Deploy it to crates.io</li>
+<li>Automate the deployment with GitHub Actions (upon pushing a new tag)</li>
+<li>New features (as per your feedback ...)</li>
+</ul>
+<h2 id="practice-practice-practice-crab-work-on-projects-you-care-about-chart-with-upwards-trend">Practice, Practice, Practice 🦀 - work on projects you care about 📈</h2>
+<p>A note about this type of learning: I find it very effective to learn a new language by (re-)building something you already know and/or you're passionate about.</p>
+<p>You have to practice! It's a lot like language learning. You can't just read a book and expect to be fluent. You have to practice speaking and listening.</p>
+<p>This is exactly what I did when I was interrailing around Europe in my early 20s and wanted to become more fluent in French and Spanish. I would speak to locals, watch TV, and read newspapers. I completely immersed myself in the language. And I made a lot of mistakes. That's how you learn!</p>
+<p>The same is true for programming. Yes, you need to read the docs and books to grasp fundamentals, but above all you need to get into the trenches and write a lot of code, ideally in the context of building real-world projects. It's where things start to click and you start to see the bigger picture. It's also way more fun!</p>
+<h2 id="practice-this">Practice This</h2>
+<p>This project uses <code>serde</code> for JSON deserialization. Try the <a href="https://rustplatform.com/json-serialization">JSON Serialization</a> exercise on the Pybites Rust Platform to practice working with <code>serde</code> and <code>serde_json</code>.</p>
+<hr />
+<p>If you enjoy this content hit me up on <a href="https://twitter.com/bbelderbos">X</a>. I'm always up for a chat about programming. I also coach developers, so if you need help with your coding journey let me now, I can help you with this. 🚀</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/page/5/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Newer posts</span>
+                        </a>
+                    </span>
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/page/7/">
+                            <span class="button__text">Older posts</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

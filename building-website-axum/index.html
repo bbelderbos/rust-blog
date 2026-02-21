@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>I built my first Rust website using Axum | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="I built my first Rust website using Axum | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/building-website-axum/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="I built my first Rust website using Axum | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/building-website-axum/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/building-website-axum/">I built my first Rust website using Axum</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-14
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>I managed to make a website using Axum, a web framework for Rust, pretty similar to Flask in its minimalistic approach. Although it's a basic site, I'm happy with the result, and I learned a lot in the process.</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/artist-website.png" alt="result of the page I managed to build" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>In this post, I'll show you how I built a simple artist portfolio site using this framework.</p>
+<h2 id="setup">Setup</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new artist-portfolio
+</span><span style="color:#96b5b4;">cd</span><span> artist-portfolio
+</span></code></pre>
+<p>I added the following dependencies:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">axum </span><span>= &quot;</span><span style="color:#a3be8c;">0.7</span><span>&quot;
+</span><span style="color:#bf616a;">dotenv </span><span>= &quot;</span><span style="color:#a3be8c;">0.15</span><span>&quot;
+</span><span style="color:#bf616a;">tokio </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">full</span><span>&quot;] }
+</span><span style="color:#bf616a;">tower </span><span>= &quot;</span><span style="color:#a3be8c;">0.4</span><span>&quot;
+</span><span style="color:#bf616a;">tower-http </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.5</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">fs</span><span>&quot;] }
+</span><span style="color:#bf616a;">askama </span><span>= &quot;</span><span style="color:#a3be8c;">0.11</span><span>&quot;
+</span><span style="color:#bf616a;">tracing </span><span>= &quot;</span><span style="color:#a3be8c;">0.1</span><span>&quot;
+</span><span style="color:#bf616a;">tracing-subscriber </span><span>= &quot;</span><span style="color:#a3be8c;">0.3</span><span>&quot;
+</span></code></pre>
+<h2 id="the-code">The code</h2>
+<p>First I created the main file, <code>src/main.rs</code>, which contains the application setup and the routes.</p>
+<p>The repo is <a href="https://github.com/bbelderbos/artist-portfolio">here</a>.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// will show you the imported modules in a bit ...
+</span><span style="color:#b48ead;">mod </span><span>handlers;
+</span><span style="color:#b48ead;">mod </span><span>s3;
+</span><span>
+</span><span style="color:#b48ead;">use </span><span>axum::{Router, routing::get, extract::Extension};
+</span><span style="color:#b48ead;">use </span><span>dotenv::dotenv;
+</span><span style="color:#b48ead;">use </span><span>tower_http::services::ServeDir;
+</span><span style="color:#b48ead;">use</span><span> tracing_subscriber;
+</span><span style="color:#b48ead;">use </span><span>std::sync::Arc;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#96b5b4;">dotenv</span><span>().</span><span style="color:#96b5b4;">ok</span><span>();
+</span><span>    tracing_subscriber::fmt::init();
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// Initialize configuration
+</span><span>    </span><span style="color:#b48ead;">let</span><span> aws_s3_bucket = std::env::var(&quot;</span><span style="color:#a3be8c;">AWS_S3_BUCKET</span><span>&quot;).</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">AWS_S3_BUCKET must be set</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> config = Arc::new(Config { aws_s3_bucket });
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> app = Router::new()
+</span><span>        .</span><span style="color:#96b5b4;">route</span><span>(&quot;</span><span style="color:#a3be8c;">/</span><span>&quot;, </span><span style="color:#96b5b4;">get</span><span>(handlers::about_handler))
+</span><span>        .</span><span style="color:#96b5b4;">route</span><span>(&quot;</span><span style="color:#a3be8c;">/portfolio</span><span>&quot;, </span><span style="color:#96b5b4;">get</span><span>(handlers::portfolio_handler))
+</span><span>        .</span><span style="color:#96b5b4;">nest_service</span><span>(&quot;</span><span style="color:#a3be8c;">/static</span><span>&quot;, ServeDir::new(&quot;</span><span style="color:#a3be8c;">static</span><span>&quot;))
+</span><span>        .</span><span style="color:#96b5b4;">layer</span><span>(Extension(config.</span><span style="color:#96b5b4;">clone</span><span>()));
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> port = std::env::var(&quot;</span><span style="color:#a3be8c;">PORT</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_or_else</span><span>(|_| &quot;</span><span style="color:#a3be8c;">3000</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span>    </span><span style="color:#b48ead;">let</span><span> addr = std::env::var(&quot;</span><span style="color:#a3be8c;">BIND_ADDR</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_or_else</span><span>(|_| &quot;</span><span style="color:#a3be8c;">0.0.0.0</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span>    </span><span style="color:#b48ead;">let</span><span> bind_addr = format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">:</span><span style="color:#d08770;">{}</span><span>&quot;, addr, port);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> listener = tokio::net::TcpListener::bind(&amp;bind_addr).await.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    tracing::info!(&quot;</span><span style="color:#a3be8c;">Listening on {}</span><span>&quot;, listener.</span><span style="color:#96b5b4;">local_addr</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>());
+</span><span>    axum::serve(listener, app).await.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Clone)]
+</span><span style="color:#b48ead;">pub struct </span><span>Config {
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">aws_s3_bucket</span><span>: String,
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The <code>handlers</code> module contains the request handlers for the different routes.</li>
+<li>The <code>s3</code> module contains the logic to interact with AWS S3 (I ended up simplifying this part for now, see in a bit).</li>
+<li>The <code>Config</code> struct holds the configuration for the application (the AWS S3 bucket name holding the images). I'm using the <code>Arc</code> type to share this configuration across the application.</li>
+<li>The <code>dotenv</code> crate is used to load environment variables from a <code>.env</code> file, see <a href="/environment-variables-rust">this article</a>. I added an <code>.env-template</code> file in the repo to show you what variables you need to set.</li>
+<li>The <code>tracing</code> and <code>tracing-subscriber</code> crates are used for logging.</li>
+<li>The <code>tower-http</code> crate is used to serve static files from the <code>static</code> directory, which I happily got working for this app too.</li>
+<li>The <code>askama</code> crate is used for templating, which I'll show that in the handlers section.</li>
+<li>The <code>tokio</code> crate is used for async I/O.</li>
+<li>The <code>axum</code> crate is the web framework itself and serves the application.</li>
+</ul>
+<h2 id="creating-the-handlers">Creating the handlers</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>askama::Template;
+</span><span style="color:#b48ead;">use </span><span>axum::{
+</span><span>    extract::Extension,
+</span><span>    http::StatusCode,
+</span><span>    response::Html,
+</span><span>};
+</span><span style="color:#b48ead;">use crate</span><span>::Config;
+</span><span style="color:#b48ead;">use crate</span><span>::s3::get_images;
+</span><span style="color:#b48ead;">use </span><span>std::sync::Arc;
+</span><span style="color:#b48ead;">use </span><span>std::collections::HashMap;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Template)]
+</span><span>#[</span><span style="color:#bf616a;">template</span><span>(path = &quot;</span><span style="color:#a3be8c;">about.html</span><span>&quot;)]
+</span><span style="color:#b48ead;">struct </span><span>AboutTemplate {
+</span><span>    </span><span style="color:#bf616a;">image_url</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">current_page</span><span>: &amp;</span><span style="color:#b48ead;">&#39;static str</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">pub</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">about_handler</span><span>(Extension(</span><span style="color:#bf616a;">config</span><span>): Extension&lt;Arc&lt;Config&gt;&gt;) -&gt; Result&lt;Html&lt;String&gt;, StatusCode&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> image_key = &quot;</span><span style="color:#a3be8c;">artist.png</span><span>&quot;;
+</span><span>    </span><span style="color:#b48ead;">let</span><span> image_url = format!(&quot;</span><span style="color:#a3be8c;">https://</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.s3.amazonaws.com/</span><span style="color:#d08770;">{}</span><span>&quot;, config.aws_s3_bucket, image_key);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> template = AboutTemplate { image_url, current_page: &quot;</span><span style="color:#a3be8c;">home</span><span>&quot; };
+</span><span>    </span><span style="color:#b48ead;">match</span><span> template.</span><span style="color:#96b5b4;">render</span><span>() {
+</span><span>        Ok(rendered) =&gt; Ok(Html(rendered)),
+</span><span>        Err(_) =&gt; Err(StatusCode::</span><span style="color:#d08770;">INTERNAL_SERVER_ERROR</span><span>),
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Template)]
+</span><span>#[</span><span style="color:#bf616a;">template</span><span>(path = &quot;</span><span style="color:#a3be8c;">portfolio.html</span><span>&quot;)]
+</span><span style="color:#b48ead;">struct </span><span>PortfolioTemplate {
+</span><span>    </span><span style="color:#bf616a;">images</span><span>: Vec&lt;(String, String)&gt;,
+</span><span>    </span><span style="color:#bf616a;">current_page</span><span>: &amp;</span><span style="color:#b48ead;">&#39;static str</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">pub</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">portfolio_handler</span><span>(Extension(</span><span style="color:#bf616a;">config</span><span>): Extension&lt;Arc&lt;Config&gt;&gt;) -&gt; Result&lt;Html&lt;String&gt;, StatusCode&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> images = </span><span style="color:#96b5b4;">get_images</span><span>(&amp;config.aws_s3_bucket).</span><span style="color:#96b5b4;">unwrap_or_else</span><span>(|_| HashMap::new());
+</span><span>    </span><span style="color:#65737e;">// cannot get the template to work with a HashMap directly, so convert to a Vec of tuples
+</span><span>    </span><span style="color:#b48ead;">let</span><span> images: Vec&lt;(String, String)&gt; = images.</span><span style="color:#96b5b4;">into_iter</span><span>().</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> template = PortfolioTemplate { images, current_page: &quot;</span><span style="color:#a3be8c;">portfolio</span><span>&quot;  };
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">match</span><span> template.</span><span style="color:#96b5b4;">render</span><span>() {
+</span><span>        Ok(rendered) =&gt; Ok(Html(rendered)),
+</span><span>        Err(_) =&gt; Err(StatusCode::</span><span style="color:#d08770;">INTERNAL_SERVER_ERROR</span><span>),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The <code>handlers</code> module contains the request handlers for the different routes.</li>
+<li>The <code>askama</code> crate is used for templating. I created two templates, <code>about.html</code> and <code>portfolio.html</code>, which are rendered by the handlers.</li>
+<li>The <code>about_handler</code> function renders the <code>about.html</code> template, passing the image URL and the current page name, which I use to highlight the current page in the navigation bar.</li>
+<li>The <code>portfolio_handler</code> function renders the <code>portfolio.html</code> template, passing a list of image URLs and the current page name.</li>
+<li>The <code>s3::get_images</code> function is a placeholder for now, returning a <code>HashMap</code> of image URLs from the S3 bucket. I'll show you how I implemented this function in the next section. I did have to convert the <code>HashMap</code> to a <code>Vec</code> of tuples to get the template to work, as I couldn't get it to work with a <code>HashMap</code> directly.</li>
+</ul>
+<h2 id="retrieving-images-from-aws-s3">Retrieving images from AWS S3</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::collections::HashMap;
+</span><span style="color:#b48ead;">use </span><span>std::error::Error;
+</span><span>
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">get_images</span><span>(</span><span style="color:#bf616a;">aws_s3_bucket</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) -&gt; Result&lt;HashMap&lt;String, String&gt;, Box&lt;dyn Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> images = HashMap::new();
+</span><span>    </span><span style="color:#65737e;">// Hardcoded for now to keep it simple, but in a real-world scenario
+</span><span>    </span><span style="color:#65737e;">// you would fetch the image URLs from an S3 bucket
+</span><span>    </span><span style="color:#b48ead;">for</span><span> i in </span><span style="color:#d08770;">1</span><span>..=</span><span style="color:#d08770;">10 </span><span>{
+</span><span>        </span><span style="color:#b48ead;">let</span><span> full_image = format!(&quot;</span><span style="color:#a3be8c;">https://</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.s3.amazonaws.com/</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.webp</span><span>&quot;, aws_s3_bucket, i);
+</span><span>        </span><span style="color:#b48ead;">let</span><span> thumbnail = full_image.</span><span style="color:#96b5b4;">replace</span><span>(&quot;</span><span style="color:#a3be8c;">.webp</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">_thumb.png</span><span>&quot;);
+</span><span>        images.</span><span style="color:#96b5b4;">insert</span><span>(full_image, thumbnail);
+</span><span>    }
+</span><span>    Ok(images)
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The <code>s3</code> module contains the logic to interact with AWS S3. I had this working at some point with the <code>rusoto*</code> crates, but I ended up simplifying it for this first iteration (old s3 code still <a href="https://github.com/bbelderbos/artist-portfolio/commit/fe9cff5b4c10a504ea5a8c4f1786f688d9981104">here</a>).</li>
+<li>For now I am just returning a <code>HashMap</code> of image full + thumb URLs, but in a real-world scenario, you might fetch the images from a bucket (and only a few per request using pagination).</li>
+<li>I used ChatGPT to make some nice artist work images and made another Rust script to resize them (will post it soon here ...)</li>
+</ul>
+<h2 id="templates-and-static-files">Templates and static files</h2>
+<p>I'm using the <code>askama</code> crate for templating. I created two templates, <code>about.html</code> and <code>portfolio.html</code>, which extend a <code>base.html</code> template. The <code>about.html</code> template contains some fake text about the artist, and the <code>portfolio.html</code> template displays a list of images.</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>{% extends &quot;base.html&quot; %}
+</span><span>
+</span><span>{% block title %}About the Artist{% endblock %}
+</span><span>
+</span><span>{% block content %}
+</span><span>  &lt;</span><span style="color:#bf616a;">p</span><span>&gt;
+</span><span>    Bunch of fake text about the artist.
+</span><span>  &lt;/</span><span style="color:#bf616a;">p</span><span>&gt;
+</span><span>{% endblock %}
+</span></code></pre>
+<p>This is the <code>portfolio.html</code> template:</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>{% extends &quot;base.html&quot; %}
+</span><span>
+</span><span>{% block title %}Portfolio{% endblock %}
+</span><span>
+</span><span>{% block content %}
+</span><span>
+</span><span>&lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">image-container</span><span>&quot;&gt;
+</span><span>    {% for (full_image, thumbnail) in images %}
+</span><span>        &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">#img{{ loop.index }}</span><span>&quot;&gt;
+</span><span>            &lt;</span><span style="color:#bf616a;">img </span><span style="color:#d08770;">src</span><span>=&quot;</span><span style="color:#a3be8c;">{{ thumbnail }}</span><span>&quot; </span><span style="color:#d08770;">alt</span><span>=&quot;</span><span style="color:#a3be8c;">Artwork</span><span>&quot;&gt;
+</span><span>        &lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>        &lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">lightbox</span><span>&quot; </span><span style="color:#8fa1b3;">id</span><span>=&quot;</span><span style="color:#a3be8c;">img{{ loop.index }}</span><span>&quot;&gt;
+</span><span>            &lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">lightbox-content</span><span>&quot;&gt;
+</span><span>                &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">#</span><span>&quot; </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">close-lightbox</span><span>&quot;&gt;</span><span style="color:#8fa1b3;">&amp;</span><span style="color:#d08770;">times;</span><span>&lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>                &lt;</span><span style="color:#bf616a;">img </span><span style="color:#d08770;">src</span><span>=&quot;</span><span style="color:#a3be8c;">{{ full_image }}</span><span>&quot; </span><span style="color:#d08770;">alt</span><span>=&quot;</span><span style="color:#a3be8c;">Artwork</span><span>&quot;&gt;
+</span><span>            &lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>        &lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>    {% endfor %}
+</span><span>&lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>{% endblock %}
+</span></code></pre>
+<p>Note here I only managed to loop through a Vec of tuples, not a <code>HashMap</code> directly, so I had to convert the <code>HashMap</code> to a <code>Vec</code> of tuples in the handler (see above).</p>
+<p>I also added some CSS classes to the images and lightbox to make them look nice (you can find the CSS <a href="https://github.com/bbelderbos/artist-portfolio/blob/main/static/style.css">here</a>). This is why you see a <code>loop.index</code> in the template, which is used to generate unique IDs for the lightbox.</p>
+<p>And finally, the <code>base.html</code> template:</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>&lt;!</span><span style="color:#b48ead;">DOCTYPE </span><span style="color:#d08770;">html</span><span>&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">html </span><span style="color:#d08770;">lang</span><span>=&quot;</span><span style="color:#a3be8c;">en</span><span>&quot;&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">head</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">meta </span><span style="color:#d08770;">charset</span><span>=&quot;</span><span style="color:#a3be8c;">UTF-8</span><span>&quot;&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">title</span><span>&gt;{% block title %}Artist Portfolio{% endblock %}&lt;/</span><span style="color:#bf616a;">title</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">link </span><span style="color:#d08770;">rel</span><span>=&quot;</span><span style="color:#a3be8c;">stylesheet</span><span>&quot; </span><span style="color:#d08770;">type</span><span>=&quot;</span><span style="color:#a3be8c;">text/css</span><span>&quot; </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">/static/style.css</span><span>&quot;&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">head</span><span>&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">body</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">header</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">h1</span><span>&gt;Artist Portfolio&lt;/</span><span style="color:#bf616a;">h1</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#bf616a;">header</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#bf616a;">nav</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">/</span><span>&quot; </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">{% if current_page == </span><span>&quot;</span><span style="color:#d08770;">home</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span> </span><span style="color:#d08770;">%}active{% endif %}</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span>&gt;About the Artist&lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">/portfolio</span><span>&quot; </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">{% if current_page == </span><span>&quot;</span><span style="color:#d08770;">portfolio</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span> </span><span style="color:#d08770;">%}active{% endif %}</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span>&gt;Portfolio&lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#bf616a;">nav</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">container</span><span>&quot;&gt;
+</span><span>      {% block content %}{% endblock %}
+</span><span>    &lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#bf616a;">footer</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">p</span><span>&gt;</span><span style="color:#8fa1b3;">&amp;</span><span style="color:#d08770;">copy;</span><span> 2024+ Artist Portfolio&lt;/</span><span style="color:#bf616a;">p</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#bf616a;">footer</span><span>&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">body</span><span>&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">html</span><span>&gt;
+</span></code></pre>
+<p>I like that apart from templating (and inheritance with them), I got static files to work so I could add a <code>style.css</code> file to style the page.</p>
+<p>The static folder is served by the <code>tower-http</code> crate, which I added to the <code>Router</code> in the main file. It can also serve other static files like images, fonts, etc.</p>
+<p>As mentioned before I also check each navigation item to see if it's the current page, and if so I add the <code>active</code> class to highlight it in the navigation bar.</p>
+<h2 id="conclusion-and-next-steps">Conclusion and next steps</h2>
+<p>I managed to build a simple artist portfolio site using Axum, a web framework for Rust. It's still a basic site, but I'm happy with the result so far 🚀</p>
+<p>Of course I heavily used ChatGPT to get this working, but I learned so much faster this way, libraries like <code>Axum</code> and <code>Askama</code> make most sense when you start to use them in the context of a project.</p>
+<p>Just reading about them won't get you anywhere near being able to use them effectively. There's still a lot to learn, but this gave me some good basic insights how to build a website with Rust. 💡</p>
+<p>Again you can find the code in the <a href="https://github.com/bbelderbos/artist-portfolio">repo</a>.</p>
+<hr />
+<p>I want to further explore how to interact with AWS S3, and I want to learn how to add a contact form to also handle form data and send emails. 📈</p>
+<p>I also managed to deploy the site to Heroku, which I'll discuss soon here, it was really easy to do. 😍</p>
+<p>What will you build with Axum? Reach out to me on social media, I'd love to hear about it ... 😎</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/environment-variables-rust/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">How to handle environment variables in Rust</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/deploy-rust-app-to-heroku/">
+                            <span class="button__text">How to deploy a Rust app to Heroku</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>A little alarm clock CLI app in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="A little alarm clock CLI app in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/play-alarm-from-command-line/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="A little alarm clock CLI app in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/play-alarm-from-command-line/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/play-alarm-from-command-line/">A little alarm clock CLI app in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-19
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>The other day I pushed my second crate to crates.io. It's called <a href="https://crates.io/crates/cli-alarm">cli-alarm</a> and it's a simple command line tool to play an alarm sound after a specified amount of time. It has an option to repeat the alarm at regular intervals as well.</p>
+<h2 id="why-this-project">Why this project?</h2>
+<p>I created it because I wanted to play an alarm sound from the terminal as a reminder to take a break from the computer every hour, we progammers tend to sit for too long without moving which is really bad!</p>
+<p>I had built this with Python before, but I wanted to try it with Rust this time. And that's actually a good way to learn a new language: by building something you've already built with another language. You already know what you want to build, so you can focus on the new language.</p>
+<h2 id="how-to-use-it">How to use it?</h2>
+<p>Here's how you can use it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install cli-alarm
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> alarm</span><span style="color:#bf616a;"> -m</span><span> 1
+</span><span style="color:#bf616a;">Alarm</span><span> set to go off in 1 minutes.
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">plays</span><span> sound once after 1 minute
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> alarm</span><span style="color:#bf616a;"> -m</span><span> 1</span><span style="color:#bf616a;"> -r
+</span><span style="color:#bf616a;">Recurring</span><span> alarm set for every 1 minutes.
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">plays</span><span> sound every minute
+</span><span style="color:#bf616a;">...
+</span></code></pre>
+<p>Curious how it got this alias? It's because of the <code>[[bin]]</code> section in the <code>Cargo.toml</code> file:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[[bin]]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">alarm</span><span>&quot;
+</span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;
+</span></code></pre>
+<h2 id="learnings">Learnings</h2>
+<p>Code so far <a href="https://github.com/bbelderbos/cli_alarm">here</a>.</p>
+<p>A couple of cool things I learned while building this:</p>
+<ul>
+<li>I used <a href="https://crates.io/crates/clap">clap</a>  again for the CLI, great library, see also <a href="/command-line-apps-with-clap">this article</a>.</li>
+</ul>
+<p>Like last time I am using attributes (derive macros) to define the CLI interface which is pretty concise:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">derive</span><span>(Parser, Debug)]
+</span><span>#[</span><span style="color:#bf616a;">command</span><span>(author, version, about, long_about = None)]
+</span><span style="color:#b48ead;">struct </span><span>Cli {
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;m&#39;, long, required = true)]
+</span><span>    </span><span style="color:#bf616a;">minutes</span><span>: </span><span style="color:#b48ead;">u64</span><span>,
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;r&#39;, long, default_value_t = false)]
+</span><span>    </span><span style="color:#bf616a;">repeat</span><span>: </span><span style="color:#b48ead;">bool</span><span>,
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short, long, env = &quot;</span><span style="color:#a3be8c;">ALARM_FILE</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">file</span><span>: Option&lt;String&gt;,
+</span><span>}
+</span></code></pre>
+<p>This time around I learned that clap also supports environment variables. Here I use it to set the alarm sound file if not provided as an argument.</p>
+<ul>
+<li>I used the <a href="https://crates.io/crates/rodio">rodio</a> crate to play the alarm sound. It's a simple and easy-to-use audio library. Next step is to figure out how to play an audio message in addition to the alarm sound.</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>rodio::{Decoder, OutputStream, source::Source};
+</span><span>...
+</span><span style="color:#b48ead;">let </span><span>(_stream, stream_handle) = OutputStream::try_default().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> file = File::open(audio_file).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> source = Decoder::new(BufReader::new(file)).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>stream_handle.</span><span style="color:#96b5b4;">play_raw</span><span>(source.</span><span style="color:#96b5b4;">convert_samples</span><span>()).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span></code></pre>
+<p>That's a lot of unwrapping, I should probably handle the errors more gracefully, still a lot to learn ...</p>
+<ul>
+<li>I used the <a href="https://crates.io/crates/chrono">chrono</a> crate to print the current time in the log messages:</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>chrono::Local;
+</span><span>...
+</span><span>println!(&quot;</span><span style="color:#a3be8c;">Playing alarm at </span><span style="color:#d08770;">{}</span><span>&quot;, Local::now().</span><span style="color:#96b5b4;">format</span><span>(&quot;</span><span style="color:#a3be8c;">%Y-%m-%d %H:%M:%S</span><span>&quot;));
+</span></code></pre>
+<p>Unlike Python's <code>datetime</code>, Rust doesn't have a built-in way to format dates and times, so you need to use a crate for that. This is a common pattern in Rust: the standard library is kept small and you use crates for additional functionality.</p>
+<p>Other notable Python Standard Library packages you'll miss as a Pythonista for example are: <code>random</code>, <code>re</code>, <code>csv</code>, and <code>json</code>, but once you get used to just <code>cargo add</code>ing the crates you need, you hardly notice the difference.</p>
+<ul>
+<li>
+<p>I used the <a href="https://crates.io/crates/reqwest">reqwest</a> crate to download the default alarm sound. It's a simple and easy-to-use HTTP client, which I had already used for my <em>Pybites Search</em> app, see <a href="/pybites-search-in-rust">here</a>.</p>
+</li>
+<li>
+<p>Where in Python you use <code>while True:</code> to create an infinite loop, in Rust you use <code>loop { ... }</code>.</p>
+</li>
+<li>
+<p>You can use <code>thread::sleep</code> to pause the execution of the program for a specified amount of time, which seems a fit for this app.</p>
+</li>
+<li>
+<p>Like Python, Rust has a <code>Path</code> struct (object) to work with file paths in a platform-independent way. I like structs in Rust, see also <a href="/namedtuple-in-rust-struct">here</a>.</p>
+</li>
+<li>
+<p>I use <code>cfg!(target_os = &quot;windows&quot;)</code> to check if the OS is Windows. This is a built-in macro in Rust (in Python you'd use <code>sys.platform</code> or the <code>platform</code> module).</p>
+</li>
+</ul>
+<h2 id="improvement-ideas-next-steps">Improvement ideas / next steps</h2>
+<p>Although this is not very good Rust code yet, I'm happy with the progress so far, specially having a working program that does something useful.</p>
+<p>Some things to improve:</p>
+<ul>
+<li>
+<p>Play an audio message as mentioned.</p>
+</li>
+<li>
+<p>Download the default alarm file to a sensible location or maybe a temp dir to not clutter the user's filesystem.</p>
+</li>
+<li>
+<p>Handle errors more gracefully, e.g. using <code>Result</code> instead of <code>unwrap</code> to better propagate errors.</p>
+</li>
+<li>
+<p>Modularize the code more to learn how to work with multiple files / modules.</p>
+</li>
+<li>
+<p>Linting and formatting (and automate this with a pre-commit hook as I tend to do with Python, see <a href="https://www.youtube.com/watch?v=XFyLzr5Ehf0">here</a>).</p>
+</li>
+<li>
+<p>Add documentation (and host it somewhere, e.g. GitHub Pages).</p>
+</li>
+<li>
+<p>Add tests (although this app being heavy on IO and time-based, probably not the best app to start to learn about testing in Rust lol).</p>
+</li>
+</ul>
+<p>So good for a couple of more articles here ...</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The best way to learn is to build small projects! This way you learn to put things together which is an important skill in programming. You can also gradually increase the complexity of the projects you build.</p>
+<p>I'm happy with the progress so far and how this way of learning Rust constantly challenges me to learn more about the language and tooling. I'm looking forward to diving into more advanced topics like error handling, testing, modularization, and more ...</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/constants-python-vs-rust/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Constants in Python vs Rust</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/python-builtins-rust-chaining/">
+                            <span class="button__text">Python Built-ins vs. Rust method chaining (and how it works)</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

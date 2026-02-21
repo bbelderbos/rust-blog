@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsbit.es/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/upload-file-to-s3/">Using rusoto to upload a file to S3</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-24
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>A while ago I made a Python script to upload files to an S3 bucket. It's a simple script that uses the <code>boto3</code> library to interact with the AWS API. Check it out <a href="https://github.com/PyBites-Open-Source/pybites-tools/blob/main/pybites_tools/aws.py">here</a>.</p>
+<p>Let's see how to do this with Rust and the <code>rusoto</code> crate.</p>
+<p>First, I added the following dependencies to my <code>Cargo.toml</code> file:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="background-color:#bf616a;color:#2b303b;">...</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">clap </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">4.5.7</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">derive</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">env</span><span>&quot;] }
+</span><span style="color:#bf616a;">rusoto_core </span><span>= &quot;</span><span style="color:#a3be8c;">0.48.0</span><span>&quot;
+</span><span style="color:#bf616a;">rusoto_s3 </span><span>= &quot;</span><span style="color:#a3be8c;">0.48.0</span><span>&quot;
+</span><span style="color:#bf616a;">tokio </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1.38.0</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">full</span><span>&quot;] }
+</span></code></pre>
+<p>This is what I came up with for the first iteration:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>rusoto_core::{Region, credential::EnvironmentProvider, HttpClient};
+</span><span style="color:#b48ead;">use </span><span>rusoto_s3::{S3Client, </span><span style="color:#d08770;">S3</span><span>, PutObjectRequest};
+</span><span style="color:#b48ead;">use </span><span>tokio::fs::File;
+</span><span style="color:#b48ead;">use </span><span>tokio::io::AsyncReadExt;
+</span><span style="color:#b48ead;">use </span><span>std::error::Error;
+</span><span style="color:#b48ead;">use </span><span>clap::Parser;
+</span><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Parser, Debug)]
+</span><span>#[</span><span style="color:#bf616a;">clap</span><span>(about, version, author)]
+</span><span style="color:#b48ead;">struct </span><span>Args {
+</span><span>    #[</span><span style="color:#bf616a;">clap</span><span>(short, long, env = &quot;</span><span style="color:#a3be8c;">S3_BUCKET_NAME</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">bucket</span><span>: String,
+</span><span>    #[</span><span style="color:#bf616a;">clap</span><span>(short, long, env = &quot;</span><span style="color:#a3be8c;">AWS_REGION</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">region</span><span>: String,
+</span><span>    #[</span><span style="color:#bf616a;">clap</span><span>(short, long)]
+</span><span>    </span><span style="color:#bf616a;">file</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">upload_image_to_s3</span><span>(</span><span style="color:#bf616a;">bucket</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">key</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">file</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">region</span><span>: Region) -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> s3_client = S3Client::new_with(HttpClient::new()?, EnvironmentProvider::default(), region);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> file = File::open(file).await?;
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> buffer = Vec::new();
+</span><span>    file.</span><span style="color:#96b5b4;">read_to_end</span><span>(&amp;</span><span style="color:#b48ead;">mut</span><span> buffer).await?;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> put_request = PutObjectRequest {
+</span><span>        bucket: bucket.</span><span style="color:#96b5b4;">to_string</span><span>(),
+</span><span>        key: key.</span><span style="color:#96b5b4;">to_string</span><span>(),
+</span><span>        body: Some(buffer.</span><span style="color:#96b5b4;">into</span><span>()),
+</span><span>        ..Default::default()
+</span><span>    };
+</span><span>
+</span><span>    s3_client.</span><span style="color:#96b5b4;">put_object</span><span>(put_request).await?;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">File uploaded successfully to </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">/</span><span style="color:#d08770;">{}</span><span>&quot;, bucket, key);
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> args = Args::parse();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> key = Path::new(&amp;args.file)
+</span><span>        .</span><span style="color:#96b5b4;">file_name</span><span>()
+</span><span>        .</span><span style="color:#96b5b4;">and_then</span><span>(|</span><span style="color:#bf616a;">name</span><span>| name.</span><span style="color:#96b5b4;">to_str</span><span>())
+</span><span>        .</span><span style="color:#96b5b4;">ok_or</span><span>(&quot;</span><span style="color:#a3be8c;">Invalid file path</span><span>&quot;)?;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> region = args.region.parse::&lt;Region&gt;()?;
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">upload_image_to_s3</span><span>(&amp;args.bucket, key, &amp;args.file, region).await?;
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<ul>
+<li>I use Clap (<a href="/command-line-apps-with-clap">as usual</a>) for handling command-line arguments.</li>
+<li>I use the <code>rusoto_core</code> and <code>rusoto_s3</code> crates to interact with the AWS API.</li>
+<li>I use the <code>tokio</code> crate to make it asynchronous.</li>
+<li>The <code>upload_image_to_s3</code> function reads the file, creates a <code>PutObjectRequest</code>, and uploads the file to the specified S3 bucket.</li>
+<li>The <code>main</code> function parses the command-line arguments, extracts the file name, and uploads the file to S3.</li>
+</ul>
+<p>To run the program, you need to set the <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> environment variables:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> export AWS_ACCESS_KEY_ID=your_access_key_id
+</span><span style="color:#bf616a;">$</span><span> export AWS_SECRET_ACCESS_KEY=your_secret_access_key
+</span></code></pre>
+<p>And either specify region and bucket from the command line or set the <code>S3_BUCKET_NAME</code> and <code>AWS_REGION</code> environment variables if you always want to use the same bucket and region:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> export S3_BUCKET_NAME=example-bucket
+</span><span style="color:#bf616a;">$</span><span> export AWS_REGION=us-east-2
+</span></code></pre>
+<p>With all this set you only need to give the file you want to upload:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run -- -f </span><span style="color:#bf616a;">~</span><span>/Desktop/cat.png
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">File</span><span> uploaded successfully to example-bucket/cat.png
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>And that's it, a Rust utitlity to upload files to S3. 🚀</p>
+<p>I extended the program a bit to allow multiple files to be uploaded and list the images, including with pagination so I can use it later with HTMX' infinite scroll. I will write about that in a future post ...</p>
+<p>The repo is <a href="https://github.com/bbelderbos/s3_file_manager">here</a> and I pushed it to crates.io as well. 🦀</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/constant-hashmap-lookup/">Making an immutable hashmap constant</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-23
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>The other day I needed an dictionary / HashMap to look up <a href="https://github.com/bbelderbos/pybites-search/issues/5">abbreviated content types</a>.</p>
+<h2 id="constant-dictionary-hashmap">Constant dictionary / hashmap</h2>
+<p>I wondered how to make it constant and if I could use the nice Python <code>dict.get(key, key)</code> idiom to return the key itself if it is not found in the dictionary.</p>
+<p>I found the <code>phf</code> crate, which is a perfect fit for this it seems. And it supports the <code>get</code> method and the <code>unwrap_or</code> method to provide a default value if the key is not found.</p>
+<p>Another option is <code>lazy_static</code> but I read that <code>phf</code> enforces immutability more strictly by design and that it can provide more efficient access patterns due to its compile-time optimizations (the data is embedded in the binary).</p>
+<h2 id="phf-example"><code>phf</code> example</h2>
+<p>I added this code (<a href="https://github.com/bbelderbos/pybites-search/commit/6fb8b032f36c0564e843a0072ee0960ac8f1543f">commit</a>):</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>phf::phf_map;
+</span><span>
+</span><span style="color:#b48ead;">static </span><span style="color:#d08770;">CATEGORY_MAPPING</span><span>: phf::Map&lt;&amp;</span><span style="color:#b48ead;">&#39;static str</span><span>, &amp;</span><span style="color:#b48ead;">&#39;static str</span><span>&gt; = phf_map! {
+</span><span>    &quot;</span><span style="color:#a3be8c;">a</span><span>&quot; =&gt; &quot;</span><span style="color:#a3be8c;">article</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">b</span><span>&quot; =&gt; &quot;</span><span style="color:#a3be8c;">bite</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">p</span><span>&quot; =&gt; &quot;</span><span style="color:#a3be8c;">podcast</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">v</span><span>&quot; =&gt; &quot;</span><span style="color:#a3be8c;">video</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">t</span><span>&quot; =&gt; &quot;</span><span style="color:#a3be8c;">tip</span><span>&quot;,
+</span><span>};
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">for</span><span> ct in &amp;[&quot;</span><span style="color:#a3be8c;">a</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">b</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">p</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">v</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">t</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">not found</span><span>&quot;] {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> value = </span><span style="color:#d08770;">CATEGORY_MAPPING</span><span>.</span><span style="color:#96b5b4;">get</span><span>(ct).</span><span style="color:#96b5b4;">unwrap_or</span><span>(&amp;ct).</span><span style="color:#96b5b4;">to_string</span><span>();
+</span><span>        println!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> -&gt; </span><span style="color:#d08770;">{}</span><span>&quot;, ct, value);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>This prints:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">a</span><span> -&gt; article
+</span><span style="color:#bf616a;">b</span><span> -&gt; bite
+</span><span style="color:#bf616a;">p</span><span> -&gt; podcast
+</span><span style="color:#bf616a;">v</span><span> -&gt; video
+</span><span style="color:#bf616a;">t</span><span> -&gt; tip
+</span><span style="color:#bf616a;">not</span><span> found -&gt; not found
+</span></code></pre>
+<ul>
+<li>The <code>phf_map!</code> macro creates a constant hashmap.</li>
+<li>The <code>CATEGORY_MAPPING</code> is a static variable that holds the hashmap.</li>
+<li>The <code>get</code> method is used to lookup the key in the hashmap.</li>
+<li>The <code>unwrap_or</code> method is used to provide a default value if the key is not found.</li>
+<li>The <code>to_string</code> method is used to convert the value to a string.</li>
+</ul>
+<p>Note that you need to enable the <code>macros</code> feature in your <code>Cargo.toml</code> file:</p>
+<h2 id="configuring-phf">Configuring <code>phf</code></h2>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">phf </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.11.2</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">macros</span><span>&quot;] }
+</span></code></pre>
+<h2 id="practice-this">Practice This</h2>
+<p>Try the <a href="https://rustplatform.com/hashmap-entry-api">HashMap Entry API</a> exercise on the Pybites Rust Platform to practice working with HashMaps in Rust.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>With <code>phf</code> you can create a constant hashmap in an efficient way. It is a good fit for cases where you need to look up values by key and you want to enforce immutability. 💡</p>
+<p>And with that you can now use Pybites Search with both <code>-c a</code> and <code>-c article</code>, <code>-c b</code> and <code>-c bite</code>, etc. 🎉 🚀</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/linting-with-clippy/">Linting your Rust code with Clippy</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-22
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In Python you often use flake8, pyflakes and/or ruff to lint your code. In Rust, you can use Clippy.</p>
+<p>Clippy is a collection of lints to catch common mistakes and improve your Rust code. Let's try it out on <a href="/pybites-search-in-rust">Pybites Search</a>.</p>
+<h2 id="installing-and-running-clippy">Installing and running Clippy</h2>
+<p>First make sure you install Clippy:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> rustup component add clippy
+</span></code></pre>
+<p>Next you can invoke it in any project through Cargo:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo clippy
+</span></code></pre>
+<p>Running this in the Pybites search project we get:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> cargo clippy
+</span><span>    </span><span style="color:#bf616a;">Checking</span><span> pybites-search v0.6.0 (/Users/pybob/code/rust/search)
+</span><span style="color:#bf616a;">warning:</span><span> writing `&amp;</span><span style="color:#bf616a;">Vec</span><span>` instead of `&amp;</span><span style="color:#bf616a;">[_]</span><span>` involves a new object where a slice will do
+</span><span>   </span><span style="color:#bf616a;">--</span><span>&gt; src/main.rs:108:25
+</span><span>    |
+</span><span style="color:#bf616a;">108 </span><span>| </span><span style="color:#bf616a;">fn</span><span> save_to_cache(items: &amp;</span><span style="color:#bf616a;">Vec</span><span>&lt;Item&gt;) </span><span style="color:#bf616a;">-</span><span>&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    |                         ^^^^^^^^^^
+</span><span>    |
+</span><span>    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#ptr_arg
+</span><span>    = note: `</span><span style="color:#bf616a;">#[warn</span><span>(clippy::ptr_arg)</span><span style="color:#bf616a;">]</span><span>` on by default
+</span><span>help: change this to
+</span><span>    |
+</span><span>108 </span><span style="color:#bf616a;">~</span><span> fn save_to_cache(items: &amp;</span><span style="color:#b48ead;">[</span><span>Item</span><span style="color:#b48ead;">]</span><span>) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>109 |     let cache_path = get_cache_file_path();
+</span><span>110 |     let cache_data = CacheData {
+</span><span>111 |         timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
+</span><span>112 </span><span style="color:#bf616a;">~</span><span>         items: items.to_owned(),
+</span><span>    |
+</span><span>
+</span><span>warning: `</span><span style="color:#bf616a;">pybites-search</span><span>` (bin &quot;</span><span style="color:#a3be8c;">psearch</span><span>&quot;) generated 1 warning
+</span><span>    Finished `</span><span style="color:#bf616a;">dev</span><span>` profile </span><span style="color:#b48ead;">[</span><span>unoptimized + debuginfo</span><span style="color:#b48ead;">]</span><span> target(s) in 1.16s
+</span></code></pre>
+<p>The warning is about using <code>&amp;Vec</code> instead of <code>&amp;[_]</code>. The fix is to change the function signature to <code>fn save_to_cache(items: &amp;[Item]) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {</code> (and <code>items.clone()</code> to <code>items.to_vec()</code> in the function body).</p>
+<p>It's useful to check out <a href="https://rust-lang.github.io/rust-clippy/master/index.html#/ptr_arg">the associated link</a> where we can read about the why:</p>
+<blockquote>
+<p>Requiring the argument to be of the specific size makes the function less useful for no benefit; slices in the form of &amp;[T] or &amp;str usually suffice and can be obtained from other types, too.</p>
+</blockquote>
+<p>And a suggested fix:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>fn foo(&amp;Vec&lt;u32&gt;) { .. }
+</span><span>
+</span><span>// use instead:
+</span><span>
+</span><span>fn foo(&amp;[u32]) { .. }
+</span></code></pre>
+<p>Note this is a warning, not an error, you can still compile and run your code.</p>
+<p>But it's good practice to fix these warnings to improve the quality of your code. 🦀 🧹</p>
+<h2 id="running-clippy-on-another-project">Running Clippy on another project</h2>
+<p>Let's run it on <a href="/resizing-images">the resize-images project</a>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">warning:</span><span> the borrowed expression implements the required traits
+</span><span>  </span><span style="color:#bf616a;">--</span><span>&gt; src/main.rs:54:105
+</span><span>   |
+</span><span style="color:#bf616a;">54 </span><span>|                 </span><span style="color:#96b5b4;">let</span><span> output_path = Path::new(&amp;output_dir).join(path.file_stem().unwrap()).with_extension(&amp;extension);
+</span><span>   |                                                                                                         </span><span style="color:#bf616a;">^^^^^^^^^^</span><span> help: change this to: `</span><span style="color:#bf616a;">extension</span><span>`
+</span><span>   |
+</span><span>   = </span><span style="color:#bf616a;">help:</span><span> for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrows_for_generic_args
+</span><span>   = </span><span style="color:#bf616a;">note: </span><span>`</span><span style="color:#bf616a;">#[warn</span><span>(clippy::needless_borrows_for_generic_args)</span><span style="color:#bf616a;">]</span><span>` on by default
+</span><span>
+</span><span style="color:#bf616a;">warning: </span><span>`</span><span style="color:#bf616a;">resize-images</span><span>` (bin &quot;</span><span style="color:#a3be8c;">resize-images</span><span>&quot;) </span><span style="color:#bf616a;">generated</span><span> 1 warning (run `</span><span style="color:#bf616a;">cargo</span><span> clippy</span><span style="color:#bf616a;"> --fix --bin </span><span>&quot;</span><span style="color:#a3be8c;">resize-images</span><span>&quot;` to apply 1 suggestion)
+</span><span>    </span><span style="color:#bf616a;">Finished </span><span>`</span><span style="color:#bf616a;">dev</span><span>` profile </span><span style="color:#b48ead;">[</span><span>unoptimized + debuginfo</span><span style="color:#b48ead;">]</span><span> target(s) </span><span style="color:#bf616a;">in</span><span> 6.81s
+</span></code></pre>
+<p>This time it's about a needless borrow for generic args. The fix is to remove the <code>&amp;</code> from <code>with_extension(&amp;extension)</code>.</p>
+<p>Again <a href="https://rust-lang.github.io/rust-clippy/master/index.html#/needless_borrows_for_generic_args">the help link</a> explains why:</p>
+<blockquote>
+<p>Suggests that the receiver of the expression borrows the expression.</p>
+</blockquote>
+<p>And shows an example + fix:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">f</span><span>(_: impl AsRef&lt;</span><span style="color:#b48ead;">str</span><span>&gt;) {}
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> x = &quot;</span><span style="color:#a3be8c;">foo</span><span>&quot;;
+</span><span style="color:#96b5b4;">f</span><span>(&amp;x);
+</span><span>
+</span><span style="color:#65737e;">// use instead:
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">f</span><span>(_: impl AsRef&lt;</span><span style="color:#b48ead;">str</span><span>&gt;) {}
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> x = &quot;</span><span style="color:#a3be8c;">foo</span><span>&quot;;
+</span><span style="color:#96b5b4;">f</span><span>(x);
+</span></code></pre>
+<h2 id="auto-fixing-clippy-warnings">Auto-fixing Clippy warnings</h2>
+<p>You can also auto-fix Clippy warnings with <code>cargo clippy --fix</code>. This will apply the suggestions it has for you. It's a great way to quickly clean up your code.</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo clippy</span><span style="color:#bf616a;"> --fix
+</span></code></pre>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/clippy-autofix.png" alt="Example of clippy autofixing an error" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<h2 id="running-clippy-as-part-of-pre-commit">Running Clippy as part of pre-commit</h2>
+<p>You can run Clippy as part of your pre-commit hooks. This way you can't commit code with Clippy warnings.</p>
+<p><em>If you're new to pre-commit, check out my video <a href="https://www.youtube.com/watch?v=XFyLzr5Ehf0">here</a></em></p>
+<p>To do this, install the <a href="https://pre-commit.com/">pre-commit</a> tool and add the following to a <code>.pre-commit-config.yaml</code> file in your project (taken from <a href="https://raw.githubusercontent.com/doublify/pre-commit-rust/master/.pre-commit-hooks.yaml">here</a>):</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#bf616a;">repos</span><span>:
+</span><span>  - </span><span style="color:#bf616a;">repo</span><span>: </span><span style="color:#a3be8c;">https://github.com/doublify/pre-commit-rust
+</span><span>    </span><span style="color:#bf616a;">rev</span><span>: </span><span style="color:#a3be8c;">v1.0
+</span><span>    </span><span style="color:#bf616a;">hooks</span><span>:
+</span><span>    - </span><span style="color:#bf616a;">id</span><span>: </span><span style="color:#a3be8c;">fmt
+</span><span>      </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">fmt
+</span><span>      </span><span style="color:#bf616a;">description</span><span>: </span><span style="color:#a3be8c;">Format files with cargo fmt.
+</span><span>      </span><span style="color:#bf616a;">entry</span><span>: </span><span style="color:#a3be8c;">cargo fmt
+</span><span>      </span><span style="color:#bf616a;">language</span><span>: </span><span style="color:#a3be8c;">system
+</span><span>      </span><span style="color:#bf616a;">types</span><span>: [</span><span style="color:#a3be8c;">rust</span><span>]
+</span><span>      </span><span style="color:#bf616a;">args</span><span>: [&quot;</span><span style="color:#a3be8c;">--</span><span>&quot;]
+</span><span>    - </span><span style="color:#bf616a;">id</span><span>: </span><span style="color:#a3be8c;">cargo-check
+</span><span>      </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">cargo check
+</span><span>      </span><span style="color:#bf616a;">description</span><span>: </span><span style="color:#a3be8c;">Check the package for errors.
+</span><span>      </span><span style="color:#bf616a;">entry</span><span>: </span><span style="color:#a3be8c;">cargo check
+</span><span>      </span><span style="color:#bf616a;">language</span><span>: </span><span style="color:#a3be8c;">system
+</span><span>      </span><span style="color:#bf616a;">types</span><span>: [</span><span style="color:#a3be8c;">rust</span><span>]
+</span><span>      </span><span style="color:#bf616a;">pass_filenames</span><span>: </span><span style="color:#d08770;">false
+</span><span>    - </span><span style="color:#bf616a;">id</span><span>: </span><span style="color:#a3be8c;">clippy
+</span><span>      </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">clippy
+</span><span>      </span><span style="color:#bf616a;">description</span><span>: </span><span style="color:#a3be8c;">Lint rust sources
+</span><span>      </span><span style="color:#bf616a;">entry</span><span>: </span><span style="color:#a3be8c;">cargo clippy
+</span><span>      </span><span style="color:#bf616a;">language</span><span>: </span><span style="color:#a3be8c;">system
+</span><span>      </span><span style="color:#bf616a;">args</span><span>: [&quot;</span><span style="color:#a3be8c;">--</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">-D</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">warnings</span><span>&quot;]
+</span><span>      </span><span style="color:#bf616a;">types</span><span>: [</span><span style="color:#a3be8c;">rust</span><span>]
+</span><span>      </span><span style="color:#bf616a;">pass_filenames</span><span>: </span><span style="color:#d08770;">false
+</span></code></pre>
+<p>Apart from clippy, this also includes <code>fmt</code> and <code>cargo check</code> hooks.</p>
+<p>Then install the pre-commit hooks:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> pre-commit install
+</span></code></pre>
+<p>Now every time you commit code, Clippy + friends will run and you can't commit code with warnings. 🚫</p>
+<p>To run it on all files retroactively in your project:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> pre-commit run</span><span style="color:#bf616a;"> --all-files
+</span></code></pre>
+<p>I just did that and <a href="https://github.com/bbelderbos/pybites-search/commit/96193766a101dd592fabe0d959167c21e6f9cec5">see here the result</a>.</p>
+<p>Imports are nicely ordered and the code is better formatted. This reminds me a lot of <code>isort</code> and <code>black</code> in Python, where Clippy is more like <code>flake8</code> and <code>pyflakes</code> 🦀 🐍 😍</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Clippy is a great tool to help you write better Rust code. It's easy to install and run. You can even auto-fix warnings. 💪 📈</p>
+<p>There are many more configuration options, check out the <a href="https://rust-lang.github.io/rust-clippy/master/index.html">Clippy lints</a> and <a href="https://github.com/rust-lang/rust-clippy">its GitHub repo</a> for more info.</p>
+<p>It's also convenient to run it as part of pre-commit. This way you can't commit code with warnings. It's a great way to keep your code clean and readable. 🦀 🧹</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/tts-in-rust/">Alarm clock part II - text to speech</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-21
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>I tweaked <a href="/play-alarm-from-command-line">my alarm clock app</a> today to add text-to-speech (TTS).</p>
+<p>I started with the obvious choice: <a href="https://crates.io/crates/tts">tts crate</a>, but it did not work on my Mac, no audio.</p>
+<h2 id="adding-text-to-speech">Adding text-to-speech</h2>
+<p>So I got a bit creative and ended up with this function:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">speak_message</span><span>(</span><span style="color:#bf616a;">message</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">macos</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">say</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(message)
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute say command on macOS</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">windows</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">powershell</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">-Command</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(&amp;format!(&quot;</span><span style="color:#a3be8c;">Add-Type –TypeDefinition </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">using System.Speech; var synth = new Speech.Synthesis.SpeechSynthesizer(); synth.Speak(&#39;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&#39;);</span><span style="color:#96b5b4;">\&quot;</span><span>&quot;, message))
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute PowerShell TTS on Windows</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">linux</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">espeak</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(message)
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute espeak on Linux</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        eprintln!(&quot;</span><span style="color:#a3be8c;">Unsupported operating system for TTS</span><span>&quot;);
+</span><span>    }
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<ul>
+<li>
+<p>On macOS, it uses the <code>say</code> command (built-in / ships by default with macOS). For Windows, it uses PowerShell to speak the message. And on Linux, it uses <code>espeak</code>. Note that I mostly care about a Mac solution right now, so I have not tested the Windows + Linux ones yet ...</p>
+</li>
+<li>
+<p><code>cfg!(target_os = &quot;...&quot;)</code> is a Rust macro that checks the target operating system (similar how you can use the <code>platform</code> module in Python). It is a compile-time check, so the code for other operating systems will not be included in the binary.</p>
+</li>
+<li>
+<p>The <code>expect</code> method is used to panic if the command fails. I probably should handle the error more gracefully, I will improve this later.</p>
+</li>
+<li>
+<p><code>println!</code> prints to standard output. To print to standard error, you can use <code>eprintln!</code> and it's good practice to use it for error messages.</p>
+</li>
+<li>
+<p>The return type is <code>Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;</code> to indicate that the function can return an error. The <code>Box&lt;dyn std::error::Error&gt;</code> is a trait object that can hold any type that implements the <code>Error</code> trait. I am seeing this pattern quite a bit in Rust code.</p>
+</li>
+</ul>
+<h2 id="new-command-line-arguments">New command-line arguments</h2>
+<p>The message to speak is a new (Clap) command-line argument:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">DEFAULT_MESSAGE</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">You set an alarm, time is up!</span><span>&quot;;
+</span><span>...
+</span><span>
+</span><span style="color:#65737e;">/// Message to speak instead of playing an audio file
+</span><span>#[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;M&#39;, long, required = true, default_value = DEFAULT_MESSAGE)]
+</span><span>message: String,
+</span></code></pre>
+<p>And I play it a couple of times, another new command-line argument:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">TIMES_TO_PLAY</span><span>: </span><span style="color:#b48ead;">usize </span><span>= </span><span style="color:#d08770;">3</span><span>;
+</span><span>...
+</span><span>
+</span><span style="color:#65737e;">/// Times to play the alarm sound
+</span><span>#[</span><span style="color:#bf616a;">arg</span><span>(short, long, default_value_t = TIMES_TO_PLAY)]
+</span><span>times: </span><span style="color:#b48ead;">usize</span><span>,
+</span></code></pre>
+<p>I added this loop to play the message multiple times:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">for </span><span>_ in </span><span style="color:#d08770;">0</span><span>..args.times {
+</span><span>    </span><span style="color:#96b5b4;">speak_message</span><span>(&amp;args.message).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>}
+</span></code></pre>
+<p>The nice thing about <code>usize</code> (and typing in general) is that it excludes invalid options.</p>
+<p>For example, if the user enters a negative number, the program will not compile. The <code>usize</code> type is an unsigned integer, meaning that it cannot be negative.</p>
+<h2 id="ranges-in-rust-vs-python">Ranges in Rust (vs Python)</h2>
+<p>The <code>0..N</code> construct is similar to <code>range</code> in Python, where the upper bound is also exclusive. Also in both languages, the lower bound is inclusive. To make the upper bound inclusive, you can use <code>0..=N</code> in Rust. So I could also write <code>1..=args.times</code> to play the message <code>args.times</code> times.</p>
+<p>You can also use <code>std::iter::repeat</code> here I learned:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>std::iter::repeat(()).</span><span style="color:#96b5b4;">take</span><span>(args.times).</span><span style="color:#96b5b4;">for_each</span><span>(|_| {
+</span><span>    </span><span style="color:#96b5b4;">speak_message</span><span>(&amp;args.message).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>});
+</span></code></pre>
+<p>But that seems more verbose and complicated than the more concise and readable <code>for</code> loop so I stuck with that.</p>
+<p>So running the program like this it will say &quot;Wake up&quot; 3 times after 3 seconds:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run -- -M &quot;</span><span style="color:#a3be8c;">Wake up</span><span>&quot; -s 3
+</span><span style="color:#65737e;"># says &quot;Wake up&quot; three times
+</span></code></pre>
+<p>Why 3 times? By not specifying the number of times, it will default to 3 (see the <code>TIMES_TO_PLAY</code> constant).</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I like the current 0.3.0 (available on crates.io) better than the previous ones, where I was playing an alarm file. This had the added complexity of downloading and playing an audio file.</p>
+<p>The text-to-speech feature is less code relatively and actually tells the user what the alarm is about. The only thing is compatibility, I need to test it on Windows and Linux still ...</p>
+<p>As usual, by building things I've learned more about interesting Rust features and idioms. I am also getting more comfortable with the language and its ecosystem. 😍 📈</p>
+<p>I will probably use this project to write some more posts about 1. code structuring (modularizing your code), 2. testing and 3. documentation. Stay tuned! 🚀</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/python-builtins-rust-chaining/">Python Built-ins vs. Rust method chaining (and how it works)</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-20
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>If you're familiar with Python, you know how powerful its built-in functions for iterables can be.</p>
+<p>Functions like <code>map</code>, <code>filter</code>, and <code>reduce</code> provide a simple and expressive way to handle collections.</p>
+<p>Rust offers similar functionality through iterators and method chaining, which, while different in syntax, provide equally powerful capabilities.</p>
+<p>This post explores how Python built-ins translate to Rust's method chaining with iterators.</p>
+<h2 id="python-built-ins-vs-rust-method-chaining">Python Built-ins vs. Rust Method Chaining</h2>
+<h3 id="python-s-approach">Python's Approach</h3>
+<p>Python provides many built-in functions to operate on iterables, such as <code>map</code>, <code>filter</code>, <code>zip</code>, <code>enumerate</code>, <code>all</code>, <code>any</code>, etc.</p>
+<p>These functions are easy to use and understand, making them a staple in Python programming. I did an overview video of them you can watch <a href="https://www.youtube.com/watch?v=ejvql4eKev4">here</a>.</p>
+<h3 id="rust-s-approach">Rust's Approach</h3>
+<p>Rust, on the other hand, implements these functionalities as methods on iterator types.</p>
+<p>This approach leverages Rust's strengths in type safety and performance. By chaining methods, Rust allows you to build complex operations in a concise and readable manner.</p>
+<h2 id="example-comparisons">Example Comparisons</h2>
+<p>Let's compare some common operations using Python built-ins and Rust method chaining:</p>
+<h3 id="map"><code>map</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>numbers = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>squared = </span><span style="color:#bf616a;">list</span><span>(</span><span style="color:#96b5b4;">map</span><span>(</span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">x</span><span>: x**</span><span style="color:#d08770;">2</span><span>, numbers))
+</span><span style="color:#96b5b4;">print</span><span>(squared)  </span><span style="color:#65737e;"># Output: [1, 4, 9]
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span style="color:#b48ead;">let</span><span> squared: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x).</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, squared);  </span><span style="color:#65737e;">// Output: [1, 4, 9]
+</span></code></pre>
+<h3 id="filter"><code>filter</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>numbers = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>]
+</span><span>even = </span><span style="color:#bf616a;">list</span><span>(</span><span style="color:#96b5b4;">filter</span><span>(</span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">x</span><span>: x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>, numbers))
+</span><span style="color:#96b5b4;">print</span><span>(even)  </span><span style="color:#65737e;"># Output: [2, 4]
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>];
+</span><span style="color:#b48ead;">let</span><span> even: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">filter</span><span>(|&amp;&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>).</span><span style="color:#96b5b4;">copied</span><span>().</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, even);  </span><span style="color:#65737e;">// Output: [2, 4]
+</span></code></pre>
+<h3 id="zip"><code>zip</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>list1 = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>list2 = [&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;]
+</span><span style="color:#b48ead;">for </span><span>item1, item2 </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">zip</span><span>(list1, list2):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(item1, item2)  </span><span style="color:#65737e;"># Output: 1 a, 2 b, 3
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> list1 = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span style="color:#b48ead;">let</span><span> list2 = vec![&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;];
+</span><span style="color:#b48ead;">for </span><span>(item1, item2) in list1.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">zip</span><span>(list2.</span><span style="color:#96b5b4;">iter</span><span>()) {
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{} {}</span><span>&quot;, item1, item2);  </span><span style="color:#65737e;">// Output: 1 a, 2 b, 3 c
+</span><span>}
+</span></code></pre>
+<h3 id="enumerate"><code>enumerate</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>items = [&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;]
+</span><span style="color:#b48ead;">for </span><span>index, value </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">enumerate</span><span>(items):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(index, value)  </span><span style="color:#65737e;"># Output: 0 a, 1 b, 2 c
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> items = vec![&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;];
+</span><span style="color:#b48ead;">for </span><span>(index, value) in items.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">enumerate</span><span>() {
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{} {}</span><span>&quot;, index, value);  </span><span style="color:#65737e;">// Output: 0 a, 1 b, 2 c
+</span><span>}
+</span></code></pre>
+<h2 id="how-method-chaining-works-in-rust">How Method Chaining Works in Rust</h2>
+<p>Rust’s method chaining is possible because each method in the iterator chain returns another iterator. This allows you to call multiple methods in sequence. Here's a deeper dive into how this works:</p>
+<h3 id="example-chaining-map-and-filter">Example: Chaining <code>map</code> and <code>filter</code></h3>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>];
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> result: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers
+</span><span>    .</span><span style="color:#96b5b4;">iter</span><span>()                   </span><span style="color:#65737e;">// Creates an iterator over the elements of the vector
+</span><span>    .</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x)          </span><span style="color:#65737e;">// Applies the closure to each item, returns an iterator of squared values
+</span><span>    .</span><span style="color:#96b5b4;">filter</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>)  </span><span style="color:#65737e;">// Filters the items, returning only those that are even
+</span><span>    .</span><span style="color:#96b5b4;">collect</span><span>();               </span><span style="color:#65737e;">// Collects the iterator into a vector
+</span><span>
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, result);  </span><span style="color:#65737e;">// Output: [4, 16]
+</span></code></pre>
+<p>Quite elegant, isn't it? Let's break down the steps:</p>
+<h3 id="step-by-step-breakdown">Step-by-Step Breakdown</h3>
+<ol>
+<li>
+<p><strong>Creating the Iterator</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>numbers.</span><span style="color:#96b5b4;">iter</span><span>()
+</span></code></pre>
+<p>This creates an iterator over the references to the elements of the vector <code>numbers</code>.</p>
+</li>
+<li>
+<p><strong>Mapping Values</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x)
+</span></code></pre>
+<p>The <code>map</code> method creates a new iterator that applies the given closure to each item, in this case, squaring the values.</p>
+</li>
+<li>
+<p><strong>Filtering Values</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">filter</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>)
+</span></code></pre>
+<p>The <code>filter</code> method creates another iterator that only yields items for which the given predicate is <code>true</code>, in this case, retaining even numbers.</p>
+</li>
+<li>
+<p><strong>Collecting Results</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">collect</span><span>()
+</span></code></pre>
+<p>The <code>collect</code> method consumes the iterator and collects the resulting items into a new collection, in this case, a vector.</p>
+</li>
+</ol>
+<h3 id="how-it-works-internally">How It Works Internally</h3>
+<p>Each method (<code>map</code>, <code>filter</code>, etc.) returns a new iterator type. For example:</p>
+<ul>
+<li><code>numbers.iter()</code> returns an <code>Iter</code> iterator.</li>
+<li><code>Iter</code> has a method <code>map</code> that returns a <code>Map&lt;Iter, F&gt;</code> iterator.</li>
+<li><code>Map&lt;Iter, F&gt;</code> has a method <code>filter</code> that returns a <code>Filter&lt;Map&lt;Iter, F&gt;, G&gt;</code> iterator.</li>
+</ul>
+<p>These iterator types (<code>Iter</code>, <code>Map</code>, <code>Filter</code>) all implement the <code>Iterator</code> trait, allowing them to be chained together seamlessly.</p>
+<p>In Python we really like generators and <em>lazy</em> operations (meaning any computation is only done when needed). Rust iterators are also lazy by default, which can lead to significant performance improvements, especially when working with large collections.</p>
+<hr />
+<p><em>Traits</em> are a fundamental feature in Rust that allow you to define shared behavior across different types. A trait is a collection of methods defined for an unknown type: <code>Self</code>. Traits can be implemented for any data type. In this case, the <code>Iterator</code> trait provides a common interface for all iterators, enabling method chaining.</p>
+<p>By implementing the <code>Iterator</code> trait, a type gains the ability to be iterated over using methods like <code>map</code>, <code>filter</code>, and <code>collect</code>. This trait-based approach ensures that any type that implements <code>Iterator</code> can seamlessly integrate with Rust's powerful iterator combinators, promoting code reuse and modularity.</p>
+<p>A dedicated article to follow on this topic...</p>
+<h2 id="benefits-of-chaining">Benefits of Chaining</h2>
+<ol>
+<li><strong>Readability</strong>: Method chaining provides a clear and concise way to express a series of operations on a collection.</li>
+<li><strong>Performance</strong>: Iterators in Rust are lazy and can be highly optimized by the compiler. Operations are performed only when needed.</li>
+<li><strong>Extensibility</strong>: By implementing the <code>Iterator</code> trait for custom types, you can leverage all the powerful methods available on iterators.</li>
+</ol>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice iterators on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/iterator-basics">Iterator Basics</a></li>
+<li><a href="https://rustplatform.com/map-and-filter">Map and Filter</a></li>
+<li><a href="https://rustplatform.com/iterator-chaining">Iterator Chaining</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>So what are Python's robust and performant built-ins in Rust? You'll often find them as methods on iterator types, allowing you to chain operations together in a fluent and efficient manner. 😍 📈</p>
+<p>I hope this comparison has given you a better understanding of how Rust's method chaining with iterators can be a powerful tool in your programming arsenal. Happy coding! 🦀 🚀</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/page/2/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Newer posts</span>
+                        </a>
+                    </span>
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/page/4/">
+                            <span class="button__text">Older posts</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

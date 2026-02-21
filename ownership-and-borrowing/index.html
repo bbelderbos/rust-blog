@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Ownership and borrowing in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Ownership and borrowing in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/ownership-and-borrowing/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Ownership and borrowing in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/ownership-and-borrowing/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/ownership-and-borrowing/">Ownership and borrowing in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-09
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>In Python, this code runs just fine:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">print_person</span><span>(</span><span style="color:#bf616a;">s</span><span>):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Inside function: </span><span>{s}&quot;)
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">main</span><span>():
+</span><span>    person = &quot;</span><span style="color:#a3be8c;">John</span><span>&quot;
+</span><span>    </span><span style="color:#bf616a;">print_person</span><span>(person)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Hello, </span><span>{person}</span><span style="color:#a3be8c;">!</span><span>&quot;)  </span><span style="color:#65737e;"># person still accessible
+</span><span>
+</span><span style="color:#bf616a;">main</span><span>()
+</span></code></pre>
+<p>When I pass <code>person</code> to <code>print_person</code>, the ownership of <code>person</code> is not moved to the function. I can still use <code>person</code> after the function call.</p>
+<p>In Rust, the same code will not compile:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">print_person</span><span>(</span><span style="color:#bf616a;">s</span><span>: String) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Inside function: </span><span style="color:#d08770;">{}</span><span>&quot;, s);
+</span><span>    </span><span style="color:#65737e;">// s goes out of scope here and is dropped
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;);
+</span><span>    </span><span style="color:#96b5b4;">print_person</span><span>(person);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, person); </span><span style="color:#65737e;">// compile-time error
+</span><span>}
+</span></code></pre>
+<p>The Rust compiler gives this nicely descriptive error message:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">7 </span><span>|     </span><span style="color:#96b5b4;">let</span><span> person = String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;);
+</span><span>  |         </span><span style="color:#bf616a;">------</span><span> move occurs because `</span><span style="color:#bf616a;">person</span><span>` has type `</span><span style="color:#bf616a;">String</span><span>`, which does not implement the `</span><span style="color:#bf616a;">Copy</span><span>` trait
+</span><span style="color:#bf616a;">8 </span><span>|     </span><span style="color:#bf616a;">print_person</span><span>(person);
+</span><span>  |                  </span><span style="color:#bf616a;">------</span><span> value moved here
+</span><span style="color:#bf616a;">9 </span><span>|     </span><span style="color:#bf616a;">println!</span><span>(&quot;</span><span style="color:#a3be8c;">Hello, {}!</span><span>&quot;, person); </span><span style="color:#bf616a;">//</span><span> compile-time error
+</span><span>  |                            </span><span style="color:#bf616a;">^^^^^^</span><span> value borrowed here after move
+</span></code></pre>
+<p>What happens here is that <code>person</code> is moved to <code>print_person</code>, and I can't use it after that. This is because Rust is strict about ownership and borrowing.</p>
+<p>This definitely takes some time to get used to, but it's a powerful and important feature of Rust.</p>
+<p>It helps prevent memory-related bugs (e.g., use-after-free, double-free, dangling pointers, memory leaks) that are common in other languages that manage memory manually (e.g., C and C++).</p>
+<p>The solution is to borrow <code>person</code> instead of moving it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">print_person</span><span>(</span><span style="color:#bf616a;">s</span><span>: &amp;String) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Inside function: </span><span style="color:#d08770;">{}</span><span>&quot;, s);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;);
+</span><span>    </span><span style="color:#96b5b4;">print_person</span><span>(&amp;person);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, person); </span><span style="color:#65737e;">// now person is still usable
+</span><span>}
+</span></code></pre>
+<p>Here we pass a reference instead of the value itself. Note that you have to express this explicitly with <code>&amp;</code> in the function signature and when calling the function.</p>
+<p>In Rust speak <code>person</code> is <em>borrowed</em> by <code>print_person</code>. This way the function can use <code>person</code> without taking <em>ownership</em> of it.</p>
+<h2 id="key-takeaways">Key Takeaways:</h2>
+<ul>
+<li>
+<p>In Rust, passing <em>ownership</em> to a function means the original variable can no longer be used. This is to prevent multiple owners of the same data, which can lead to bugs and memory leaks. It also helps with performance and concurrency.</p>
+</li>
+<li>
+<p>In Python, variables are references, so they remain valid after being passed to functions. Additionally, you don't have to worry about memory management because Python's garbage collector automatically handles the allocation and deallocation of memory (it tracks object references and uses reference counting and cyclic garbage collection to free memory that is no longer needed).</p>
+</li>
+<li>
+<p>Rust's <em>borrowing</em> allows you to pass references to functions without transferring ownership, preserving the original variable’s validity.</p>
+</li>
+</ul>
+<h2 id="mutability-and-borrowing">Mutability and borrowing</h2>
+<p>In Rust, you can have multiple immutable references to the same data, but only one mutable reference. Additionally, you have to explicitly declare that you want to mutate the data.</p>
+<p>In Python, the burden is on the programmer to ensure that data is not modified when it shouldn't be. Python doesn't distinguish between mutable and immutable references explicitly.</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">modify_data</span><span>(</span><span style="color:#bf616a;">data</span><span>):
+</span><span>    data.</span><span style="color:#bf616a;">append</span><span>(</span><span style="color:#d08770;">4</span><span>)
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">main</span><span>():
+</span><span>    my_list = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>    </span><span style="color:#bf616a;">modify_data</span><span>(my_list)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Modified list: </span><span>{my_list}&quot;)  </span><span style="color:#65737e;"># my_list is modified
+</span><span>
+</span><span style="color:#bf616a;">main</span><span>()
+</span></code></pre>
+<p>For example here <code>my_list</code> is modified inside <code>modify_data</code> function. In Rust, this would not compile because <code>my_list</code> is borrowed immutably by <code>modify_data</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">modify_data</span><span>(</span><span style="color:#bf616a;">data</span><span>: &amp;Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt;) {
+</span><span>    data.</span><span style="color:#96b5b4;">push</span><span>(</span><span style="color:#d08770;">4</span><span>);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> my_list = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span>    </span><span style="color:#96b5b4;">modify_data</span><span>(&amp;my_list);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Modified list: </span><span style="color:#d08770;">{:?}</span><span>&quot;, my_list); </span><span style="color:#65737e;">// compile-time error
+</span><span>}
+</span></code></pre>
+<p>The Rust compiler will give this error:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">2 </span><span>|     </span><span style="color:#bf616a;">data.push</span><span>(4);
+</span><span>  |     </span><span style="color:#bf616a;">^^^^ </span><span>`</span><span style="color:#bf616a;">data</span><span>` is a `&amp;` reference, so the data it refers to cannot be borrowed as mutable
+</span><span>  |
+</span><span style="color:#bf616a;">help:</span><span> consider changing this to be a mutable reference
+</span><span>  |
+</span><span style="color:#bf616a;">1 </span><span>| </span><span style="color:#bf616a;">fn</span><span> modify_data(data: &amp;</span><span style="color:#bf616a;">mut</span><span> Vec&lt;i32&gt;) {
+</span><span>  |                       </span><span style="color:#bf616a;">+++
+</span></code></pre>
+<p>In Rust, to modify data within a function, you must pass a mutable reference using <code>&amp;mut</code>. This ensures that only one mutable reference exists at a time, preventing data races and ensuring memory safety.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">modify_data</span><span>(</span><span style="color:#bf616a;">data</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt;) {
+</span><span>    data.</span><span style="color:#96b5b4;">push</span><span>(</span><span style="color:#d08770;">4</span><span>);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> my_list = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span>    </span><span style="color:#96b5b4;">modify_data</span><span>(&amp;</span><span style="color:#b48ead;">mut</span><span> my_list);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Modified list: </span><span style="color:#d08770;">{:?}</span><span>&quot;, my_list); </span><span style="color:#65737e;">// now it works
+</span><span>}
+</span></code></pre>
+<p><strong>Note</strong>: <em>This is for example's sake. I don't like mutating outer scope data inside functions. A more functional approach would be to return the modified data.</em></p>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice these concepts on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/ownership-and-borrowing">Ownership and Borrowing</a></li>
+<li><a href="https://rustplatform.com/move-semantics">Move Semantics</a></li>
+<li><a href="https://rustplatform.com/shared-references">Shared References</a></li>
+<li><a href="https://rustplatform.com/mutable-references">Mutable References</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>Understanding ownership and borrowing is a key concept in Rust. It can be frustrating at first, but it's a powerful feature that helps prevent bugs and makes your code more reliable. Rust achieves a balance between performance and safety, leveraging its strict ownership model to prevent common programming errors while still being highly performant.</p>
+<p>Python uses a different approach to memory management, relying on garbage collection to handle memory allocation and deallocation so you generally don't have to worry about these details.</p>
+<p>I still have a lot to learn about the nuances of ownership and borrowing in Rust, but I hope this post gives you a good starting point.</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/namedtuple-in-rust-struct/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Does Rust have a similar NamedTuple type?</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/rustlings-exercises-to-practice-rust/">
+                            <span class="button__text">Rustlings 😍 - Small exercises to get you used to reading + writing Rust 🦀</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

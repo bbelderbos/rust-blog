@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>How to blog with Zola, a Rust-based static site generator | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="How to blog with Zola, a Rust-based static site generator | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/blog-with-zola/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="How to blog with Zola, a Rust-based static site generator | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/blog-with-zola/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/blog-with-zola/">How to blog with Zola, a Rust-based static site generator</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-02
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Here is how I am running this blog using Zola.</p>
+<h2 id="what-is-zola">What is Zola?</h2>
+<blockquote>
+<p>Zola is a static site generator (SSG), similar to Hugo, Pelican, and Jekyll (for a comprehensive list of SSGs, please see Jamstack). It is written in Rust and uses the Tera template engine, which is similar to Jinja2, Django templates, Liquid, and Twig. <a href="https://www.getzola.org/documentation/getting-started/overview/#markdown-content">source</a></p>
+</blockquote>
+<h2 id="installation">Installation</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">brew</span><span> install zola  </span><span style="color:#65737e;"># cargo would not work for me
+</span><span style="color:#bf616a;">zola</span><span> init .  </span><span style="color:#65737e;"># I had a repo, else: zola init myblog
+</span><span style="color:#65737e;"># follow the instructions
+</span><span style="color:#65737e;"># add a theme (https://www.getzola.org/themes/)
+</span><span style="color:#bf616a;">git</span><span> submodule add https://github.com/pawroman/zola-theme-terminimal themes/terminimal
+</span><span style="color:#bf616a;">zola</span><span> create post &quot;</span><span style="color:#a3be8c;">My First Post</span><span>&quot;
+</span></code></pre>
+<p>Maybe something more but these were the main steps.</p>
+<h2 id="configuration">Configuration</h2>
+<p>This is my <code>config.toml</code>:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">base_url </span><span>= &quot;</span><span style="color:#a3be8c;">https://rsbit.es</span><span>&quot;
+</span><span style="color:#bf616a;">title </span><span>= &quot;</span><span style="color:#a3be8c;">Bite‑sized Rust learning, powered by Pybites</span><span>&quot;
+</span><span style="color:#bf616a;">description </span><span>= &quot;</span><span style="color:#a3be8c;">Documenting the journey of a Pythonista learning Rust with bite-sized posts.</span><span>&quot;
+</span><span style="color:#bf616a;">theme </span><span>= &quot;</span><span style="color:#a3be8c;">terminimal</span><span>&quot;
+</span><span style="color:#bf616a;">compile_sass </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">build_search_index </span><span>= </span><span style="color:#d08770;">false
+</span><span style="color:#bf616a;">generate_feed </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">feed_filename </span><span>= &quot;</span><span style="color:#a3be8c;">atom.xml</span><span>&quot;
+</span><span>
+</span><span>[markdown]
+</span><span style="color:#bf616a;">highlight_code </span><span>= </span><span style="color:#d08770;">true
+</span><span>
+</span><span>[extra]
+</span><span style="color:#bf616a;">logo_text </span><span>= &quot;</span><span style="color:#a3be8c;">Bite-sized Rust</span><span>&quot;
+</span><span style="color:#bf616a;">logo_home_link </span><span>= &quot;</span><span style="color:#a3be8c;">/</span><span>&quot;
+</span><span style="color:#bf616a;">author </span><span>= &quot;</span><span style="color:#a3be8c;">Bob Belderbos</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Whether to show links to earlier and later posts
+</span><span style="color:#65737e;"># on each post page (defaults to true).
+</span><span style="color:#bf616a;">enable_post_view_navigation </span><span>= </span><span style="color:#d08770;">true
+</span><span>
+</span><span style="color:#65737e;"># The text shown at the bottom of a post,
+</span><span style="color:#65737e;"># before earlier/later post links.
+</span><span style="color:#65737e;"># Defaults to &quot;Thanks for reading! Read other posts?&quot;
+</span><span style="color:#bf616a;">post_view_navigation_prompt </span><span>= &quot;</span><span style="color:#a3be8c;">Read more</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># - &quot;combined&quot; -- combine like so: &quot;page_title | main_title&quot;,
+</span><span style="color:#65737e;">#                 or if page_title is not defined or empty, fall back to `main_title`
+</span><span style="color:#bf616a;">page_titles </span><span>= &quot;</span><span style="color:#a3be8c;">combined</span><span>&quot;
+</span></code></pre>
+<ul>
+<li><code>base_url</code> is important for the theme to work correctly (I forgot to update https://example.com at the start and it broke the theme's styling)</li>
+<li><code>theme</code> is the name of the theme folder in <code>themes/</code></li>
+<li><code>compile_sass</code> - Sass compilation is required (see <a href="https://github.com/pawroman/zola-theme-terminimal">theme docs</a>)</li>
+<li>the settings under <code>[extra]</code> are theme specific.</li>
+</ul>
+<h2 id="writing">Writing</h2>
+<p>For each new post, you create a new markdown file in the <code>content</code> folder. The file name should be the title of the post with dashes instead of spaces.</p>
+<p>The file should start with a TOML front matter block, which is the metadata for the post. Here is an example:</p>
+<pre data-lang="markdown" style="background-color:#2b303b;color:#c0c5ce;" class="language-markdown "><code class="language-markdown" data-lang="markdown"><span>+++
+</span><span>title = &quot;How to set up Zola&quot;
+</span><span>date = 2024-06-02
+</span><span>+++
+</span></code></pre>
+<p>If you want to add more metadata, you can add it in this front matter block. If you don't want to publish the post yet, you can add <code>draft = true</code> for example.</p>
+<p>Then write the content in markdown beneath this block.</p>
+<p>To make a new post I made a quick shell script:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cat new_post.sh
+</span><span style="color:#65737e;">#!/bin/bash
+</span><span>
+</span><span style="color:#65737e;"># Prompt for the slug and title
+</span><span style="color:#96b5b4;">read </span><span style="color:#bf616a;">-p </span><span>&quot;</span><span style="color:#a3be8c;">Enter the slug (e.g., my-new-post): </span><span>&quot; slug
+</span><span style="color:#96b5b4;">read </span><span style="color:#bf616a;">-p </span><span>&quot;</span><span style="color:#a3be8c;">Enter the title: </span><span>&quot; title
+</span><span>
+</span><span style="color:#65737e;"># Get today&#39;s date
+</span><span style="color:#bf616a;">date</span><span>=$</span><span style="color:#a3be8c;">(</span><span style="color:#bf616a;">date</span><span style="color:#a3be8c;"> +</span><span>&quot;</span><span style="color:#a3be8c;">%Y-%m-%d</span><span>&quot;</span><span style="color:#a3be8c;">)
+</span><span>
+</span><span style="color:#65737e;"># Define the file path
+</span><span style="color:#bf616a;">file_path</span><span>=&quot;</span><span style="color:#a3be8c;">content/</span><span>$</span><span style="color:#a3be8c;">{</span><span style="color:#bf616a;">slug</span><span style="color:#a3be8c;">}.md</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Create the new markdown file with front matter
+</span><span style="color:#bf616a;">cat </span><span>&lt;&lt;</span><span style="color:#b48ead;">EOL </span><span>&gt; $</span><span style="color:#bf616a;">file_path
+</span><span style="color:#a3be8c;">+++
+</span><span style="color:#a3be8c;">title = &quot;</span><span>$</span><span style="color:#a3be8c;">{</span><span style="color:#bf616a;">title</span><span style="color:#a3be8c;">}&quot;
+</span><span style="color:#a3be8c;">date = </span><span>$</span><span style="color:#a3be8c;">{</span><span style="color:#bf616a;">date</span><span style="color:#a3be8c;">}
+</span><span style="color:#a3be8c;">+++
+</span><span style="color:#a3be8c;">
+</span><span style="color:#b48ead;">EOL
+</span><span>
+</span><span style="color:#96b5b4;">echo </span><span>&quot;</span><span style="color:#a3be8c;">New post created at </span><span>$</span><span style="color:#bf616a;">file_path</span><span>&quot;
+</span></code></pre>
+<h2 id="building">Building</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">zola</span><span> build
+</span></code></pre>
+<p>This will generate the static site in the <code>public</code> folder.</p>
+<p>Then run a local server to preview the site:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">zola</span><span> serve
+</span></code></pre>
+<p>For convenience I made a Makefile with some aliases including a combined <code>dev</code> command:</p>
+<pre data-lang="makefile" style="background-color:#2b303b;color:#c0c5ce;" class="language-makefile "><code class="language-makefile" data-lang="makefile"><span style="color:#8fa1b3;">.PHONY</span><span>: </span><span style="color:#a3be8c;">build serve dev clean checkout-theme
+</span><span>
+</span><span style="color:#8fa1b3;">build</span><span>:
+</span><span>	</span><span style="color:#bf616a;">zola</span><span> build
+</span><span>
+</span><span style="color:#8fa1b3;">serve</span><span>:
+</span><span>	</span><span style="color:#bf616a;">zola</span><span> serve
+</span><span>
+</span><span style="color:#8fa1b3;">dev</span><span>:
+</span><span>	</span><span style="color:#bf616a;">zola</span><span> build &amp;&amp; </span><span style="color:#bf616a;">zola</span><span> serve
+</span><span>
+</span><span style="color:#8fa1b3;">clean</span><span>:
+</span><span>	</span><span style="color:#bf616a;">rm -rf</span><span> public
+</span><span>
+</span><span style="color:#8fa1b3;">checkout-theme</span><span>:
+</span><span>	</span><span style="color:#bf616a;">git</span><span> submodule update</span><span style="color:#bf616a;"> --init
+</span></code></pre>
+<p><code>checkout-theme</code> I added later when I git clone'd this repo on a new machine and detected that the theme repo was not cloned automatically.</p>
+<h2 id="deployment">Deployment</h2>
+<p>I use GitHub Actions to build and deploy the site (so nice!)</p>
+<p>Here is the workflow file (<code>.github/workflows/deploy.yml</code>):</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#65737e;"># On every push this script is executed
+</span><span style="color:#d08770;">on</span><span>: </span><span style="color:#a3be8c;">push
+</span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and deploy GH Pages
+</span><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">build</span><span>:
+</span><span>    </span><span style="color:#bf616a;">runs-on</span><span>: </span><span style="color:#a3be8c;">ubuntu-latest
+</span><span>    </span><span style="color:#bf616a;">if</span><span>: </span><span style="color:#a3be8c;">github.ref == &#39;refs/heads/main&#39;
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Checkout main
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/checkout@v4
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and deploy
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">shalzz/zola-deploy-action@v0.18.0
+</span><span>        </span><span style="color:#bf616a;">env</span><span>:
+</span><span>          </span><span style="color:#bf616a;">PAGES_BRANCH</span><span>: </span><span style="color:#a3be8c;">gh-pages
+</span><span>          </span><span style="color:#bf616a;">GITHUB_TOKEN</span><span>: </span><span style="color:#a3be8c;">${{ secrets.GITHUB_TOKEN }}
+</span></code></pre>
+<p>This workflow will build the site and push the changes to the <code>gh-pages</code> branch upon every push to the <code>main</code> branch.</p>
+<ul>
+<li>
+<p>Interestingly ChatGPT overcomplicated this, but I found in Zola's docs that you can actually use shalzz/zola-deploy-action. I only had to update from 0.17.x to 0.18.x to make it work.</p>
+</li>
+<li>
+<p>You don't have to setup the <code>secrets.GITHUB_TOKEN</code> as it is a default secret provided by GitHub if you use your action for the same repository.</p>
+</li>
+<li>
+<p>I did have to update the &quot;Workflow permissions&quot; under GitHub's repo Settings &gt; Actions, to enable &quot;Read and write permissions&quot; (<em>Workflows have read and write permissions in the repository for all scopes.</em>), otherwise the action would fail.</p>
+</li>
+<li>
+<p>I also had to set &quot;Build and deployment&quot; to &quot;Deploy form a branch&quot; (under Settings &gt; Pages) and set the branch to <code>gh-pages</code> + <code>/ (root)</code>.</p>
+</li>
+</ul>
+<h2 id="static-files">Static files</h2>
+<p>I did hit one issue when showing images in the post.</p>
+<p>I thought this would work:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>![overview mind map of how PyO3 and Maturin work to run Rust code in Python](/rust-in-python.png)
+</span></code></pre>
+<p>Having the image in my <code>static/</code> folder, but it didn't show up on the live site.</p>
+<p>I played with the path making it relative and absolute, but in the end, I had to use the <code>image()</code> shortcode with the <code>src</code> attribute pointing to the image in the <code>static/</code> folder (just the file name, not the full path). See <a href="https://github.com/pawroman/zola-theme-terminimal?tab=readme-ov-file#shortcodes">theme docs</a> as well.</p>
+<h2 id="add-pages">Add pages</h2>
+<p>This was a bit less straight-forward so I am adding it here as an extra. See <a href="https://github.com/bbelderbos/rust-blog/commit/29648aefb30b46a0dab7d110d833d65370c26964">commit</a>:</p>
+<ul>
+<li>I created a <code>menu_items</code> array in the <code>config.toml</code> with the pages I wanted to add to the menu.</li>
+<li>I created a <code>content/pages</code> folder and added a markdown file for each page using existing templates from the theme (about and archive).</li>
+<li>I also made an <code>content/pages/_index.md</code>, I cannot 100% remember but I think it would not compile without it.</li>
+<li>I could move the post entries to a new <code>content/posts</code> folder (and use the <code>content/posts/_index.md</code> to list the posts), but I decided to keep them in the root <code>content</code> folder for now.</li>
+</ul>
+<p>OK that seems easier than it was, but I had to try a few things to get it right. 😅</p>
+<h2 id="add-search">Add search</h2>
+<p>You can enable search in the theme by setting <code>build_search_index = true</code> in the <code>config.toml</code>. This will generate <code>search_index.json</code> and <code>elasticlunr.min.js</code> files in the <code>public</code> folder upon build.</p>
+<p><code>elasticlunr.js</code> is a lightweight full-text search engine in JavaScript for browser search. The search index is generated from the content of the site upon build, the index is stored in mentioned <code>search_index.json</code> file.</p>
+<p><a href="https://github.com/bbelderbos/rust-blog/commit/304d708a9454ad5d9bf43e58387803e5594c0f86">Here</a> is the commit I made to get search working on this site:</p>
+<ul>
+<li>
+<p>I created a <code>templates/search.html</code> file with the search form and results.</p>
+</li>
+<li>
+<p>It contains the necessary JavaScript to make this work. First we define an <code>idx</code> constant: <code>const idx = elasticlunr.Index.load(window.searchIndex);</code> which we can then use to search the index (<code>idx.search(query)</code>). It returns an array of search results which we then render in the DOM.</p>
+</li>
+<li>
+<p>I added some CSS to style the search results and added the page to the navigation menu with <code>{name = &quot;Search&quot;, url = &quot;$BASE_URL/pages/search&quot;},</code> in the <code>config.toml</code>.</p>
+</li>
+</ul>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/search-example1.png" alt="doing a search on this website" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/search-example2.png" alt="another search" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<h2 id="add-a-custom-domain">Add a custom domain</h2>
+<p>Apart from mentioned <code>base_url</code> in the <code>config.toml</code>, you also need to add a <code>CNAME</code> file in the <code>static/</code> folder with the domain you want to use, e.g.:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cat static/CNAME
+</span><span style="color:#bf616a;">rsbit.es
+</span></code></pre>
+<p>Then under the repo's Settings &gt; GitHub Pages, you can add the custom domain. You can also turn on HTTPS there.</p>
+<p>Lastly you need to update your DNS settings of your domain provider to point to GitHub's IP addresses, see <a href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site">GitHub's docs</a>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Zola is a great SSG so far, I am happy with the setup. I like the simplicity of the tool and the speed of the generated site (Rust 📈 -&gt; <code>zola build</code> -&gt; <code>Done in 91ms.</code> for me) and automatic deployment with GitHub Actions. 😍</p>
+<p>If you're looking for a Rust based SSG solution I hope this post will help you with the setup. 📈</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/my-first-post/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Hello World</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/cargo-like-poetry/">
+                            <span class="button__text">Rust Cargo is a lot like Python Poetry 😍</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

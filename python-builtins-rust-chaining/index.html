@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Python Built-ins vs. Rust method chaining (and how it works) | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Python Built-ins vs. Rust method chaining (and how it works) | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/python-builtins-rust-chaining/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Python Built-ins vs. Rust method chaining (and how it works) | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/python-builtins-rust-chaining/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/python-builtins-rust-chaining/">Python Built-ins vs. Rust method chaining (and how it works)</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-20
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>If you're familiar with Python, you know how powerful its built-in functions for iterables can be.</p>
+<p>Functions like <code>map</code>, <code>filter</code>, and <code>reduce</code> provide a simple and expressive way to handle collections.</p>
+<p>Rust offers similar functionality through iterators and method chaining, which, while different in syntax, provide equally powerful capabilities.</p>
+<p>This post explores how Python built-ins translate to Rust's method chaining with iterators.</p>
+<h2 id="python-built-ins-vs-rust-method-chaining">Python Built-ins vs. Rust Method Chaining</h2>
+<h3 id="python-s-approach">Python's Approach</h3>
+<p>Python provides many built-in functions to operate on iterables, such as <code>map</code>, <code>filter</code>, <code>zip</code>, <code>enumerate</code>, <code>all</code>, <code>any</code>, etc.</p>
+<p>These functions are easy to use and understand, making them a staple in Python programming. I did an overview video of them you can watch <a href="https://www.youtube.com/watch?v=ejvql4eKev4">here</a>.</p>
+<h3 id="rust-s-approach">Rust's Approach</h3>
+<p>Rust, on the other hand, implements these functionalities as methods on iterator types.</p>
+<p>This approach leverages Rust's strengths in type safety and performance. By chaining methods, Rust allows you to build complex operations in a concise and readable manner.</p>
+<h2 id="example-comparisons">Example Comparisons</h2>
+<p>Let's compare some common operations using Python built-ins and Rust method chaining:</p>
+<h3 id="map"><code>map</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>numbers = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>squared = </span><span style="color:#bf616a;">list</span><span>(</span><span style="color:#96b5b4;">map</span><span>(</span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">x</span><span>: x**</span><span style="color:#d08770;">2</span><span>, numbers))
+</span><span style="color:#96b5b4;">print</span><span>(squared)  </span><span style="color:#65737e;"># Output: [1, 4, 9]
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span style="color:#b48ead;">let</span><span> squared: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x).</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, squared);  </span><span style="color:#65737e;">// Output: [1, 4, 9]
+</span></code></pre>
+<h3 id="filter"><code>filter</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>numbers = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>]
+</span><span>even = </span><span style="color:#bf616a;">list</span><span>(</span><span style="color:#96b5b4;">filter</span><span>(</span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">x</span><span>: x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>, numbers))
+</span><span style="color:#96b5b4;">print</span><span>(even)  </span><span style="color:#65737e;"># Output: [2, 4]
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>];
+</span><span style="color:#b48ead;">let</span><span> even: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">filter</span><span>(|&amp;&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>).</span><span style="color:#96b5b4;">copied</span><span>().</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, even);  </span><span style="color:#65737e;">// Output: [2, 4]
+</span></code></pre>
+<h3 id="zip"><code>zip</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>list1 = [</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>]
+</span><span>list2 = [&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;]
+</span><span style="color:#b48ead;">for </span><span>item1, item2 </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">zip</span><span>(list1, list2):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(item1, item2)  </span><span style="color:#65737e;"># Output: 1 a, 2 b, 3
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> list1 = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>];
+</span><span style="color:#b48ead;">let</span><span> list2 = vec![&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;];
+</span><span style="color:#b48ead;">for </span><span>(item1, item2) in list1.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">zip</span><span>(list2.</span><span style="color:#96b5b4;">iter</span><span>()) {
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{} {}</span><span>&quot;, item1, item2);  </span><span style="color:#65737e;">// Output: 1 a, 2 b, 3 c
+</span><span>}
+</span></code></pre>
+<h3 id="enumerate"><code>enumerate</code></h3>
+<p><strong>Python:</strong></p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>items = [&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;]
+</span><span style="color:#b48ead;">for </span><span>index, value </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">enumerate</span><span>(items):
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(index, value)  </span><span style="color:#65737e;"># Output: 0 a, 1 b, 2 c
+</span></code></pre>
+<p><strong>Rust:</strong></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> items = vec![&#39;</span><span style="color:#a3be8c;">a</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">b</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">c</span><span>&#39;];
+</span><span style="color:#b48ead;">for </span><span>(index, value) in items.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">enumerate</span><span>() {
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{} {}</span><span>&quot;, index, value);  </span><span style="color:#65737e;">// Output: 0 a, 1 b, 2 c
+</span><span>}
+</span></code></pre>
+<h2 id="how-method-chaining-works-in-rust">How Method Chaining Works in Rust</h2>
+<p>Rust’s method chaining is possible because each method in the iterator chain returns another iterator. This allows you to call multiple methods in sequence. Here's a deeper dive into how this works:</p>
+<h3 id="example-chaining-map-and-filter">Example: Chaining <code>map</code> and <code>filter</code></h3>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> numbers = vec![</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">4</span><span>];
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> result: Vec&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = numbers
+</span><span>    .</span><span style="color:#96b5b4;">iter</span><span>()                   </span><span style="color:#65737e;">// Creates an iterator over the elements of the vector
+</span><span>    .</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x)          </span><span style="color:#65737e;">// Applies the closure to each item, returns an iterator of squared values
+</span><span>    .</span><span style="color:#96b5b4;">filter</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>)  </span><span style="color:#65737e;">// Filters the items, returning only those that are even
+</span><span>    .</span><span style="color:#96b5b4;">collect</span><span>();               </span><span style="color:#65737e;">// Collects the iterator into a vector
+</span><span>
+</span><span>println!(&quot;</span><span style="color:#d08770;">{:?}</span><span>&quot;, result);  </span><span style="color:#65737e;">// Output: [4, 16]
+</span></code></pre>
+<p>Quite elegant, isn't it? Let's break down the steps:</p>
+<h3 id="step-by-step-breakdown">Step-by-Step Breakdown</h3>
+<ol>
+<li>
+<p><strong>Creating the Iterator</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>numbers.</span><span style="color:#96b5b4;">iter</span><span>()
+</span></code></pre>
+<p>This creates an iterator over the references to the elements of the vector <code>numbers</code>.</p>
+</li>
+<li>
+<p><strong>Mapping Values</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">map</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x * x)
+</span></code></pre>
+<p>The <code>map</code> method creates a new iterator that applies the given closure to each item, in this case, squaring the values.</p>
+</li>
+<li>
+<p><strong>Filtering Values</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">filter</span><span>(|&amp;</span><span style="color:#bf616a;">x</span><span>| x % </span><span style="color:#d08770;">2 </span><span>== </span><span style="color:#d08770;">0</span><span>)
+</span></code></pre>
+<p>The <code>filter</code> method creates another iterator that only yields items for which the given predicate is <code>true</code>, in this case, retaining even numbers.</p>
+</li>
+<li>
+<p><strong>Collecting Results</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>.</span><span style="color:#96b5b4;">collect</span><span>()
+</span></code></pre>
+<p>The <code>collect</code> method consumes the iterator and collects the resulting items into a new collection, in this case, a vector.</p>
+</li>
+</ol>
+<h3 id="how-it-works-internally">How It Works Internally</h3>
+<p>Each method (<code>map</code>, <code>filter</code>, etc.) returns a new iterator type. For example:</p>
+<ul>
+<li><code>numbers.iter()</code> returns an <code>Iter</code> iterator.</li>
+<li><code>Iter</code> has a method <code>map</code> that returns a <code>Map&lt;Iter, F&gt;</code> iterator.</li>
+<li><code>Map&lt;Iter, F&gt;</code> has a method <code>filter</code> that returns a <code>Filter&lt;Map&lt;Iter, F&gt;, G&gt;</code> iterator.</li>
+</ul>
+<p>These iterator types (<code>Iter</code>, <code>Map</code>, <code>Filter</code>) all implement the <code>Iterator</code> trait, allowing them to be chained together seamlessly.</p>
+<p>In Python we really like generators and <em>lazy</em> operations (meaning any computation is only done when needed). Rust iterators are also lazy by default, which can lead to significant performance improvements, especially when working with large collections.</p>
+<hr />
+<p><em>Traits</em> are a fundamental feature in Rust that allow you to define shared behavior across different types. A trait is a collection of methods defined for an unknown type: <code>Self</code>. Traits can be implemented for any data type. In this case, the <code>Iterator</code> trait provides a common interface for all iterators, enabling method chaining.</p>
+<p>By implementing the <code>Iterator</code> trait, a type gains the ability to be iterated over using methods like <code>map</code>, <code>filter</code>, and <code>collect</code>. This trait-based approach ensures that any type that implements <code>Iterator</code> can seamlessly integrate with Rust's powerful iterator combinators, promoting code reuse and modularity.</p>
+<p>A dedicated article to follow on this topic...</p>
+<h2 id="benefits-of-chaining">Benefits of Chaining</h2>
+<ol>
+<li><strong>Readability</strong>: Method chaining provides a clear and concise way to express a series of operations on a collection.</li>
+<li><strong>Performance</strong>: Iterators in Rust are lazy and can be highly optimized by the compiler. Operations are performed only when needed.</li>
+<li><strong>Extensibility</strong>: By implementing the <code>Iterator</code> trait for custom types, you can leverage all the powerful methods available on iterators.</li>
+</ol>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice iterators on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/iterator-basics">Iterator Basics</a></li>
+<li><a href="https://rustplatform.com/map-and-filter">Map and Filter</a></li>
+<li><a href="https://rustplatform.com/iterator-chaining">Iterator Chaining</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>So what are Python's robust and performant built-ins in Rust? You'll often find them as methods on iterator types, allowing you to chain operations together in a fluent and efficient manner. 😍 📈</p>
+<p>I hope this comparison has given you a better understanding of how Rust's method chaining with iterators can be a powerful tool in your programming arsenal. Happy coding! 🦀 🚀</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/play-alarm-from-command-line/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">A little alarm clock CLI app in Rust</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/tts-in-rust/">
+                            <span class="button__text">Alarm clock part II - text to speech</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

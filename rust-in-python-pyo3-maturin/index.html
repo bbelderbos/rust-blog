@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>How to run Rust in Python with PyO3 and Maturin | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="How to run Rust in Python with PyO3 and Maturin | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/rust-in-python-pyo3-maturin/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="How to run Rust in Python with PyO3 and Maturin | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/rust-in-python-pyo3-maturin/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/rust-in-python-pyo3-maturin/">How to run Rust in Python with PyO3 and Maturin</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-04
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>In this article I will show you how to run Rust code in Python using PyO3 + Maturin.</p>
+<p>PyO3 is a Rust library for building Python bindings and Maturin is a tool for building and publishing Python packages built with PyO3.</p>
+<p>Here is a quick overview of the steps we will follow:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/rust-in-python.png" alt="overview mind map of how PyO3 and Maturin work to run Rust code in Python" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>Let's do a quick demo to see how it works.</p>
+<h2 id="create-a-new-library">Create a new library</h2>
+<p>First, let's create a new Rust library using Cargo:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new</span><span style="color:#bf616a;"> --lib</span><span> sum_squares
+</span></code></pre>
+<p>This will create a new directory called <code>sum_squares</code> with the following structure:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> pyo3  $ tree
+</span><span style="color:#96b5b4;">.
+</span><span style="color:#bf616a;">└──</span><span> sum_squares
+</span><span>    </span><span style="color:#bf616a;">├──</span><span> Cargo.toml
+</span><span>    </span><span style="color:#bf616a;">└──</span><span> src
+</span><span>        </span><span style="color:#bf616a;">└──</span><span> lib.rs
+</span><span>
+</span><span style="color:#bf616a;">3</span><span> directories, 2 files
+</span></code></pre>
+<p>Next we update the <code>Cargo.toml</code> file to include the <code>pyo3</code> dependency:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[package]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">sum_squares</span><span>&quot;
+</span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1.0</span><span>&quot;
+</span><span style="color:#bf616a;">edition </span><span>= &quot;</span><span style="color:#a3be8c;">2021</span><span>&quot;
+</span><span>
+</span><span>[lib]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">sum_squares</span><span>&quot;
+</span><span style="color:#bf616a;">crate-type </span><span>= [&quot;</span><span style="color:#a3be8c;">cdylib</span><span>&quot;]
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">pyo3 </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.21</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">extension-module</span><span>&quot;] }
+</span></code></pre>
+<p>We also need the <code>cdylib</code> crate type to create a shared library that can be loaded by Python (so/.dylib/.dll files, <code>.so</code> for Unix, <code>.dll</code> for Windows).</p>
+<p>Next, we update the <code>src/lib.rs</code> file to include a simple function that sums the squares of two numbers:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>pyo3::prelude::*;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">pyfunction</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">sum_of_squares</span><span>(</span><span style="color:#bf616a;">n</span><span>: </span><span style="color:#b48ead;">u64</span><span>) -&gt; </span><span style="color:#b48ead;">u64 </span><span>{
+</span><span>    (</span><span style="color:#d08770;">1</span><span>..=n).</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">x</span><span>| x * x).</span><span style="color:#96b5b4;">sum</span><span>()
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">pymodule</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">sum_squares</span><span>(</span><span style="color:#bf616a;">_py</span><span>: Python, </span><span style="color:#bf616a;">m</span><span>: &amp;PyModule) -&gt; PyResult&lt;()&gt; {
+</span><span>    m.</span><span style="color:#96b5b4;">add_function</span><span>(wrap_pyfunction!(sum_of_squares, m)?)?;
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<p>At a high level:</p>
+<ul>
+<li>The <code>#[pyfunction]</code> attribute is used to mark the function as a Python function.</li>
+<li>The <code>#[pymodule]</code> attribute is used to mark the module as a Python module.</li>
+<li>The <code>m.add_function</code> method is used to add the <code>sum_of_squares</code> function to the module.</li>
+<li>The <code>wrap_pyfunction!</code> macro is used to wrap the Rust function in a Python function.</li>
+<li>The <code>Python</code> and <code>PyModule</code> types are used to interact with the Python runtime.</li>
+</ul>
+<p>Some Rust syntax I am learning about:</p>
+<ul>
+<li>We use the <code>use</code> statement to import the <code>pyo3::prelude</code> module, which contains common types and traits used in PyO3.</li>
+<li>The <code>sum_of_squares</code> function calculates the sum of squares of numbers from 1 to <code>n</code> using the <code>..=</code> operator (<code>=</code> is including the upper bound) to create a range and the <code>map</code> and <code>sum</code> methods to calculate the sum of squares,</li>
+<li>The function receives a single argument <code>n</code> of type <code>u64</code> and returns a single value of type <code>u64</code>. Unlike Python's optional type hints, Rust's type hints are mandatory.</li>
+<li>The <code>PyResult</code> in the <code>sum_squares</code> function signature is the return type of functions that can return errors. This is needed because the <code>add_function</code> method can return an error. The <code>?</code> operator is used to propagate the error if it occurs.</li>
+<li>The <code>Ok(())</code> expression is used to return a successful result. () is the unit type, which is similar to void in other languages.</li>
+</ul>
+<h2 id="create-a-python-package">Create a Python package</h2>
+<p>First make a virtual environment, enable it, and install the <code>maturin</code> package:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">python -m</span><span> venv venv
+</span><span style="color:#96b5b4;">source</span><span> venv/bin/activate
+</span><span style="color:#bf616a;">pip</span><span> install maturin
+</span></code></pre>
+<p>Normally you would run <code>maturin init</code> to create a new Python package, but in this case we already have a Cargo project, so we can skip this step.</p>
+<p>Let's build the Python package using Maturin:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">maturin</span><span> develop
+</span></code></pre>
+<p>It worked but I did get this warning:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">warning:</span><span> use of deprecated method `</span><span style="color:#bf616a;">pyo3::deprecations::GilRefs::</span><span>&lt;T&gt;::function_arg`: use `&amp;</span><span style="color:#bf616a;">Bound</span><span>&lt;&#39;</span><span style="color:#a3be8c;">_, T&gt;` instead for this function argument
+</span></code></pre>
+<p>To fix this error, I updated the function signature to use <code>&amp;Bound&lt;'_, PyModule&gt;</code> instead of <code>&amp;PyModule</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>...
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">sum_squares</span><span>(</span><span style="color:#bf616a;">m</span><span>: &amp;Bound&lt;&#39;_, PyModule&gt;) -&gt; PyResult&lt;()&gt; {
+</span><span>...
+</span></code></pre>
+<p>After that change, I ran <code>maturin develop</code> again and the warning was gone:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> maturin develop
+</span><span>
+</span><span style="color:#bf616a;">🔗</span><span> Found pyo3 bindings
+</span><span style="color:#bf616a;">🐍</span><span> Found CPython 3.11 at /Users/bbelderbos/code/rust/pyo3/sum_squares/venv/bin/python
+</span><span>    </span><span style="color:#bf616a;">Finished </span><span>`</span><span style="color:#bf616a;">dev</span><span>` profile </span><span style="color:#b48ead;">[</span><span>unoptimized + debuginfo</span><span style="color:#b48ead;">]</span><span> target(s) </span><span style="color:#bf616a;">in</span><span> 0.07s
+</span><span style="color:#bf616a;">📦</span><span> Built wheel for CPython 3.11 to /var/folders/jl/cfhvw0nj11n1496hk7vqhw_r0000gn/T/.tmp5qSsw8/sum_squares-0.1.0-cp311-cp311-macosx_10_12_x86_64.whl
+</span><span style="color:#bf616a;">✏️</span><span>  Setting installed package as editable
+</span><span style="color:#bf616a;">🛠</span><span> Installed sum_squares-0.1.0
+</span></code></pre>
+<p>I can now see the shared library (.so file) in my virtual environment:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> ls</span><span style="color:#bf616a;"> -lrth</span><span> venv/lib/python3.11/site-packages/sum_squares
+</span><span style="color:#bf616a;">total</span><span> 1936
+</span><span style="color:#bf616a;">-rw-r--r--@</span><span> 1 bbelderbos  staff   127B Jun  4 12:59 __init__.py
+</span><span style="color:#bf616a;">-rwxr-xr-x@</span><span> 1 bbelderbos  staff   961K Jun  4 12:59 sum_squares.cpython-311-darwin.so
+</span><span style="color:#bf616a;">drwxr-xr-x@</span><span> 3 bbelderbos  staff    96B Jun  4 12:59 __pycache__
+</span></code></pre>
+<p>And I can import it in the Python REPL:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>&gt;&gt;&gt; </span><span style="color:#b48ead;">import </span><span>sum_squares
+</span><span>&gt;&gt;&gt; sum_squares.</span><span style="color:#bf616a;">sum_of_squares</span><span>(</span><span style="color:#d08770;">5</span><span>)
+</span><span style="color:#d08770;">55
+</span></code></pre>
+<p>That's it! We have successfully built a Python package with Rust code using PyO3 and Maturin.</p>
+<p>I have not pushed one to PyPI, but you can do that by running <code>maturin publish</code>. I will blog here when I have done that for a real project ...</p>
+<p>Lastly, to see how it performs vs some Python code, I created a <code>test.py</code> file:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">import </span><span>time
+</span><span>
+</span><span style="color:#b48ead;">from </span><span>sum_squares </span><span style="color:#b48ead;">import </span><span>sum_of_squares
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">sum_of_squares_py</span><span>(</span><span style="color:#bf616a;">n</span><span>):
+</span><span>    </span><span style="color:#b48ead;">return </span><span style="color:#96b5b4;">sum</span><span>(x * x </span><span style="color:#b48ead;">for </span><span>x </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">range</span><span>(</span><span style="color:#d08770;">1</span><span>, n + </span><span style="color:#d08770;">1</span><span>))
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">if </span><span>__name__ == &quot;</span><span style="color:#a3be8c;">__main__</span><span>&quot;:
+</span><span>    n = </span><span style="color:#d08770;">10</span><span>**</span><span style="color:#d08770;">6
+</span><span>
+</span><span>    start_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    result = </span><span style="color:#bf616a;">sum_of_squares_py</span><span>(n)
+</span><span>    end_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Python result: </span><span>{result}&quot;)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Python execution time: </span><span>{end_time - start_time</span><span style="color:#d08770;">:.6f</span><span>}</span><span style="color:#a3be8c;"> seconds</span><span>&quot;)
+</span><span>
+</span><span>    start_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    result = </span><span style="color:#bf616a;">sum_of_squares</span><span>(n)
+</span><span>    end_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Rust result: </span><span>{result}&quot;)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Rust execution time: </span><span>{end_time - start_time</span><span style="color:#d08770;">:.6f</span><span>}</span><span style="color:#a3be8c;"> seconds</span><span>&quot;)
+</span></code></pre>
+<p>Running it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> python test.py
+</span><span style="color:#bf616a;">Python</span><span> result: 333333833333500000
+</span><span style="color:#bf616a;">Python</span><span> execution time: 0.066308 seconds
+</span><span style="color:#bf616a;">Rust</span><span> result: 333333833333500000
+</span><span style="color:#bf616a;">Rust</span><span> execution time: 0.023685 seconds
+</span></code></pre>
+<p>Nice, the Rust implementation is about 3x faster than the Python implementation. But that's not the point of this article, the point is to show you how to run Rust code in Python which opens up exciting new opportunities for performance improvements in your Python code. 😍 📈</p>
+<p>This is how Pydantic, the data validation library, is speeding up its codebase I believe. 😎</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this article, we learned how to run Rust code in Python using PyO3 and Maturin. We created a new Rust library with a simple function that sums the squares of two numbers, built a Python package using Maturin, and tested the performance of the Rust implementation against a Python implementation.</p>
+<p>There is a lot more to learn about PyO3 and Maturin, and Rust in general.</p>
+<p>Check out the <a href="https://pyo3.rs/v0.21.2/">PyO3 documentation</a> and the <a href="https://github.com/PyO3/maturin">Maturin documentation</a> for more information.</p>
+<p>What Python code do you want to speed up with Rust?</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/cargo-like-poetry/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Rust Cargo is a lot like Python Poetry 😍</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/pybites-search-in-rust/">
+                            <span class="button__text">Building Pybites Search in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

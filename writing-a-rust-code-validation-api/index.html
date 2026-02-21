@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Writing a Rust code validation API | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Writing a Rust code validation API | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/writing-a-rust-code-validation-api/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Writing a Rust code validation API | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/writing-a-rust-code-validation-api/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/writing-a-rust-code-validation-api/">Writing a Rust code validation API</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-07-12
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Today I managed to add support for Rust exercises <a href="https://codechalleng.es/">on our platform</a>. I struggled with getting <code>cargo test</code> to work on AWS Lambda for a week (talking about <a href="https://pybit.activehosted.com/social/918317b57931b6b7a7d29490fe5ec9f9.509">tunnel vision</a>), so it was time to pivot to a different approach.</p>
+<p>It turns out that I needed a bit more resource power and Heroku did it for me. So I dropped AWS Gateway API + AWS Lambda (what we normally use to validate coding exercises) and wrote my first Rust API to run tests on code.</p>
+<p>The final version is a bit more involved, because it gets the code from our platform's API. To keep it simple, I omitted this part here.</p>
+<h2 id="using-axtix-web-to-build-an-api">Using Axtix-web to build an API</h2>
+<p>Here is the code:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+</span><span style="color:#b48ead;">use </span><span>serde::{Deserialize, Serialize};
+</span><span style="color:#b48ead;">use </span><span>std::env;
+</span><span style="color:#b48ead;">use </span><span>std::fs;
+</span><span style="color:#b48ead;">use </span><span>std::io::Write;
+</span><span style="color:#b48ead;">use </span><span>std::process::Command;
+</span><span style="color:#b48ead;">use </span><span>tempfile::tempdir;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Deserialize)]
+</span><span style="color:#b48ead;">struct </span><span>Request {
+</span><span>    </span><span style="color:#bf616a;">user_code</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">test_code</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Serialize)]
+</span><span style="color:#b48ead;">struct </span><span>Response {
+</span><span>    </span><span style="color:#bf616a;">success</span><span>: </span><span style="color:#b48ead;">bool</span><span>,
+</span><span>    </span><span style="color:#bf616a;">output</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">execute_code</span><span>(</span><span style="color:#bf616a;">req</span><span>: web::Json&lt;Request&gt;, </span><span style="color:#bf616a;">http_req</span><span>: HttpRequest) -&gt; impl Responder {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> api_key = env::var(&quot;</span><span style="color:#a3be8c;">API_KEY</span><span>&quot;).</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">API_KEY not set</span><span>&quot;);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">if let </span><span>Some(key) = http_req.</span><span style="color:#96b5b4;">headers</span><span>().</span><span style="color:#96b5b4;">get</span><span>(&quot;</span><span style="color:#a3be8c;">x-api-key</span><span>&quot;) {
+</span><span>        </span><span style="color:#b48ead;">if</span><span> key.</span><span style="color:#96b5b4;">to_str</span><span>().</span><span style="color:#96b5b4;">unwrap_or</span><span>(&quot;&quot;) != api_key {
+</span><span>            </span><span style="color:#b48ead;">return </span><span>HttpResponse::Unauthorized().</span><span style="color:#96b5b4;">body</span><span>(&quot;</span><span style="color:#a3be8c;">Invalid API key</span><span>&quot;);
+</span><span>        }
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        </span><span style="color:#b48ead;">return </span><span>HttpResponse::Unauthorized().</span><span style="color:#96b5b4;">body</span><span>(&quot;</span><span style="color:#a3be8c;">Missing API key</span><span>&quot;);
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> user_code = &amp;req.user_code;
+</span><span>    </span><span style="color:#b48ead;">let</span><span> test_code = &amp;req.test_code;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> dir = </span><span style="color:#96b5b4;">tempdir</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> dir_path = dir.</span><span style="color:#96b5b4;">path</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> main_path = dir_path.</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;);
+</span><span>    fs::create_dir_all(main_path.</span><span style="color:#96b5b4;">parent</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>()).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> main_file = fs::File::create(&amp;main_path).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    main_file
+</span><span>        .</span><span style="color:#96b5b4;">write_all</span><span>(
+</span><span>            format!(
+</span><span>                </span><span style="color:#b48ead;">r</span><span>#</span><span style="color:#a3be8c;">&quot;
+</span><span style="color:#a3be8c;">            </span><span style="color:#d08770;">{}
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">            #[cfg(test)]
+</span><span style="color:#a3be8c;">            mod tests </span><span style="color:#96b5b4;">{{
+</span><span style="color:#a3be8c;">                use super::*;
+</span><span style="color:#a3be8c;">                </span><span style="color:#d08770;">{}
+</span><span style="color:#a3be8c;">            </span><span style="color:#96b5b4;">}}
+</span><span style="color:#a3be8c;">            </span><span>&quot;#,
+</span><span>                user_code, test_code
+</span><span>            )
+</span><span>            .</span><span style="color:#96b5b4;">as_bytes</span><span>(),
+</span><span>        )
+</span><span>        .</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cargo_toml_path = dir_path.</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">Cargo.toml</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> cargo_toml_file = fs::File::create(cargo_toml_path).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    cargo_toml_file
+</span><span>        .</span><span style="color:#96b5b4;">write_all</span><span>(
+</span><span>            </span><span style="color:#b48ead;">br</span><span>#</span><span style="color:#a3be8c;">&quot;
+</span><span style="color:#a3be8c;">        [package]
+</span><span style="color:#a3be8c;">        name = &quot;temp_project&quot;
+</span><span style="color:#a3be8c;">        version = &quot;0.1.0&quot;
+</span><span style="color:#a3be8c;">        edition = &quot;2021&quot;
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">        [dependencies]
+</span><span style="color:#a3be8c;">        </span><span>&quot;#,
+</span><span>        )
+</span><span>        .</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output = Command::new(&quot;</span><span style="color:#a3be8c;">cargo</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">test</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">current_dir</span><span>(dir_path)
+</span><span>        .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>        .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">failed to execute cargo test</span><span>&quot;);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> success = output.status.</span><span style="color:#96b5b4;">success</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output_str = String::from_utf8_lossy(&amp;output.stdout).</span><span style="color:#96b5b4;">to_string</span><span>()
+</span><span>        + String::from_utf8_lossy(&amp;output.stderr).</span><span style="color:#96b5b4;">as_ref</span><span>();
+</span><span>
+</span><span>    dir.</span><span style="color:#96b5b4;">close</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> response = Response {
+</span><span>        success,
+</span><span>        output: output_str,
+</span><span>    };
+</span><span>
+</span><span>    HttpResponse::Ok().</span><span style="color:#96b5b4;">json</span><span>(response)
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">actix_web</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; std::io::Result&lt;()&gt; {
+</span><span>    HttpServer::new(|| App::new().</span><span style="color:#96b5b4;">route</span><span>(&quot;</span><span style="color:#a3be8c;">/execute</span><span>&quot;, web::post().</span><span style="color:#96b5b4;">to</span><span>(execute_code)))
+</span><span>        .</span><span style="color:#96b5b4;">bind</span><span>(&quot;</span><span style="color:#a3be8c;">0.0.0.0:8080</span><span>&quot;)?
+</span><span>        .</span><span style="color:#96b5b4;">run</span><span>()
+</span><span>        .await
+</span><span>}
+</span></code></pre>
+<p>Dependencies used (in <code>Cargo.toml</code>):</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">actix-web </span><span>= &quot;</span><span style="color:#a3be8c;">4.0.0</span><span>&quot;
+</span><span style="color:#bf616a;">serde </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">derive</span><span>&quot;] }
+</span><span style="color:#bf616a;">serde_json </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;
+</span><span style="color:#bf616a;">tempfile </span><span>= &quot;</span><span style="color:#a3be8c;">3.2</span><span>&quot;
+</span></code></pre>
+<p>Some highlights:</p>
+<ul>
+<li>
+<p><code>Request</code> and <code>Response</code> are the structs for the request and response bodies.</p>
+</li>
+<li>
+<p>Making an API is relatively simple with the <code>actix-web</code> crate. The <code>main</code> function starts an HTTP server that listens on port 8080. I did have to make the port configurable with an environment variable for Heroku, but I omitted this part from the code for this post.</p>
+</li>
+<li>
+<p><code>execute_code</code> is the handler for the <code>/execute</code> endpoint. It receives the code and tests, writes them to a temporary file, and runs <code>cargo test</code> on it. For this to work, the code and tests are concatenated into a single file and we write a <code>Cargo.toml</code> file with the base metadata.</p>
+</li>
+<li>
+<p>The code is written to a temporary directory using the <code>tempfile</code> crate.</p>
+</li>
+<li>
+<p>To make it a bit more secure, I added an API key check. If the API key is missing or invalid, the API returns an unauthorized response.</p>
+</li>
+</ul>
+<p>Here is <a href="https://github.com/bbelderbos/rust_api_demo">the repo</a> if you want to play with it yourself.</p>
+<h2 id="testing-the-api">Testing the API</h2>
+<p>As you can see in the README I added two test examples of a good vs failing test:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> ./test-ok.sh abc
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">success</span><span>&quot;</span><span style="color:#bf616a;">:true,</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">:</span><span>&quot;</span><span style="color:#a3be8c;">\nrunning 1 test\ntest tests::test_add ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Compiling temp_project v0.1.0 (/private/var/folders/jl/cfhvw0nj11n1496hk7vqhw_r0000gn/T/.tmp1Y5KyV)\n    Finished `</span><span style="color:#bf616a;">test</span><span style="color:#a3be8c;">` profile [unoptimized + debuginfo] target(s) in 0.29s\n     Running unittests src/main.rs (target/debug/deps/temp_project-b55de88e432be2f2)\n</span><span>&quot;}%
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> ./test-fail.sh abc
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">success</span><span>&quot;</span><span style="color:#bf616a;">:false,</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">:</span><span>&quot;</span><span style="color:#a3be8c;">\nrunning 1 test\ntest tests::test_add ... FAILED\n\nfailures:\n\n---- tests::test_add stdout ----\nthread &#39;tests::test_add&#39; panicked at src/main.rs:7:41:\nassertion `</span><span style="color:#bf616a;">left</span><span style="color:#a3be8c;"> == right` failed\n  left: -1\n right: 5\nnote: run with `</span><span style="color:#bf616a;">RUST_BACKTRACE</span><span>=</span><span style="color:#a3be8c;">1` environment variable to display a backtrace\n\n\nfailures:\n    tests::test_add\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Compiling temp_project v0.1.0 (/private/var/folders/jl/cfhvw0nj11n1496hk7vqhw_r0000gn/T/.tmpKXOHmY)\n    Finished `</span><span style="color:#bf616a;">test</span><span style="color:#a3be8c;">` profile [unoptimized + debuginfo] target(s) in 0.27s\n     Running unittests src/main.rs (target/debug/deps/temp_project-b55de88e432be2f2)\nerror: test failed, to rerun pass `</span><span style="color:#bf616a;">--bin</span><span style="color:#a3be8c;"> temp_project`\n</span><span>&quot;}%
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>As a nice side effect of wanting to support Rust exercises on our platform, I learned how to build a simple API in Rust.</p>
+<p>As mentioned I deployed it to Heroku, for which I had to use Docker to build the image, and then push it to Heroku's container registry. I will detail that in a follow up post ...</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/exception-handling-in-rust/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Exception handling in Rust</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/your-first-rust-function/">
+                            <span class="button__text">Your first Rust function (from a Python perspective)</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

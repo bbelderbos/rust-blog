@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Does Rust have a similar NamedTuple type? | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Does Rust have a similar NamedTuple type? | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/namedtuple-in-rust-struct/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Does Rust have a similar NamedTuple type? | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/namedtuple-in-rust-struct/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/namedtuple-in-rust-struct/">Does Rust have a similar NamedTuple type?</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-08
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>When exploring a new language after Python, one of the first things you might look for is a similar Python types, and one of my favorite ones is the <code>namedtuple</code>.</p>
+<p>It's a simple way to create a class with named fields, and it's very useful when you want to create a simple data structure.</p>
+<h2 id="python-named-tuples">Python named tuples</h2>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#65737e;"># old way
+</span><span style="color:#b48ead;">from </span><span>collections </span><span style="color:#b48ead;">import </span><span>namedtuple
+</span><span>Person = </span><span style="color:#bf616a;">namedtuple</span><span>(&#39;</span><span style="color:#a3be8c;">Person</span><span>&#39;, [&#39;</span><span style="color:#a3be8c;">name</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">age</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">email</span><span>&#39;])
+</span><span>p = </span><span style="color:#bf616a;">Person</span><span>(&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#96b5b4;">print</span><span>(p.name, p.age, p.email)
+</span><span>
+</span><span style="color:#65737e;"># more modern way with type hints I prefer:
+</span><span style="color:#b48ead;">from </span><span>typing </span><span style="color:#b48ead;">import </span><span>NamedTuple
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">Person</span><span style="color:#eff1f5;">(</span><span style="color:#a3be8c;">NamedTuple</span><span style="color:#eff1f5;">):
+</span><span>    name: str
+</span><span>    age: int
+</span><span>    email: str
+</span><span>
+</span><span>p = </span><span style="color:#bf616a;">Person</span><span>(&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#96b5b4;">print</span><span>(p.name, p.age, p.email)
+</span><span style="color:#65737e;"># p.name = &#39;John Doe&#39;  # AttributeError... -&gt; named tuples are immutable
+</span></code></pre>
+<h2 id="named-tuples-are-more-readable">Named tuples are more readable</h2>
+<p>I am such a big fan of named tuples because unlike regular tuples they let you access the fields by name, which makes your code more readable and less error-prone.</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#65737e;"># regular tuple
+</span><span>person = (&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#65737e;"># what field is at what index?
+</span><span style="color:#96b5b4;">print</span><span>(person[</span><span style="color:#d08770;">0</span><span>], person[</span><span style="color:#d08770;">1</span><span>], person[</span><span style="color:#d08770;">2</span><span>])
+</span><span>
+</span><span style="color:#65737e;"># named tuple
+</span><span>Person = </span><span style="color:#bf616a;">namedtuple</span><span>(&#39;</span><span style="color:#a3be8c;">Person</span><span>&#39;, [&#39;</span><span style="color:#a3be8c;">name</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">age</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">email</span><span>&#39;])
+</span><span>person = </span><span style="color:#bf616a;">Person</span><span>(&#39;</span><span style="color:#a3be8c;">John</span><span>&#39;, </span><span style="color:#d08770;">30</span><span>, &#39;</span><span style="color:#a3be8c;">john@example.com</span><span>&#39;)
+</span><span style="color:#65737e;"># instantly readable
+</span><span style="color:#96b5b4;">print</span><span>(person.name, person.age, person.email)
+</span></code></pre>
+<h2 id="named-tuples-are-immutable">Named tuples are immutable</h2>
+<p>Named tuples are also immutable, which is a good thing because it makes the code safer (you can't accidentally change the values).</p>
+<p>This is a core concept in Rust I learned, where data structures are immutable by default. If you want mutability, you have to explicitly make them mutable. We'll see how to do that in the Rust in a bit ...</p>
+<h2 id="rust-offers-structs">Rust offers structs</h2>
+<p>In Rust, you can use a <code>struct</code> with named fields to create the same Person type as before. Here's how you can do it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">struct </span><span>Person {
+</span><span>    </span><span style="color:#bf616a;">name</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">age</span><span>: </span><span style="color:#b48ead;">u32</span><span>,
+</span><span>    </span><span style="color:#bf616a;">email</span><span>: String,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = Person {
+</span><span>        name: String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;),
+</span><span>        age: </span><span style="color:#d08770;">30</span><span>,
+</span><span>        email: String::from(&quot;</span><span style="color:#a3be8c;">john@example.com</span><span>&quot;),
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// struct is immutable by default
+</span><span>    </span><span style="color:#65737e;">// person.age = 31;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Name: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Age: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Email: </span><span style="color:#d08770;">{}</span><span>&quot;, person.name, person.age, person.email);
+</span><span>}
+</span></code></pre>
+<p>This prints:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">Name:</span><span> John, Age: 30, Email: john@example.com
+</span></code></pre>
+<p>(Ommitting the cargo run command from here on.)</p>
+<p>Notice that if I uncomment the line <code>person.age = 31;</code> the Rust compiler will complain. I am really impressed by with how helpful the Rust compiler is. It gives you very helpful and specific error messages. Here's what it says in this case:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">...
+</span><span>  </span><span style="color:#bf616a;">--</span><span>&gt; src/main.rs:15:5
+</span><span>   |
+</span><span style="color:#bf616a;">15 </span><span>|     </span><span style="color:#bf616a;">person.age</span><span> = 31;
+</span><span>   |     </span><span style="color:#bf616a;">^^^^^^^^^^^^^^^</span><span> cannot assign
+</span><span>   |
+</span><span style="color:#bf616a;">help:</span><span> consider changing this to be mutable
+</span><span>   |
+</span><span style="color:#bf616a;">8  </span><span>|     </span><span style="color:#96b5b4;">let</span><span> mut person = Person {
+</span><span>   |         </span><span style="color:#bf616a;">+++
+</span><span>
+</span><span style="color:#bf616a;">...
+</span></code></pre>
+<p>So as per the error message, you can make the <code>struct</code> mutable by adding the <code>mut</code> keyword before the variable name:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> person = Person {
+</span><span>        name: String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;),
+</span><span>        age: </span><span style="color:#d08770;">30</span><span>,
+</span><span>        email: String::from(&quot;</span><span style="color:#a3be8c;">john@example.com</span><span>&quot;),
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// This is allowed because `person` is mutable.
+</span><span>    person.age = </span><span style="color:#d08770;">31</span><span>;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Name: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Age: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">, Email: </span><span style="color:#d08770;">{}</span><span>&quot;, person.name, person.age, person.email);
+</span><span>}
+</span></code></pre>
+<p>This works and prints:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">Name:</span><span> John, Age: 31, Email: john@example.com
+</span></code></pre>
+<h2 id="implement-methods">Implement methods</h2>
+<p>Optionally you can implement methods on the <code>struct</code> to make it more powerful. Here's an example:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">struct </span><span>Person {
+</span><span>    </span><span style="color:#bf616a;">name</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">age</span><span>: </span><span style="color:#b48ead;">u32</span><span>,
+</span><span>    </span><span style="color:#bf616a;">email</span><span>: String,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>Person {
+</span><span>    </span><span style="color:#65737e;">// Method to display a greeting
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">greet</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) {
+</span><span>        println!(&quot;</span><span style="color:#a3be8c;">Hello, my name is </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> and I am </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> years old. You can contact me at </span><span style="color:#d08770;">{}</span><span>&quot;, </span><span style="color:#bf616a;">self</span><span>.name, </span><span style="color:#bf616a;">self</span><span>.age, </span><span style="color:#bf616a;">self</span><span>.email);
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> person = Person {
+</span><span>        name: String::from(&quot;</span><span style="color:#a3be8c;">John</span><span>&quot;),
+</span><span>        age: </span><span style="color:#d08770;">30</span><span>,
+</span><span>        email: String::from(&quot;</span><span style="color:#a3be8c;">john@example.com</span><span>&quot;),
+</span><span>    };
+</span><span>
+</span><span>    person.</span><span style="color:#96b5b4;">greet</span><span>();
+</span><span>}
+</span></code></pre>
+<p>Which prints:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">Hello,</span><span> my name is John and I am 30 years old. You can contact me at john@example.com
+</span></code></pre>
+<p>In Rust, you can enhance your structs by implementing methods using the <code>impl</code> block. This allows you to define functions that operate on instances of your struct, providing a cleaner and more encapsulated way to manage data + associated behaviors (think properties and methods in Python classes).</p>
+<p>The <code>greet(&amp;self)</code> method is an instance method that takes an immutable reference to the struct (= <code>&amp;self</code>), similar to how Python methods take <code>self</code> as their first parameter. This method simply prints a greeting using the <code>struct</code>'s fields.</p>
+<p>The <em>reference</em> part here touches upon the concept of <em>ownership</em> and <em>borrowing</em> in Rust. <em>Ownership</em> is a big and important concept in Rust, and I'll cover it here more in detail when I have a better understanding of it ...</p>
+<h2 id="practice-this">Practice This</h2>
+<p>Try the <a href="https://rustplatform.com/basic-structs">Basic Structs</a> and <a href="https://rustplatform.com/variables-and-mutability">Variables and Mutability</a> exercises on the Pybites Rust Platform.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In Rust, you can use a <code>struct</code> with named fields to achieve the same thing as a Python <code>namedtuple</code>.</p>
+<p>Structs are immutable by default, but you can make them mutable by adding the <code>mut</code> keyword before the variable name.</p>
+<p>Optionally, you can implement methods on the <code>struct</code> using the <code>impl</code> block. 🦀😎</p>
+<p>I find the Rust compiler very helpful with its detailed and specific error messages. It helps a lot, specially when you're learning the language. 😍💡📈</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/pybites-search-caching-serde-json/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Enhancing Pybites Search caching using serde_json</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/ownership-and-borrowing/">
+                            <span class="button__text">Ownership and borrowing in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

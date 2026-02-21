@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsbit.es/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/building-website-axum/">I built my first Rust website using Axum</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-14
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>I managed to make a website using Axum, a web framework for Rust, pretty similar to Flask in its minimalistic approach. Although it's a basic site, I'm happy with the result, and I learned a lot in the process.</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/artist-website.png" alt="result of the page I managed to build" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>In this post, I'll show you how I built a simple artist portfolio site using this framework.</p>
+<h2 id="setup">Setup</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new artist-portfolio
+</span><span style="color:#96b5b4;">cd</span><span> artist-portfolio
+</span></code></pre>
+<p>I added the following dependencies:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">axum </span><span>= &quot;</span><span style="color:#a3be8c;">0.7</span><span>&quot;
+</span><span style="color:#bf616a;">dotenv </span><span>= &quot;</span><span style="color:#a3be8c;">0.15</span><span>&quot;
+</span><span style="color:#bf616a;">tokio </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">full</span><span>&quot;] }
+</span><span style="color:#bf616a;">tower </span><span>= &quot;</span><span style="color:#a3be8c;">0.4</span><span>&quot;
+</span><span style="color:#bf616a;">tower-http </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.5</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">fs</span><span>&quot;] }
+</span><span style="color:#bf616a;">askama </span><span>= &quot;</span><span style="color:#a3be8c;">0.11</span><span>&quot;
+</span><span style="color:#bf616a;">tracing </span><span>= &quot;</span><span style="color:#a3be8c;">0.1</span><span>&quot;
+</span><span style="color:#bf616a;">tracing-subscriber </span><span>= &quot;</span><span style="color:#a3be8c;">0.3</span><span>&quot;
+</span></code></pre>
+<h2 id="the-code">The code</h2>
+<p>First I created the main file, <code>src/main.rs</code>, which contains the application setup and the routes.</p>
+<p>The repo is <a href="https://github.com/bbelderbos/artist-portfolio">here</a>.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// will show you the imported modules in a bit ...
+</span><span style="color:#b48ead;">mod </span><span>handlers;
+</span><span style="color:#b48ead;">mod </span><span>s3;
+</span><span>
+</span><span style="color:#b48ead;">use </span><span>axum::{Router, routing::get, extract::Extension};
+</span><span style="color:#b48ead;">use </span><span>dotenv::dotenv;
+</span><span style="color:#b48ead;">use </span><span>tower_http::services::ServeDir;
+</span><span style="color:#b48ead;">use</span><span> tracing_subscriber;
+</span><span style="color:#b48ead;">use </span><span>std::sync::Arc;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#96b5b4;">dotenv</span><span>().</span><span style="color:#96b5b4;">ok</span><span>();
+</span><span>    tracing_subscriber::fmt::init();
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// Initialize configuration
+</span><span>    </span><span style="color:#b48ead;">let</span><span> aws_s3_bucket = std::env::var(&quot;</span><span style="color:#a3be8c;">AWS_S3_BUCKET</span><span>&quot;).</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">AWS_S3_BUCKET must be set</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> config = Arc::new(Config { aws_s3_bucket });
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> app = Router::new()
+</span><span>        .</span><span style="color:#96b5b4;">route</span><span>(&quot;</span><span style="color:#a3be8c;">/</span><span>&quot;, </span><span style="color:#96b5b4;">get</span><span>(handlers::about_handler))
+</span><span>        .</span><span style="color:#96b5b4;">route</span><span>(&quot;</span><span style="color:#a3be8c;">/portfolio</span><span>&quot;, </span><span style="color:#96b5b4;">get</span><span>(handlers::portfolio_handler))
+</span><span>        .</span><span style="color:#96b5b4;">nest_service</span><span>(&quot;</span><span style="color:#a3be8c;">/static</span><span>&quot;, ServeDir::new(&quot;</span><span style="color:#a3be8c;">static</span><span>&quot;))
+</span><span>        .</span><span style="color:#96b5b4;">layer</span><span>(Extension(config.</span><span style="color:#96b5b4;">clone</span><span>()));
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> port = std::env::var(&quot;</span><span style="color:#a3be8c;">PORT</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_or_else</span><span>(|_| &quot;</span><span style="color:#a3be8c;">3000</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span>    </span><span style="color:#b48ead;">let</span><span> addr = std::env::var(&quot;</span><span style="color:#a3be8c;">BIND_ADDR</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_or_else</span><span>(|_| &quot;</span><span style="color:#a3be8c;">0.0.0.0</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span>    </span><span style="color:#b48ead;">let</span><span> bind_addr = format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">:</span><span style="color:#d08770;">{}</span><span>&quot;, addr, port);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> listener = tokio::net::TcpListener::bind(&amp;bind_addr).await.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    tracing::info!(&quot;</span><span style="color:#a3be8c;">Listening on {}</span><span>&quot;, listener.</span><span style="color:#96b5b4;">local_addr</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>());
+</span><span>    axum::serve(listener, app).await.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Clone)]
+</span><span style="color:#b48ead;">pub struct </span><span>Config {
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">aws_s3_bucket</span><span>: String,
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The <code>handlers</code> module contains the request handlers for the different routes.</li>
+<li>The <code>s3</code> module contains the logic to interact with AWS S3 (I ended up simplifying this part for now, see in a bit).</li>
+<li>The <code>Config</code> struct holds the configuration for the application (the AWS S3 bucket name holding the images). I'm using the <code>Arc</code> type to share this configuration across the application.</li>
+<li>The <code>dotenv</code> crate is used to load environment variables from a <code>.env</code> file, see <a href="/environment-variables-rust">this article</a>. I added an <code>.env-template</code> file in the repo to show you what variables you need to set.</li>
+<li>The <code>tracing</code> and <code>tracing-subscriber</code> crates are used for logging.</li>
+<li>The <code>tower-http</code> crate is used to serve static files from the <code>static</code> directory, which I happily got working for this app too.</li>
+<li>The <code>askama</code> crate is used for templating, which I'll show that in the handlers section.</li>
+<li>The <code>tokio</code> crate is used for async I/O.</li>
+<li>The <code>axum</code> crate is the web framework itself and serves the application.</li>
+</ul>
+<h2 id="creating-the-handlers">Creating the handlers</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>askama::Template;
+</span><span style="color:#b48ead;">use </span><span>axum::{
+</span><span>    extract::Extension,
+</span><span>    http::StatusCode,
+</span><span>    response::Html,
+</span><span>};
+</span><span style="color:#b48ead;">use crate</span><span>::Config;
+</span><span style="color:#b48ead;">use crate</span><span>::s3::get_images;
+</span><span style="color:#b48ead;">use </span><span>std::sync::Arc;
+</span><span style="color:#b48ead;">use </span><span>std::collections::HashMap;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Template)]
+</span><span>#[</span><span style="color:#bf616a;">template</span><span>(path = &quot;</span><span style="color:#a3be8c;">about.html</span><span>&quot;)]
+</span><span style="color:#b48ead;">struct </span><span>AboutTemplate {
+</span><span>    </span><span style="color:#bf616a;">image_url</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">current_page</span><span>: &amp;</span><span style="color:#b48ead;">&#39;static str</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">pub</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">about_handler</span><span>(Extension(</span><span style="color:#bf616a;">config</span><span>): Extension&lt;Arc&lt;Config&gt;&gt;) -&gt; Result&lt;Html&lt;String&gt;, StatusCode&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> image_key = &quot;</span><span style="color:#a3be8c;">artist.png</span><span>&quot;;
+</span><span>    </span><span style="color:#b48ead;">let</span><span> image_url = format!(&quot;</span><span style="color:#a3be8c;">https://</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.s3.amazonaws.com/</span><span style="color:#d08770;">{}</span><span>&quot;, config.aws_s3_bucket, image_key);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> template = AboutTemplate { image_url, current_page: &quot;</span><span style="color:#a3be8c;">home</span><span>&quot; };
+</span><span>    </span><span style="color:#b48ead;">match</span><span> template.</span><span style="color:#96b5b4;">render</span><span>() {
+</span><span>        Ok(rendered) =&gt; Ok(Html(rendered)),
+</span><span>        Err(_) =&gt; Err(StatusCode::</span><span style="color:#d08770;">INTERNAL_SERVER_ERROR</span><span>),
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Template)]
+</span><span>#[</span><span style="color:#bf616a;">template</span><span>(path = &quot;</span><span style="color:#a3be8c;">portfolio.html</span><span>&quot;)]
+</span><span style="color:#b48ead;">struct </span><span>PortfolioTemplate {
+</span><span>    </span><span style="color:#bf616a;">images</span><span>: Vec&lt;(String, String)&gt;,
+</span><span>    </span><span style="color:#bf616a;">current_page</span><span>: &amp;</span><span style="color:#b48ead;">&#39;static str</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">pub</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">portfolio_handler</span><span>(Extension(</span><span style="color:#bf616a;">config</span><span>): Extension&lt;Arc&lt;Config&gt;&gt;) -&gt; Result&lt;Html&lt;String&gt;, StatusCode&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> images = </span><span style="color:#96b5b4;">get_images</span><span>(&amp;config.aws_s3_bucket).</span><span style="color:#96b5b4;">unwrap_or_else</span><span>(|_| HashMap::new());
+</span><span>    </span><span style="color:#65737e;">// cannot get the template to work with a HashMap directly, so convert to a Vec of tuples
+</span><span>    </span><span style="color:#b48ead;">let</span><span> images: Vec&lt;(String, String)&gt; = images.</span><span style="color:#96b5b4;">into_iter</span><span>().</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> template = PortfolioTemplate { images, current_page: &quot;</span><span style="color:#a3be8c;">portfolio</span><span>&quot;  };
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">match</span><span> template.</span><span style="color:#96b5b4;">render</span><span>() {
+</span><span>        Ok(rendered) =&gt; Ok(Html(rendered)),
+</span><span>        Err(_) =&gt; Err(StatusCode::</span><span style="color:#d08770;">INTERNAL_SERVER_ERROR</span><span>),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The <code>handlers</code> module contains the request handlers for the different routes.</li>
+<li>The <code>askama</code> crate is used for templating. I created two templates, <code>about.html</code> and <code>portfolio.html</code>, which are rendered by the handlers.</li>
+<li>The <code>about_handler</code> function renders the <code>about.html</code> template, passing the image URL and the current page name, which I use to highlight the current page in the navigation bar.</li>
+<li>The <code>portfolio_handler</code> function renders the <code>portfolio.html</code> template, passing a list of image URLs and the current page name.</li>
+<li>The <code>s3::get_images</code> function is a placeholder for now, returning a <code>HashMap</code> of image URLs from the S3 bucket. I'll show you how I implemented this function in the next section. I did have to convert the <code>HashMap</code> to a <code>Vec</code> of tuples to get the template to work, as I couldn't get it to work with a <code>HashMap</code> directly.</li>
+</ul>
+<h2 id="retrieving-images-from-aws-s3">Retrieving images from AWS S3</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::collections::HashMap;
+</span><span style="color:#b48ead;">use </span><span>std::error::Error;
+</span><span>
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">get_images</span><span>(</span><span style="color:#bf616a;">aws_s3_bucket</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) -&gt; Result&lt;HashMap&lt;String, String&gt;, Box&lt;dyn Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> images = HashMap::new();
+</span><span>    </span><span style="color:#65737e;">// Hardcoded for now to keep it simple, but in a real-world scenario
+</span><span>    </span><span style="color:#65737e;">// you would fetch the image URLs from an S3 bucket
+</span><span>    </span><span style="color:#b48ead;">for</span><span> i in </span><span style="color:#d08770;">1</span><span>..=</span><span style="color:#d08770;">10 </span><span>{
+</span><span>        </span><span style="color:#b48ead;">let</span><span> full_image = format!(&quot;</span><span style="color:#a3be8c;">https://</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.s3.amazonaws.com/</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.webp</span><span>&quot;, aws_s3_bucket, i);
+</span><span>        </span><span style="color:#b48ead;">let</span><span> thumbnail = full_image.</span><span style="color:#96b5b4;">replace</span><span>(&quot;</span><span style="color:#a3be8c;">.webp</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">_thumb.png</span><span>&quot;);
+</span><span>        images.</span><span style="color:#96b5b4;">insert</span><span>(full_image, thumbnail);
+</span><span>    }
+</span><span>    Ok(images)
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The <code>s3</code> module contains the logic to interact with AWS S3. I had this working at some point with the <code>rusoto*</code> crates, but I ended up simplifying it for this first iteration (old s3 code still <a href="https://github.com/bbelderbos/artist-portfolio/commit/fe9cff5b4c10a504ea5a8c4f1786f688d9981104">here</a>).</li>
+<li>For now I am just returning a <code>HashMap</code> of image full + thumb URLs, but in a real-world scenario, you might fetch the images from a bucket (and only a few per request using pagination).</li>
+<li>I used ChatGPT to make some nice artist work images and made another Rust script to resize them (will post it soon here ...)</li>
+</ul>
+<h2 id="templates-and-static-files">Templates and static files</h2>
+<p>I'm using the <code>askama</code> crate for templating. I created two templates, <code>about.html</code> and <code>portfolio.html</code>, which extend a <code>base.html</code> template. The <code>about.html</code> template contains some fake text about the artist, and the <code>portfolio.html</code> template displays a list of images.</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>{% extends &quot;base.html&quot; %}
+</span><span>
+</span><span>{% block title %}About the Artist{% endblock %}
+</span><span>
+</span><span>{% block content %}
+</span><span>  &lt;</span><span style="color:#bf616a;">p</span><span>&gt;
+</span><span>    Bunch of fake text about the artist.
+</span><span>  &lt;/</span><span style="color:#bf616a;">p</span><span>&gt;
+</span><span>{% endblock %}
+</span></code></pre>
+<p>This is the <code>portfolio.html</code> template:</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>{% extends &quot;base.html&quot; %}
+</span><span>
+</span><span>{% block title %}Portfolio{% endblock %}
+</span><span>
+</span><span>{% block content %}
+</span><span>
+</span><span>&lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">image-container</span><span>&quot;&gt;
+</span><span>    {% for (full_image, thumbnail) in images %}
+</span><span>        &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">#img{{ loop.index }}</span><span>&quot;&gt;
+</span><span>            &lt;</span><span style="color:#bf616a;">img </span><span style="color:#d08770;">src</span><span>=&quot;</span><span style="color:#a3be8c;">{{ thumbnail }}</span><span>&quot; </span><span style="color:#d08770;">alt</span><span>=&quot;</span><span style="color:#a3be8c;">Artwork</span><span>&quot;&gt;
+</span><span>        &lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>        &lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">lightbox</span><span>&quot; </span><span style="color:#8fa1b3;">id</span><span>=&quot;</span><span style="color:#a3be8c;">img{{ loop.index }}</span><span>&quot;&gt;
+</span><span>            &lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">lightbox-content</span><span>&quot;&gt;
+</span><span>                &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">#</span><span>&quot; </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">close-lightbox</span><span>&quot;&gt;</span><span style="color:#8fa1b3;">&amp;</span><span style="color:#d08770;">times;</span><span>&lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>                &lt;</span><span style="color:#bf616a;">img </span><span style="color:#d08770;">src</span><span>=&quot;</span><span style="color:#a3be8c;">{{ full_image }}</span><span>&quot; </span><span style="color:#d08770;">alt</span><span>=&quot;</span><span style="color:#a3be8c;">Artwork</span><span>&quot;&gt;
+</span><span>            &lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>        &lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>    {% endfor %}
+</span><span>&lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>{% endblock %}
+</span></code></pre>
+<p>Note here I only managed to loop through a Vec of tuples, not a <code>HashMap</code> directly, so I had to convert the <code>HashMap</code> to a <code>Vec</code> of tuples in the handler (see above).</p>
+<p>I also added some CSS classes to the images and lightbox to make them look nice (you can find the CSS <a href="https://github.com/bbelderbos/artist-portfolio/blob/main/static/style.css">here</a>). This is why you see a <code>loop.index</code> in the template, which is used to generate unique IDs for the lightbox.</p>
+<p>And finally, the <code>base.html</code> template:</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>&lt;!</span><span style="color:#b48ead;">DOCTYPE </span><span style="color:#d08770;">html</span><span>&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">html </span><span style="color:#d08770;">lang</span><span>=&quot;</span><span style="color:#a3be8c;">en</span><span>&quot;&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">head</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">meta </span><span style="color:#d08770;">charset</span><span>=&quot;</span><span style="color:#a3be8c;">UTF-8</span><span>&quot;&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">title</span><span>&gt;{% block title %}Artist Portfolio{% endblock %}&lt;/</span><span style="color:#bf616a;">title</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">link </span><span style="color:#d08770;">rel</span><span>=&quot;</span><span style="color:#a3be8c;">stylesheet</span><span>&quot; </span><span style="color:#d08770;">type</span><span>=&quot;</span><span style="color:#a3be8c;">text/css</span><span>&quot; </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">/static/style.css</span><span>&quot;&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">head</span><span>&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">body</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">header</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">h1</span><span>&gt;Artist Portfolio&lt;/</span><span style="color:#bf616a;">h1</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#bf616a;">header</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#bf616a;">nav</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">/</span><span>&quot; </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">{% if current_page == </span><span>&quot;</span><span style="color:#d08770;">home</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span> </span><span style="color:#d08770;">%}active{% endif %}</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span>&gt;About the Artist&lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">a </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">/portfolio</span><span>&quot; </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">{% if current_page == </span><span>&quot;</span><span style="color:#d08770;">portfolio</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span> </span><span style="color:#d08770;">%}active{% endif %}</span><span style="background-color:#bf616a;color:#2b303b;">&quot;</span><span>&gt;Portfolio&lt;/</span><span style="color:#bf616a;">a</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#bf616a;">nav</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#bf616a;">div </span><span style="color:#d08770;">class</span><span>=&quot;</span><span style="color:#a3be8c;">container</span><span>&quot;&gt;
+</span><span>      {% block content %}{% endblock %}
+</span><span>    &lt;/</span><span style="color:#bf616a;">div</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#bf616a;">footer</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#bf616a;">p</span><span>&gt;</span><span style="color:#8fa1b3;">&amp;</span><span style="color:#d08770;">copy;</span><span> 2024+ Artist Portfolio&lt;/</span><span style="color:#bf616a;">p</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#bf616a;">footer</span><span>&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">body</span><span>&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">html</span><span>&gt;
+</span></code></pre>
+<p>I like that apart from templating (and inheritance with them), I got static files to work so I could add a <code>style.css</code> file to style the page.</p>
+<p>The static folder is served by the <code>tower-http</code> crate, which I added to the <code>Router</code> in the main file. It can also serve other static files like images, fonts, etc.</p>
+<p>As mentioned before I also check each navigation item to see if it's the current page, and if so I add the <code>active</code> class to highlight it in the navigation bar.</p>
+<h2 id="conclusion-and-next-steps">Conclusion and next steps</h2>
+<p>I managed to build a simple artist portfolio site using Axum, a web framework for Rust. It's still a basic site, but I'm happy with the result so far 🚀</p>
+<p>Of course I heavily used ChatGPT to get this working, but I learned so much faster this way, libraries like <code>Axum</code> and <code>Askama</code> make most sense when you start to use them in the context of a project.</p>
+<p>Just reading about them won't get you anywhere near being able to use them effectively. There's still a lot to learn, but this gave me some good basic insights how to build a website with Rust. 💡</p>
+<p>Again you can find the code in the <a href="https://github.com/bbelderbos/artist-portfolio">repo</a>.</p>
+<hr />
+<p>I want to further explore how to interact with AWS S3, and I want to learn how to add a contact form to also handle form data and send emails. 📈</p>
+<p>I also managed to deploy the site to Heroku, which I'll discuss soon here, it was really easy to do. 😍</p>
+<p>What will you build with Axum? Reach out to me on social media, I'd love to hear about it ... 😎</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/environment-variables-rust/">How to handle environment variables in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-13
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In this article, I will share how to isolate your environment variables from production code using the <code>dotenv</code> crate in Rust.</p>
+<h2 id="why-is-this-important-thinking">Why is this important? 🤔</h2>
+<p>As we can read in The Twelve-Factor App / III. Config section you want to separate config from code:</p>
+<blockquote>
+<p>Apps sometimes store config as constants in the code. This is a violation of twelve-factor, which requires strict separation of config from code.</p>
+</blockquote>
+<p>See <a href="https://12factor.net/config">The twelve-factor app - III. Config</a> for more details.</p>
+<p>Basically, you want to be able to make config changes independently from code changes. 💡</p>
+<p>We also want to hide secret keys and API credentials! Notice that git is very persistent (see <a href="https://www.youtube.com/watch?v=2uaTPmNvH0I">this PyCon talk</a> for example) so it’s important to get this right from the start.</p>
+<h2 id="loading-environment-variables-in-rust">Loading environment variables in Rust</h2>
+<p>You can load in environment variables like this in Rust:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::env;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> my_var = env::var(&quot;</span><span style="color:#a3be8c;">MY_VAR</span><span>&quot;).</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">MY_VAR must be set</span><span>&quot;);
+</span></code></pre>
+<p>But that requires you to set the environment variables before running your program (<code>export MY_VAR=my_value</code> from the command line). This is not ideal for production code and even for local development, it can be cumbersome.</p>
+<p>It's common to keep a local <code>.env</code> file with your environment variables (don't forget to add this file to your <code>.gitignore</code>!)</p>
+<h2 id="using-the-dotenv-crate-chart-with-upwards-trend">Using the <code>dotenv</code> crate 📈</h2>
+<p>Researching how you can do this in Rust, I stumbled upon the <code>dotenv</code> crate, which makes handling environment variables straightforward.</p>
+<p>First, add the crate to your <code>Cargo.toml</code>:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">dotenv </span><span>= &quot;</span><span style="color:#a3be8c;">0.15.0</span><span>&quot;
+</span></code></pre>
+<p>Secondly, you create an <code>.env</code> file in the root of your project:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">MY_VAR</span><span>=</span><span style="color:#a3be8c;">my_value
+</span></code></pre>
+<p>Again it’s important that you ignore this file with git, otherwise, you might end up committing sensitive data to your repo/project. 😱</p>
+<h2 id="ignoring-env-in-git">Ignoring <code>.env</code> in git</h2>
+<p>Not sure what the Rust standard is, a <a href="https://github.com/github/gitignore/blob/main/Rust.gitignore">standard Rust .gitignore file</a> does not include the <code>.env</code> pattern, <a href="https://github.com/github/gitignore/blob/main/Python.gitignore">Python's one</a> does.</p>
+<p>What I usually do (in Python) is commit an empty <code>.env-example</code> (or <code>.env-template</code>) file so other developers know what they should set.</p>
+<p>So a new developer (or me checking out the repo on another machine) can do a <code>cp .env-template .env</code> and populate the variables. As the (checked out) <code>.gitignore</code> file contains <code>.env</code>, git won’t show it as a file to be staged for commit.</p>
+<h2 id="example-using-dotenv">Example using <code>dotenv</code></h2>
+<p>To load in the variables from this file, we use a few lines of code:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">extern crate</span><span> dotenv;
+</span><span style="color:#b48ead;">use </span><span>dotenv::dotenv;
+</span><span style="color:#b48ead;">use </span><span>std::env;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#96b5b4;">dotenv</span><span>().</span><span style="color:#96b5b4;">ok</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> background_img = env::var(&quot;</span><span style="color:#a3be8c;">THUMB_BACKGROUND_IMAGE</span><span>&quot;).</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">THUMB_BACKGROUND_IMAGE must be set</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> font_file = env::var(&quot;</span><span style="color:#a3be8c;">THUMB_FONT_TTF_FILE</span><span>&quot;).</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">THUMB_FONT_TTF_FILE must be set</span><span>&quot;);
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Background Image: </span><span style="color:#d08770;">{}</span><span>&quot;, background_img);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Font File: </span><span style="color:#d08770;">{}</span><span>&quot;, font_file);
+</span><span>}
+</span></code></pre>
+<ul>
+<li><code>dotenv().ok()</code> loads the environment variables from the <code>.env</code> file.</li>
+<li><code>.expect</code> is used to handle the case where the environment variable is not set.</li>
+</ul>
+<p>With this setup, you can now access your environment variables using <code>env::var</code>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run</span><span style="color:#bf616a;"> -q
+</span><span style="color:#bf616a;">thread </span><span>&#39;</span><span style="color:#a3be8c;">main</span><span>&#39; panicked at src/main.rs:8:61:
+</span><span style="color:#bf616a;">THUMB_BACKGROUND_IMAGE</span><span> must be set: NotPresent
+</span></code></pre>
+<p>This is because we didn't set the environment variables yet in <code>.env</code>, doing so:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#65737e;"># .env
+</span><span style="color:#bf616a;">THUMB_BACKGROUND_IMAGE</span><span>=</span><span style="color:#a3be8c;">some_image.jpg
+</span><span style="color:#bf616a;">THUMB_FONT_TTF_FILE</span><span>=</span><span style="color:#a3be8c;">some_font.ttf
+</span></code></pre>
+<p>Now it works as expected 🎉</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run</span><span style="color:#bf616a;"> -q
+</span><span style="color:#bf616a;">Background</span><span> Image: some_image.jpg
+</span><span style="color:#bf616a;">Font</span><span> File: some_font.ttf
+</span></code></pre>
+<p>This is actually pretty similar to Python using the <code>python-dotenv</code> library. 🐍</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">from </span><span>dotenv </span><span style="color:#b48ead;">import </span><span>load_dotenv
+</span><span style="color:#b48ead;">import </span><span>os
+</span><span>
+</span><span style="color:#bf616a;">load_dotenv</span><span>()
+</span><span>
+</span><span>background_img = os.</span><span style="color:#bf616a;">getenv</span><span>(&quot;</span><span style="color:#a3be8c;">THUMB_BACKGROUND_IMAGE</span><span>&quot;)
+</span><span>font_file = os.</span><span style="color:#bf616a;">getenv</span><span>(&quot;</span><span style="color:#a3be8c;">THUMB_FONT_TTF_FILE</span><span>&quot;)
+</span></code></pre>
+<p>For boolean values, a common requirement for configuration settings like <code>DEBUG</code>, you can use <code>env::var</code> and parse the string to a boolean like this:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> is_debug: </span><span style="color:#b48ead;">bool </span><span>= env::var(&quot;</span><span style="color:#a3be8c;">DEBUG</span><span>&quot;).</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">v</span><span>| v == &quot;</span><span style="color:#a3be8c;">true</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_or</span><span>(</span><span style="color:#d08770;">false</span><span>);
+</span><span>...
+</span><span>println!(&quot;</span><span style="color:#a3be8c;">Debug: </span><span style="color:#d08770;">{}</span><span>&quot;, is_debug);
+</span></code></pre>
+<ul>
+<li>This works when setting <code>DEBUG=true</code> or <code>DEBUG=false</code> in your <code>.env</code> file.</li>
+<li><code>.map</code> is used to convert the string to a boolean.</li>
+<li>The final <code>unwrap_or</code> is used to handle the case where the environment variable is not set or contains an invalid value.</li>
+</ul>
+<h2 id="practice-this">Practice This</h2>
+<p>The <code>.map</code> and <code>.unwrap_or</code> patterns used in this post are core to working with <code>Option</code> in Rust. Practice them on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/option-handling">Option Handling</a></li>
+<li><a href="https://rustplatform.com/option-combinators">Option Combinators</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>Handling environment variables in Rust is straightforward using the <code>dotenv</code> crate. This approach keeps your configuration separate from your code, making it easier to manage and secure.</p>
+<p>I hope this article helps you to keep your environment variables safe and secure. 🛡️</p>
+<p>Happy coding! 🦀</p>
+<p><em>This article is an adaption from our Python article: <a href="https://pybit.es/articles/how-to-handle-environment-variables-in-python/">How to handle environment variables in Python</a>.</em></p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/convert-markdown-to-html-script/">Converting markdown files to HTML in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-12
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In my journey of learning Rust, I decided to pick a small Python program that converts markdown files to html + makes an index page for those files, and rewrite it in Rust.</p>
+<p>To learn the syntax and also see if I could speed it up.</p>
+<p>In this post, I’ll walk you through the script and how I run it in a GitHub Action to automatically generate a zip file of the HTML files and upload it as an artifact.</p>
+<p>This is in the context of a new set of Python exercises I’m working on called Newbie Bites Part II. I wanted to convert the markdown files to HTML to make it easier to read and navigate for test users.</p>
+<h2 id="the-rust-script">The Rust script</h2>
+<p><a href="https://github.com/bbelderbos/md_to_html">Code repo</a>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::fs::{</span><span style="color:#bf616a;">self</span><span>, File};
+</span><span style="color:#b48ead;">use </span><span>std::io::{</span><span style="color:#bf616a;">self</span><span>, Write};
+</span><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span style="color:#b48ead;">use </span><span>std::ffi::OsStr;
+</span><span style="color:#b48ead;">use </span><span>pulldown_cmark::{Parser, Options, html};
+</span><span style="color:#b48ead;">use </span><span>clap::{App, Arg};
+</span><span style="color:#b48ead;">use </span><span>glob::glob;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">convert_md_to_html</span><span>(</span><span style="color:#bf616a;">md_files</span><span>: Vec&lt;String&gt;, </span><span style="color:#bf616a;">output_dir</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) -&gt; io::Result&lt;()&gt; {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>!Path::new(output_dir).</span><span style="color:#96b5b4;">exists</span><span>() {
+</span><span>        fs::create_dir(output_dir)?;
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> index_content = String::from(
+</span><span>        &quot;</span><span style="color:#a3be8c;">&lt;html&gt;&lt;head&gt;&lt;title&gt;Index of Newbies Bites Part II&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;h1&gt;Index of Newbie Bites Part II&lt;/h1&gt;&lt;ul&gt;</span><span>&quot;
+</span><span>    );
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">for</span><span> md_file in md_files {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> subdir_name = Path::new(&amp;md_file)
+</span><span>            .</span><span style="color:#96b5b4;">parent</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">and_then</span><span>(Path::file_name)
+</span><span>            .</span><span style="color:#96b5b4;">and_then</span><span>(OsStr::to_str)
+</span><span>            .</span><span style="color:#96b5b4;">unwrap_or</span><span>(&quot;&quot;);
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">if </span><span>!subdir_name.</span><span style="color:#96b5b4;">chars</span><span>().</span><span style="color:#96b5b4;">next</span><span>().</span><span style="color:#96b5b4;">unwrap_or</span><span>(&#39; &#39;).</span><span style="color:#96b5b4;">is_digit</span><span>(</span><span style="color:#d08770;">10</span><span>) {
+</span><span>            </span><span style="color:#b48ead;">continue</span><span>;
+</span><span>        }
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let</span><span> html_file_name = format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.html</span><span>&quot;, subdir_name);
+</span><span>        </span><span style="color:#b48ead;">let</span><span> html_file_path = Path::new(output_dir).</span><span style="color:#96b5b4;">join</span><span>(&amp;html_file_name);
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let</span><span> md_content = fs::read_to_string(&amp;md_file)?;
+</span><span>        </span><span style="color:#b48ead;">let mut</span><span> html_content = String::new();
+</span><span>        </span><span style="color:#b48ead;">let</span><span> parser = Parser::new_ext(&amp;md_content, Options::empty());
+</span><span>        html::push_html(&amp;</span><span style="color:#b48ead;">mut</span><span> html_content, parser);
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let mut</span><span> html_file = File::create(html_file_path)?;
+</span><span>        write!(
+</span><span>            html_file,
+</span><span>            &quot;</span><span style="color:#a3be8c;">&lt;html&gt;&lt;head&gt;&lt;title&gt;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&lt;/title&gt;&lt;/head&gt;&lt;body&gt;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&lt;/body&gt;&lt;/html&gt;</span><span>&quot;,
+</span><span>            subdir_name, html_content
+</span><span>        )?;
+</span><span>
+</span><span>        index_content.</span><span style="color:#96b5b4;">push_str</span><span>(&amp;format!(
+</span><span>            &quot;</span><span style="color:#a3be8c;">&lt;li&gt;&lt;a href=</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">{}</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&gt;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&lt;/a&gt;&lt;/li&gt;</span><span style="color:#96b5b4;">\n</span><span>&quot;,
+</span><span>            html_file_name, subdir_name
+</span><span>        ));
+</span><span>    }
+</span><span>
+</span><span>    index_content.</span><span style="color:#96b5b4;">push_str</span><span>(&quot;</span><span style="color:#a3be8c;">&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</span><span>&quot;);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> index_file_path = Path::new(output_dir).</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">index.html</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> index_file = File::create(index_file_path)?;
+</span><span>    write!(index_file, &quot;</span><span style="color:#d08770;">{}</span><span>&quot;, index_content)?;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">HTML pages and index generated in </span><span style="color:#d08770;">{}</span><span>&quot;, output_dir);
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; io::Result&lt;()&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> matches = App::new(&quot;</span><span style="color:#a3be8c;">Markdown to HTML Converter</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">version</span><span>(&quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">author</span><span>(&quot;</span><span style="color:#a3be8c;">Your Name &lt;your.email@example.com&gt;</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">about</span><span>(&quot;</span><span style="color:#a3be8c;">Converts Markdown files to HTML and generates an index</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(
+</span><span>            Arg::new(&quot;</span><span style="color:#a3be8c;">directory</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">short</span><span>(&#39;</span><span style="color:#a3be8c;">d</span><span>&#39;)
+</span><span>                .</span><span style="color:#96b5b4;">long</span><span>(&quot;</span><span style="color:#a3be8c;">directory</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">value_name</span><span>(&quot;</span><span style="color:#a3be8c;">DIRECTORY</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">help</span><span>(&quot;</span><span style="color:#a3be8c;">Specifies the directory to search for Markdown files</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">takes_value</span><span>(</span><span style="color:#d08770;">true</span><span>)
+</span><span>                .</span><span style="color:#96b5b4;">required</span><span>(</span><span style="color:#d08770;">true</span><span>),
+</span><span>        )
+</span><span>        .</span><span style="color:#96b5b4;">get_matches</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> directory = matches.</span><span style="color:#96b5b4;">value_of</span><span>(&quot;</span><span style="color:#a3be8c;">directory</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> pattern = format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">/[0-9][0-9]_*/*.md</span><span>&quot;, directory);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> md_files: Vec&lt;String&gt; = </span><span style="color:#96b5b4;">glob</span><span>(&amp;pattern)
+</span><span>        .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to read glob pattern</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">filter_map</span><span>(Result::ok)
+</span><span>        .</span><span style="color:#96b5b4;">filter_map</span><span>(|</span><span style="color:#bf616a;">path</span><span>| path.</span><span style="color:#96b5b4;">to_str</span><span>().</span><span style="color:#96b5b4;">map</span><span>(String::from))
+</span><span>        .</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output_dir = &quot;</span><span style="color:#a3be8c;">html_pages</span><span>&quot;;
+</span><span>    fs::create_dir_all(output_dir)?;
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">convert_md_to_html</span><span>(md_files, output_dir)
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The script uses <code>glob</code> to find all markdown files in a directory.</li>
+<li>It then converts each markdown file to HTML using <code>pulldown-cmark</code>.</li>
+<li>It creates an index page with links to each HTML file.</li>
+<li>The HTML files and index page are saved in an <code>html_pages</code> directory.</li>
+<li>The script uses <code>clap</code> for command-line argument parsing, which I showed in <a href="/command-line-apps-with-clap">my previous article</a>.</li>
+</ul>
+<h2 id="running-the-script-in-a-github-action">Running the script in a GitHub Action</h2>
+<p>I ended up using this script as part of another repo where I was working on mentioned Python exercises. I wanted to run this script in a GitHub Action to automatically generate the HTML files and upload them as an artifact.</p>
+<p>Here’s the GitHub Action workflow file:</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and Upload HTML Pages and Exercise Zip
+</span><span>
+</span><span style="color:#d08770;">on</span><span>:
+</span><span>  </span><span style="color:#bf616a;">push</span><span>:
+</span><span>    </span><span style="color:#bf616a;">branches</span><span>:
+</span><span>      - </span><span style="color:#a3be8c;">main
+</span><span>
+</span><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">build</span><span>:
+</span><span>    </span><span style="color:#bf616a;">runs-on</span><span>: </span><span style="color:#a3be8c;">ubuntu-latest
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Checkout repository
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/checkout@v2
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Set up Rust
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions-rs/toolchain@v1
+</span><span>        </span><span style="color:#bf616a;">with</span><span>:
+</span><span>          </span><span style="color:#bf616a;">toolchain</span><span>: </span><span style="color:#a3be8c;">stable
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Install dependencies
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">sudo apt-get install -y zip unzip
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and run Rust md to html script
+</span><span>        </span><span style="color:#bf616a;">working-directory</span><span>: </span><span style="color:#a3be8c;">./md_to_html
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">cargo run --release
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Run zip_bites.sh script to zip up exercises
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">./zip_bites.sh
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Extract both zip files
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          mkdir newbies2
+</span><span style="color:#a3be8c;">          unzip md_to_html/bite_descriptions.zip -d newbies2/
+</span><span style="color:#a3be8c;">          unzip newbies-partII.zip -d newbies2/
+</span><span style="color:#a3be8c;">
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Create combined zip file
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          cd newbies2
+</span><span style="color:#a3be8c;">          zip -r ../newbies_part2.zip .
+</span><span style="color:#a3be8c;">
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Upload artifact
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/upload-artifact@v2
+</span><span>        </span><span style="color:#bf616a;">with</span><span>:
+</span><span>          </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">newbies-part2
+</span><span>          </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">newbies_part2.zip
+</span></code></pre>
+<p>There are some additional steps in the workflow file to zip up the exercises and combine them with the HTML files, but the main part is running the Rust script using <code>cargo run --release</code> after setting up the Rust toolchain.</p>
+<p>The script generates the HTML files and index page, which are then zipped up and uploaded as <a href="https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts">an <em>artifact</em></a>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I enjoyed rewriting a Python script in Rust and running it in a GitHub Action. It taught me some good Rust pieces, like how to work with files and directories, and how to use external crates like <code>clap</code> and <code>pulldown-cmark</code>. I also learned about Rust's release build performance improvements:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time cargo run -- --directory /Users/pybob/code/newbies-part2
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">cargo</span><span> run -- --directory /Users/pybob/code/newbies-part2  0.04s user 0.03s system 26% cpu 0.292 total
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> cargo build</span><span style="color:#bf616a;"> --release
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> time ./target/release/md_to_html</span><span style="color:#bf616a;"> --directory</span><span> /Users/pybob/code/newbies-part2
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">./target/release/md_to_html --directory</span><span> /Users/pybob/code/newbies-part2  0.00s user 0.01s system 79% cpu 0.020 total
+</span></code></pre>
+<p>As I always say, the most you learn by building concrete things and this exercise was no exception. 🎉</p>
+<p>And usually you learn a thing or two more as a bonus, in this case how to upload artifacts in a GitHub Action. 📈</p>
+<p>I hope this post was helpful if you’re looking to convert markdown files to HTML in Rust + how to run Rust scripts in GitHub Actions. 🦀 💡</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/command-line-apps-with-clap/">Building a nice command-line interface with Clap</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-11
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Yesterday I wanted to improve the command-line of Pybites Search that which was pretty primitive:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#65737e;"># new code is in v0.5.0
+</span><span style="color:#bf616a;">$</span><span> git checkout v0.4.0
+</span><span style="color:#bf616a;">$</span><span> cargo build</span><span style="color:#bf616a;"> --release
+</span><span>   </span><span style="color:#bf616a;">Compiling</span><span> pybites-search v0.4.0 (/Users/bbelderbos/code/rust/pybites-search)
+</span><span>   </span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># old usage message
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch
+</span><span style="color:#bf616a;">Usage:</span><span> search &lt;search_term&gt; </span><span style="color:#b48ead;">[</span><span>&lt;content_type&gt;</span><span style="color:#b48ead;">] [</span><span>--title-only</span><span style="color:#b48ead;">]
+</span><span>
+</span><span style="color:#65737e;"># no help
+</span><span>
+</span><span style="color:#bf616a;">?127</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch</span><span style="color:#bf616a;"> --help
+</span><span style="color:#bf616a;">[bite]</span><span> Using argparse to interface with a grocery cart
+</span><span style="color:#bf616a;">https://codechalleng.es/bites/58
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># no version
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch</span><span style="color:#bf616a;"> --version
+</span><span>
+</span><span style="color:#65737e;"># no multiple search terms
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch grocery cart
+</span><span>
+</span><span style="color:#65737e;"># no short options
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch grocery</span><span style="color:#bf616a;"> -t
+</span><span>
+</span><span style="color:#65737e;"># not clear that the 2nd arg here is the content type
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch fastapi video
+</span><span style="color:#bf616a;">Pybites</span><span> podcast 151 - Mastering Open Source: The Journey to FastAPI Expertise, One Issue at a Time
+</span><span style="color:#bf616a;">https://www.youtube.com/watch?v</span><span>=</span><span style="color:#a3be8c;">pz2gzSgw7y8
+</span><span style="color:#bf616a;">...
+</span></code></pre>
+<p>I just read about <a href="https://docs.rs/clap/latest/clap/">Clap</a> in the <a href="https://www.oreilly.com/library/view/command-line-rust/9781098109424/">Command-line Rust book</a> and decided to give it a go.</p>
+<p>Here is the new version:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> cargo install pybites-search
+</span><span style="color:#bf616a;">...
+</span><span>     </span><span style="color:#bf616a;">Ignored</span><span> package `</span><span style="color:#bf616a;">pybites-search</span><span> v0.5.0` is already installed, use</span><span style="color:#bf616a;"> --force</span><span> to override
+</span><span>
+</span><span style="color:#65737e;"># using the installed binary
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> which psearch
+</span><span style="color:#bf616a;">/Users/bbelderbos/.cargo/bin/psearch
+</span><span>
+</span><span style="color:#65737e;"># version and help are supported now
+</span><span>
+</span><span style="color:#bf616a;">?1</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch</span><span style="color:#bf616a;"> --version
+</span><span style="color:#bf616a;">psearch</span><span> 0.5.0
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch</span><span style="color:#bf616a;"> --help
+</span><span style="color:#bf616a;">A</span><span> command-line search tool for Pybites content
+</span><span>
+</span><span style="color:#bf616a;">Usage:</span><span> psearch </span><span style="color:#b48ead;">[</span><span>OPTIONS</span><span style="color:#b48ead;">] [</span><span>SEARCH_TERMS</span><span style="color:#b48ead;">]</span><span>...
+</span><span>
+</span><span style="color:#bf616a;">Arguments:
+</span><span>  </span><span style="color:#bf616a;">[SEARCH_TERMS]...
+</span><span>
+</span><span style="color:#bf616a;">Options:
+</span><span>  </span><span style="color:#bf616a;">-c, --content-type </span><span>&lt;CONTENT_TYPE&gt;
+</span><span>  </span><span style="color:#bf616a;">-t, --title-only
+</span><span>  </span><span style="color:#bf616a;">-h, --help</span><span>                         Print help
+</span><span>  </span><span style="color:#bf616a;">-V, --version</span><span>                      Print version
+</span><span>
+</span><span style="color:#65737e;"># required search term argument
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch
+</span><span style="color:#bf616a;">Error:</span><span> At least one search term should be given.
+</span><span style="color:#bf616a;">A</span><span> command-line search tool for Pybites content
+</span><span>
+</span><span style="color:#bf616a;">Usage:</span><span> psearch </span><span style="color:#b48ead;">[</span><span>OPTIONS</span><span style="color:#b48ead;">] [</span><span>SEARCH_TERMS</span><span style="color:#b48ead;">]</span><span>...
+</span><span>
+</span><span style="color:#bf616a;">Arguments:
+</span><span>  </span><span style="color:#bf616a;">[SEARCH_TERMS]...
+</span><span>
+</span><span style="color:#bf616a;">Options:
+</span><span>  </span><span style="color:#bf616a;">-c, --content-type </span><span>&lt;CONTENT_TYPE&gt;
+</span><span>  </span><span style="color:#bf616a;">-t, --title-only
+</span><span>  </span><span style="color:#bf616a;">-h, --help</span><span>                         Print help
+</span><span>  </span><span style="color:#bf616a;">-V, --version</span><span>                      Print version
+</span></code></pre>
+<p>The Error message actually renders red in the terminal for which I used the <code>colored</code> crate.</p>
+<p>Continuing with the new version:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi
+</span><span style="color:#bf616a;">[article]</span><span> Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://pybit.es/articles/using-python-and-fastapi-to-support-pfas-research/
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># search for podcasts only
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi</span><span style="color:#bf616a;"> -c</span><span> podcast
+</span><span style="color:#65737e;">#160 - Unpacking Pydantic&#39;s Growth and the Launch of Logfire with Samuel Colvin
+</span><span style="color:#bf616a;">https://www.pybitespodcast.com/14997890/14997890-160-unpacking-pydantic-s-growth-and-the-launch-of-logfire-with-samuel-colvin
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># search title only
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi</span><span style="color:#bf616a;"> -t
+</span><span style="color:#bf616a;">[article]</span><span> Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://pybit.es/articles/using-python-and-fastapi-to-support-pfas-research/
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># multiple search terms (joined and regex compiled)
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi pfas</span><span style="color:#bf616a;"> -t
+</span><span style="color:#bf616a;">[article]</span><span> Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://pybit.es/articles/using-python-and-fastapi-to-support-pfas-research/
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># short options combined: search only in titles and content type == video
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi pfas</span><span style="color:#bf616a;"> -t -c</span><span> video
+</span><span style="color:#bf616a;">Pybites</span><span> podcast 122 - Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://www.youtube.com/watch?v</span><span>=</span><span style="color:#a3be8c;">c5EtLNhrnH0
+</span></code></pre>
+<h2 id="clap-code">Clap code</h2>
+<p>The code change was <a href="https://github.com/bbelderbos/pybites-search/commit/78cff36be5be028d19484349a8771a859e9daf81">relatively small</a>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">derive</span><span>(Parser)]
+</span><span>#[</span><span style="color:#bf616a;">command</span><span>(name = &quot;</span><span style="color:#a3be8c;">psearch</span><span>&quot;, version, about)]
+</span><span style="color:#b48ead;">struct </span><span>Cli {
+</span><span>    </span><span style="color:#bf616a;">search_terms</span><span>: Vec&lt;String&gt;,
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;c&#39;, long = &quot;</span><span style="color:#a3be8c;">content-type</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">content_type</span><span>: Option&lt;String&gt;,
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;t&#39;, long = &quot;</span><span style="color:#a3be8c;">title-only</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">title_only</span><span>: </span><span style="color:#b48ead;">bool</span><span>,
+</span><span>}
+</span><span>
+</span><span>...
+</span><span>...
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>     </span><span style="color:#b48ead;">let</span><span> cli = Cli::parse();
+</span><span>
+</span><span>     </span><span style="color:#b48ead;">if</span><span> cli.search_terms.</span><span style="color:#96b5b4;">is_empty</span><span>() {
+</span><span>         eprintln!(&quot;</span><span style="color:#d08770;">{}</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">Error: At least one search term should be given.</span><span>&quot;.</span><span style="color:#96b5b4;">red</span><span>());
+</span><span>         Cli::command().</span><span style="color:#96b5b4;">print_help</span><span>()?;
+</span><span>         std::process::exit(</span><span style="color:#d08770;">1</span><span>);
+</span><span>     }
+</span><span>
+</span><span>     </span><span style="color:#b48ead;">let</span><span> search_term = cli.search_terms.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">term</span><span>| regex::escape(term)).collect::&lt;Vec&lt;_&gt;&gt;().</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">.*</span><span>&quot;);
+</span><span>     </span><span style="color:#b48ead;">let</span><span> content_type = cli.content_type.</span><span style="color:#96b5b4;">as_deref</span><span>();
+</span><span>     </span><span style="color:#b48ead;">let</span><span> title_only = cli.title_only;
+</span><span>
+</span><span>     ...
+</span><span>     ...
+</span><span>
+</span><span>     </span><span style="color:#96b5b4;">search_items</span><span>(&amp;items, &amp;search_term, content_type, title_only);
+</span></code></pre>
+<ul>
+<li>I defined a struct <code>Cli</code> with the fields I needed (<a href="/namedtuple-in-rust-struct">related article</a>).</li>
+<li>I used the <code>#[arg]</code> attribute to define the short and long options.</li>
+<li>I used the <code>#[command]</code> attribute to define the name, version, and about, which are inferred from the <code>Cargo.toml</code> file.</li>
+<li>In the main function, I used <code>Cli::parse()</code> to parse the command-line arguments.</li>
+<li>I checked if the search terms are empty and printed an error message if they are. It's best practice to print the error message to <code>stderr</code> (using <code>eprintln</code>) and exit the script with a non-zero status code (Unix convention).</li>
+<li>I used the <code>regex</code> crate to make a regex pattern from the search terms. I had to escape the search terms because they could contain special characters. I used the <code>regex::escape</code> function for this.</li>
+<li>I needed the <code>as_deref</code> method to convert the <code>Option&lt;String&gt;</code> to an <code>Option&lt;&amp;str&gt;</code>. This is useful because I wanted to pass the content type to the <code>search_items</code> function, which accepts an <code>Option&lt;&amp;str&gt;</code>. I still need to get used to the ownership and borrowing rules in Rust, but <a href="/ownership-and-borrowing">I am getting there</a>. It will become more intuitive with more practice ...</li>
+<li>Lastly I passed the parsed arguments to the <code>search_items</code> function.</li>
+</ul>
+<p>This looks pretty clean and the pleasant way of defining CLI interfaces this way reminds me of Python's <code>Typer</code> library.</p>
+<p>Typer also uses type annotations (and other beautiful abstractions) to make it easy to define CLI interfaces.</p>
+<p>Here is an example for comparison:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">import </span><span>typer  </span><span style="color:#65737e;"># pip install typer
+</span><span>
+</span><span>app = typer.</span><span style="color:#bf616a;">Typer</span><span>()
+</span><span>
+</span><span>@app.</span><span style="color:#bf616a;">command</span><span>()
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">psearch</span><span>(
+</span><span>    </span><span style="color:#bf616a;">search_terms</span><span>: list[str],
+</span><span>    </span><span style="color:#bf616a;">content_type</span><span>: str = typer.</span><span style="color:#bf616a;">Option</span><span>(</span><span style="color:#d08770;">None</span><span>, &quot;</span><span style="color:#a3be8c;">--content-type</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">-c</span><span>&quot;, </span><span style="color:#bf616a;">help</span><span>=&quot;</span><span style="color:#a3be8c;">The type of content to search for</span><span>&quot;),
+</span><span>    </span><span style="color:#bf616a;">title_only</span><span>: bool = typer.</span><span style="color:#bf616a;">Option</span><span>(</span><span style="color:#d08770;">False</span><span>, &quot;</span><span style="color:#a3be8c;">--title-only</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">-t</span><span>&quot;, </span><span style="color:#bf616a;">help</span><span>=&quot;</span><span style="color:#a3be8c;">Search only in titles</span><span>&quot;)
+</span><span>):
+</span><span>    search_term = &quot;</span><span style="color:#a3be8c;">.*</span><span>&quot;.</span><span style="color:#bf616a;">join</span><span>(search_terms)
+</span><span>    </span><span style="color:#65737e;"># ... rest of the implementation ...
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>I am happy with the new 0.5.0 version of Pybites Search, which thanks to Clap has a much nicer command-line interface.</p>
+<p>Clap reminds me of Typer in Python, which makes it easy to define CLI interfaces using type annotations.</p>
+<p>I will surely use Clap in future command-line apps, it's a great library to work with.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/rustlings-exercises-to-practice-rust/">Rustlings 😍 - Small exercises to get you used to reading + writing Rust 🦀</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-10
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>I have been going through the <a href="https://github.com/rust-lang/rustlings">Rustlings exercises</a> and I have found them to be a great way to practice Rust. 🔥</p>
+<p>As I said in <a href="/pybites-search-in-rust">a previous post</a>, it's all about pratice. 💡</p>
+<p>Rust is also a language that requires some time to get used to, specially when coming from a dynamic language like Python. All of a sudden you have to get used to the strictness of the compiler and the ownership system.</p>
+<p>Reading books like <a href="https://doc.rust-lang.org/book/">The Rust Programming Language</a> and <a href="https://www.oreilly.com/library/view/programming-rust-2nd/9781492052586/">Programming Rust 2nd ed</a> (both fantastic!), a lot might not stick until you put it into practice, there is a lot to take in!</p>
+<p>That's where Rustlings comes in. It's a set of small exercises that you can work through to reinforce what you've learned.</p>
+<p>Not only will you write and fix code, you'll also read a lot of code forcing yourself to understand what it does.</p>
+<p>And you'll get to see a lot of compiler error messages in the process. Rust is strict and unforgiving so the sooner you get used to that the better.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>Just follow <a href="https://github.com/rust-lang/rustlings">the README</a>, the only thing I had to do on my Mac was:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -L</span><span> https://raw.githubusercontent.com/rust-lang/rustlings/main/install.sh | </span><span style="color:#bf616a;">bash
+</span></code></pre>
+<p>And then <code>cd</code> into the <code>rustlings</code> directory.</p>
+<h2 id="watch-mode">Watch mode</h2>
+<p>There are various ways you can do the exercises, but I really liked this workflow:</p>
+<ul>
+<li>
+<p>In the first terminal window, run <code>rustlings watch</code>.</p>
+</li>
+<li>
+<p>In the second terminal window, open the <code>exercises</code> directory in your favorite editor (in my case Vim + fzf for quick file search) and start coding, as soon as you save a file, <code>watch</code> will pick it up and the corresponding tests will run.</p>
+</li>
+</ul>
+<p>Toggling between the two terminal windows writing code + seeing the tests run + reading the error messages, felt like learning on steroids. 💪</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I'm through ~80% of the 96 exercises and I can say that I've learned a lot: ownership, borrowing, lifetimes, pattern matching, enums, structs, traits, generics, iterators, error handling, writing tests, it's all there! 🚀</p>
+<p>I highly recommend giving it a go, it's a great tool to really solidify what you've learned from reading books and watching videos. You might be surprised how little actually has stuck from any passive learning you've done. 🤯</p>
+<p>This effective learning also happens when you try to build smaller projects, but <em>Rustlings</em> is a great way to reinforce the basics and fundamental concepts. 📈</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/page/4/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Newer posts</span>
+                        </a>
+                    </span>
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/page/6/">
+                            <span class="button__text">Older posts</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

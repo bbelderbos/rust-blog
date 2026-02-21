@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>How to deploy a Rust app to Heroku | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="How to deploy a Rust app to Heroku | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/deploy-rust-app-to-heroku/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="How to deploy a Rust app to Heroku | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/deploy-rust-app-to-heroku/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/deploy-rust-app-to-heroku/">How to deploy a Rust app to Heroku</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-15
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>In <a href="/building-website-axum">yesterday's post</a>, I showed how to build a simple web application with Rust. Today, I'll show how to deploy this application to Heroku.</p>
+<h2 id="steps">Steps</h2>
+<ol>
+<li>Add a <code>Procfile</code> to the root of your project</li>
+</ol>
+<p>For a simple web application, the <code>Procfile</code> should contain the following line, assuming <code>artist_portfolio</code> is the name of the application:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">web:</span><span> ./target/release/artist_portfolio
+</span></code></pre>
+<p>Note that we don't need to run a web server like Gunicorn, because the Rust application is self-contained.</p>
+<p>No other files are needed, because the Rust buildpack (see below) will take care of the rest based on the <code>Cargo.toml</code> file.</p>
+<ol start="2">
+<li>Create a new Heroku application</li>
+</ol>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku login
+</span><span style="color:#bf616a;">$</span><span> heroku create artist-portfolio
+</span></code></pre>
+<p>This adds a new remote to the Git repository (see <code>git remote -v</code>). You can also add the remote manually:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> git remote add heroku https://git.heroku.com/artist-portfolio.git
+</span></code></pre>
+<ol start="3">
+<li>Add the Rust buildpack:</li>
+</ol>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku buildpacks:set emk/rust
+</span></code></pre>
+<p>This buildpack will compile the Rust application on Heroku.</p>
+<ol start="4">
+<li>Environment variables</li>
+</ol>
+<p>You can set them either via the Heroku dashboard or the CLI:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku config:set KEY=VALUE
+</span></code></pre>
+<p>See also my post about <a href="/environment-variables-rust">using environment variables in Rust</a>.</p>
+<ol start="5">
+<li>Kick off the build</li>
+</ol>
+<p>You only have to push your code to Heroku to trigger the build:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> git push heroku main
+</span></code></pre>
+<hr />
+<p>That's it! You can now navigate to the URL provided by Heroku to see your application. If you don't know the URL, you can find it with:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku info
+</span></code></pre>
+<p>You can also open it directly from the CLI:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku open
+</span></code></pre>
+<p>If there is any issue (for example, upon first attempt I forgot to use the correct port: 8000, instead of Axum's default 3000), you can check the logs:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku logs</span><span style="color:#bf616a;"> --tail
+</span></code></pre>
+<h2 id="automate-the-deployment">Automate the deployment</h2>
+<p>Heroku is well integrated with GitHub, so you can automate the deployment process.</p>
+<p>Go to the Heroku dashboard, select the application, and navigate to the &quot;Deploy&quot; tab. Connect your GitHub repository and select the branch you want to deploy. You can also conveniently enable automatic deployments.</p>
+<p>For more information, see the <a href="https://devcenter.heroku.com/articles/github-integration">Heroku documentation</a>.</p>
+<p>You can also map a custom domain to your Heroku application and get an SSL certificate.</p>
+<hr />
+<p>That's it! Your Rust application on Heroku in a few simple steps.</p>
+<p>When I try other platforms and deploy options (e.g. Docker), I will share them here ...</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/building-website-axum/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">I built my first Rust website using Axum</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/rust-analyzer-ale-errors-while-coding/">
+                            <span class="button__text">Use rust-analyzer + ALE to show errors as you code in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

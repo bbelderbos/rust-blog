@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Rust Makes None.attribute Crashes Impossible — Your Code Won&#x27;t Even Compile | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Rust Makes None.attribute Crashes Impossible — Your Code Won't Even Compile | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/rust-no-none-crashes/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Rust Makes None.attribute Crashes Impossible — Your Code Won't Even Compile | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/rust-no-none-crashes/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/rust-no-none-crashes/">Rust Makes None.attribute Crashes Impossible — Your Code Won&#x27;t Even Compile</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-19
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Every Python developer has seen this traceback:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>AttributeError: &#39;NoneType&#39; object has no attribute &#39;name&#39;
+</span></code></pre>
+<p>The problem is that tests might miss this so it shows up in production, and that could be at 2 am in the morning.</p>
+<p>The pattern that causes it is everywhere:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>):
+</span><span>    </span><span style="color:#b48ead;">return </span><span>db.</span><span style="color:#bf616a;">get</span><span>(user_id)  </span><span style="color:#65737e;"># might return None
+</span><span>
+</span><span>user = </span><span style="color:#bf616a;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>)
+</span><span style="color:#96b5b4;">print</span><span>(user.name)  </span><span style="color:#65737e;"># boom
+</span></code></pre>
+<p>Nothing in Python warns you that <code>find_user</code> might return <code>None</code>. No type error, no warning, no compile-time check. The code looks perfectly fine — until it isn't.</p>
+<p>Tony Hoare, who invented null references, called it his <a href="https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/">&quot;billion-dollar mistake&quot;</a>. Every language that has implicit nulls inherits this problem. Python included.</p>
+<h2 id="rust-refuses-to-compile-the-bug">Rust refuses to compile the bug</h2>
+<p>Rust does have a None scenario, but it's handled differently. It has <code>Option&lt;T&gt;</code> — an enum with exactly two variants:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">enum </span><span>Option&lt;T&gt; {
+</span><span>    Some(T),  </span><span style="color:#65737e;">// a value is present
+</span><span>    None,     </span><span style="color:#65737e;">// no value
+</span><span>}
+</span></code></pre>
+<p>When a function might not have a value to return, it says so in its type signature:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>: </span><span style="color:#b48ead;">u64</span><span>) -&gt; Option&lt;User&gt; {
+</span><span>    db.</span><span style="color:#96b5b4;">get</span><span>(user_id)
+</span><span>}
+</span></code></pre>
+<p>Fair enough, Pythonistas certainly want to add type hints to express this too:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>: int) -&gt; Optional[User]:
+</span><span>    </span><span style="color:#b48ead;">return </span><span>db.</span><span style="color:#bf616a;">get</span><span>(user_id)
+</span></code></pre>
+<p>Or more modern syntax:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>: int) -&gt; User | </span><span style="color:#d08770;">None</span><span>:
+</span><span>    </span><span style="color:#b48ead;">return </span><span>db.</span><span style="color:#bf616a;">get</span><span>(user_id)
+</span></code></pre>
+<p>But here is the key difference: where in Python you're relying on tooling (mypy, ty) to catch this, in Rust using the result type without handling the <code>None</code> case, <strong>the code does not compile</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> user = </span><span style="color:#96b5b4;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>);
+</span><span>println!(&quot;</span><span style="color:#d08770;">{}</span><span>&quot;, user.name);  </span><span style="color:#65737e;">// compile error: Option&lt;User&gt; has no field `name`
+</span></code></pre>
+<p>The compiler forces you to acknowledge that the value might not be there:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">match </span><span style="color:#96b5b4;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>) {
+</span><span>    Some(user) =&gt; println!(&quot;</span><span style="color:#d08770;">{}</span><span>&quot;, user.name),
+</span><span>    None =&gt; println!(&quot;</span><span style="color:#a3be8c;">User not found</span><span>&quot;),
+</span><span>}
+</span></code></pre>
+<p>This means no <code>AttributeError</code> and no unexpected runtime crash. The bug literally cannot exist in the compiled program.</p>
+<h2 id="it-s-not-just-match-statements">It's not just match statements</h2>
+<p>If <code>match</code> on every <code>Option</code> sounds tedious, it is — and Rust has ergonomic shortcuts. The <code>.map()</code> combinator transforms the inner value while keeping the <code>Option</code> wrapper:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> name: Option&lt;String&gt; = Some(&quot;</span><span style="color:#a3be8c;">alice</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span style="color:#b48ead;">let</span><span> upper = name.</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">n</span><span>| n.</span><span style="color:#96b5b4;">to_uppercase</span><span>());
+</span><span style="color:#65737e;">// Some(&quot;ALICE&quot;)
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> empty: Option&lt;String&gt; = None;
+</span><span style="color:#b48ead;">let</span><span> upper = empty.</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">n</span><span>| n.</span><span style="color:#96b5b4;">to_uppercase</span><span>());
+</span><span style="color:#65737e;">// None — the closure never runs, no crash
+</span></code></pre>
+<p>This is an elegant way to express Python's <code>x.upper() if x is not None else None</code> which might feel a bit clunky at times.</p>
+<p>There's also <code>.unwrap_or()</code> for defaults, <code>.is_some()</code> for checks, and <code>if let</code> for quick pattern matches. The full API has <a href="https://doc.rust-lang.org/std/option/enum.Option.html">dozens of combinators</a> — all with the advantage of compile-time safety.</p>
+<h2 id="what-this-means-in-practice">What this means in practice</h2>
+<p>Think about how many defensive checks you write in Python:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>user = </span><span style="color:#bf616a;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>)
+</span><span style="color:#b48ead;">if </span><span>user is not </span><span style="color:#d08770;">None</span><span>:
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(user.name)
+</span><span>
+</span><span>config = </span><span style="color:#bf616a;">load_config</span><span>(&quot;</span><span style="color:#a3be8c;">app</span><span>&quot;)
+</span><span style="color:#b48ead;">if </span><span>config is not </span><span style="color:#d08770;">None</span><span>:
+</span><span>    </span><span style="color:#bf616a;">apply_settings</span><span>(config)
+</span></code></pre>
+<p>Each <code>is not None</code> check exists because the language can't guarantee the value is there. You're doing the compiler's job manually — and across a larger codebase, it's easy to miss one.</p>
+<p>In Rust, the type system tracks presence and absence through every function call, every transformation, every return value. If you forget to handle a <code>None</code>, you find out immediately — in your editor, not your error logs.</p>
+<p>This isn't just theory. It's the reason Rust programs don't have an entire class of bugs right out of the box.</p>
+<h2 id="try-it-yourself">Try it yourself</h2>
+<p>We built a hands-on exercise that lets you practice this pattern. You'll implement three functions that return <code>Option&lt;T&gt;</code> — finding values in slices, handling division by zero, and extracting fields from optional structs.</p>
+<p><strong><a href="https://rustplatform.com/option-handling">Option Handling</a></strong></p>
+<p>I hope this gives you a feel for what it's like to write safer code.</p>
+<hr />
+<p><em>If you're a Python developer curious about Rust, our <a href="https://rustplatform.com">Rust Platform</a> teaches Rust concepts through small, focused exercises — each one bridging what you already know in Python to how Rust does it differently (and often better).</em></p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/rust-iterators-over-loops-one-function-that-shows-why/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Rust iterators over loops: one function that shows why</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/adding-auth-to-an-api/">
+                            <span class="button__text">Adding API Key Authentication to a Rust CLI</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

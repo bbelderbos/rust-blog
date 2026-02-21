@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Building Pybites Search in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Building Pybites Search in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/pybites-search-in-rust/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Building Pybites Search in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/pybites-search-in-rust/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/pybites-search-in-rust/">Building Pybites Search in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-05
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <blockquote>
+<p>&quot;The only way to learn a new programming language is by writing programs in it.&quot;</p>
+<ul>
+<li>Dennis Ritchie</li>
+</ul>
+</blockquote>
+<p>So true! Hence after my morning reading I picked up the laptop and tried to re-build <a href="https://pypi.org/project/pybites-search/">Pybites search</a> in Rust :)</p>
+<p>I came up with the following, iterating over code and learning Rust with ChatGPT (repo <a href="https://github.com/bbelderbos/pybites-search">here</a>).</p>
+<p><em>Note that I first consolidated 5 endpoints (articles, bites, videos, podcasts and tips) on our platform to one endpoint, so I only had to do a single request.</em></p>
+<h2 id="the-rust-script">The Rust script</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>cached::proc_macro::cached;
+</span><span style="color:#b48ead;">use</span><span> reqwest;
+</span><span style="color:#b48ead;">use </span><span>serde::Deserialize;
+</span><span style="color:#b48ead;">use </span><span>regex::Regex;
+</span><span style="color:#b48ead;">use </span><span>std::env;
+</span><span style="color:#b48ead;">use </span><span>std::time::Duration;
+</span><span>
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">TIMEOUT</span><span>: </span><span style="color:#b48ead;">u64 </span><span>= </span><span style="color:#d08770;">10</span><span>;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">ENDPOINT</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">http://localhost:8000/api/content</span><span>&quot;;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Deserialize, Debug, Clone)]
+</span><span style="color:#b48ead;">struct </span><span>Item {
+</span><span>    </span><span style="color:#bf616a;">content_type</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">title</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">summary</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">link</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> args: Vec&lt;String&gt; = env::args().</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>    </span><span style="color:#b48ead;">if</span><span> args.</span><span style="color:#96b5b4;">len</span><span>() &lt; </span><span style="color:#d08770;">2 </span><span>|| args.</span><span style="color:#96b5b4;">len</span><span>() &gt; </span><span style="color:#d08770;">4 </span><span>{
+</span><span>        eprintln!(&quot;</span><span style="color:#a3be8c;">Usage: search &lt;search_term&gt; [&lt;content_type&gt;] [--title-only]</span><span>&quot;);
+</span><span>        </span><span style="color:#b48ead;">return </span><span>Ok(());
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> search_term = &amp;args[</span><span style="color:#d08770;">1</span><span>];
+</span><span>    </span><span style="color:#b48ead;">let</span><span> content_type = </span><span style="color:#b48ead;">if</span><span> args.</span><span style="color:#96b5b4;">len</span><span>() &gt;= </span><span style="color:#d08770;">3 </span><span>&amp;&amp; !args[</span><span style="color:#d08770;">2</span><span>].</span><span style="color:#96b5b4;">starts_with</span><span>(&quot;</span><span style="color:#a3be8c;">--</span><span>&quot;) { Some(&amp;args[</span><span style="color:#d08770;">2</span><span>]) } </span><span style="color:#b48ead;">else </span><span>{ None };
+</span><span>    </span><span style="color:#b48ead;">let</span><span> title_only = args.</span><span style="color:#96b5b4;">contains</span><span>(&amp;&quot;</span><span style="color:#a3be8c;">--title-only</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> items = </span><span style="color:#b48ead;">match </span><span style="color:#96b5b4;">fetch_items</span><span>(</span><span style="color:#d08770;">ENDPOINT</span><span>.</span><span style="color:#96b5b4;">to_string</span><span>()).await {
+</span><span>        Ok(items) =&gt; items,
+</span><span>        Err(e) =&gt; {
+</span><span>            eprintln!(&quot;</span><span style="color:#a3be8c;">Error fetching items: </span><span style="color:#d08770;">{:?}</span><span>&quot;, e);
+</span><span>            </span><span style="color:#b48ead;">return </span><span>Err(e.</span><span style="color:#96b5b4;">into</span><span>());
+</span><span>        }
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">search_items</span><span>(&amp;items, search_term, content_type.</span><span style="color:#96b5b4;">map</span><span>(String::as_str), title_only);
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">cached</span><span>(time = 600, result = true, sync_writes = true)]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fetch_items</span><span>(</span><span style="color:#bf616a;">endpoint</span><span>: String) -&gt; Result&lt;Vec&lt;Item&gt;, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> client = reqwest::Client::new();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> response = client
+</span><span>        .</span><span style="color:#96b5b4;">get</span><span>(&amp;endpoint)
+</span><span>        .</span><span style="color:#96b5b4;">timeout</span><span>(Duration::from_secs(</span><span style="color:#d08770;">TIMEOUT</span><span>))
+</span><span>        .</span><span style="color:#96b5b4;">send</span><span>()
+</span><span>        .await?
+</span><span>        .</span><span style="color:#96b5b4;">error_for_status</span><span>()? </span><span style="color:#65737e;">// Ensure the response status is a success
+</span><span>        .json::&lt;Vec&lt;Item&gt;&gt;()
+</span><span>        .await?;
+</span><span>    Ok(response)
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">search_items</span><span>(</span><span style="color:#bf616a;">items</span><span>: &amp;[Item], </span><span style="color:#bf616a;">search_term</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">content_type</span><span>: Option&lt;&amp;</span><span style="color:#b48ead;">str</span><span>&gt;, </span><span style="color:#bf616a;">title_only</span><span>: </span><span style="color:#b48ead;">bool</span><span>) {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> re = Regex::new(&amp;format!(&quot;</span><span style="color:#a3be8c;">(?i)</span><span style="color:#d08770;">{}</span><span>&quot;, regex::escape(search_term))).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">for</span><span> item in items {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> matches = </span><span style="color:#b48ead;">if</span><span> title_only {
+</span><span>            re.</span><span style="color:#96b5b4;">is_match</span><span>(&amp;item.title)
+</span><span>        } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>            re.</span><span style="color:#96b5b4;">is_match</span><span>(&amp;item.title) || re.</span><span style="color:#96b5b4;">is_match</span><span>(&amp;item.summary)
+</span><span>        };
+</span><span>        </span><span style="color:#b48ead;">if</span><span> content_type.</span><span style="color:#96b5b4;">map_or</span><span>(</span><span style="color:#d08770;">true</span><span>, |</span><span style="color:#bf616a;">t</span><span>| t.</span><span style="color:#96b5b4;">eq_ignore_ascii_case</span><span>(&amp;item.content_type)) &amp;&amp; matches {
+</span><span>            </span><span style="color:#b48ead;">if</span><span> content_type.</span><span style="color:#96b5b4;">is_none</span><span>() {
+</span><span>                println!(&quot;</span><span style="color:#a3be8c;">Type: </span><span style="color:#d08770;">{}</span><span>&quot;, item.content_type);
+</span><span>            }
+</span><span>            println!(&quot;</span><span style="color:#a3be8c;">Title: </span><span style="color:#d08770;">{}</span><span>&quot;, item.title);
+</span><span>            println!(&quot;</span><span style="color:#a3be8c;">Link: </span><span style="color:#d08770;">{}</span><span style="color:#96b5b4;">\n</span><span>&quot;, item.link);
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Note this is AI generated code so it might not be as idiomatic as it could be. But that doesn't matter, I can always refactor it later. The point is I got a working script in Rust that searches our content. 🦀</p>
+<p>Plus I feel I learned a lot in the process, a lot faster by just consuming tutorials and reading books! 💡</p>
+<h2 id="some-things-i-learned">Some things I learned</h2>
+<ul>
+<li>How to make requests with <code>reqwest</code> (and <code>tokio</code> for async requests)</li>
+<li>How to cache requests with <code>cached</code> (note that this is a simple in-memory cache so it turned out to not be that useful for this script, in a later revision I added manual memoization, see <a href="/pybites-search-caching-serde-json">this post</a>)</li>
+<li>How to use <code>serde</code> to deserialize JSON</li>
+<li>Handle command line arguments</li>
+<li>Use <code>regex</code> to search for a term in a string</li>
+<li>Print to stdout and stderr</li>
+<li>Method chaining in Rust</li>
+<li>Some error handling in Rust</li>
+<li>Simple things like how to best define constants</li>
+</ul>
+<h2 id="config">Config</h2>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="background-color:#bf616a;color:#2b303b;">$ cat Cargo.toml</span><span>
+</span><span>[package]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">pybites-search</span><span>&quot;
+</span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1.0</span><span>&quot;
+</span><span style="color:#bf616a;">authors </span><span>= [&quot;</span><span style="color:#a3be8c;">Bob Belderbos &lt;bob@pybit.es&gt;</span><span>&quot;]
+</span><span style="color:#bf616a;">edition </span><span>= &quot;</span><span style="color:#a3be8c;">2021</span><span>&quot;
+</span><span style="color:#bf616a;">description </span><span>= &quot;</span><span style="color:#a3be8c;">A command-line search tool for Pybites content</span><span>&quot;
+</span><span style="color:#bf616a;">license </span><span>= &quot;</span><span style="color:#a3be8c;">MIT</span><span>&quot;
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">cached </span><span>= &quot;</span><span style="color:#a3be8c;">0.34.0</span><span>&quot;
+</span><span style="color:#bf616a;">reqwest </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.11</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">json</span><span>&quot;] }
+</span><span style="color:#bf616a;">tokio </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">full</span><span>&quot;] }
+</span><span style="color:#bf616a;">serde </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">derive</span><span>&quot;] }
+</span><span style="color:#bf616a;">serde_json </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;
+</span><span style="color:#bf616a;">regex </span><span>= &quot;</span><span style="color:#a3be8c;">1</span><span>&quot;
+</span><span>
+</span><span>[[bin]]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">psearch</span><span>&quot;
+</span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;
+</span></code></pre>
+<ul>
+<li>There is some metadata at the top about the package.</li>
+<li>Below I listed the dependencies I used in the script.</li>
+<li>I also defined the binary name and path to the script, that's why you see me running <code>./target/release/psearch</code> below aafter the build step.</li>
+</ul>
+<h2 id="compiling-and-running-the-script">Compiling and running the script</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> cargo build</span><span style="color:#bf616a;"> --release
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch
+</span><span style="color:#bf616a;">Usage:</span><span> search &lt;search_term&gt; </span><span style="color:#b48ead;">[</span><span>&lt;content_type&gt;</span><span style="color:#b48ead;">] [</span><span>--title-only</span><span style="color:#b48ead;">]
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch rust
+</span><span style="color:#bf616a;">Type:</span><span> article
+</span><span style="color:#bf616a;">Title:</span><span> Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://pybit.es/articles/jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust/
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> article
+</span><span style="color:#bf616a;">Title:</span><span> Talking to API&#39;</span><span style="color:#a3be8c;">s and goodlooking tools
+</span><span style="color:#a3be8c;">Link: https://pybit.es/articles/guest-talking-to-apis-goodlooking-tools
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">Type: bite
+</span><span style="color:#a3be8c;">Title: Create Wikipedia Lorem Ipsum text
+</span><span style="color:#a3be8c;">Link: http://localhost:8000/bites/364
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">...
+</span><span style="color:#a3be8c;">...
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">√ search (main) $ ./target/release/psearch rust article
+</span><span style="color:#a3be8c;">Title: Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#a3be8c;">Link: https://pybit.es/articles/jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust/
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">Title: Talking to API</span><span>&#39;s and goodlooking tools
+</span><span style="color:#bf616a;">Link:</span><span> https://pybit.es/articles/guest-talking-to-apis-goodlooking-tools
+</span><span>
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch rust</span><span style="color:#bf616a;">  --title-only
+</span><span style="color:#bf616a;">Type:</span><span> article
+</span><span style="color:#bf616a;">Title:</span><span> Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://pybit.es/articles/jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust/
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> video
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 146 - Armin Ronacher: Flask 3.0, Open Source, Rust and Developer Mindset
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=yV4OXDy_DwE
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> video
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 105 - Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=LojYjASdOHk
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> podcast
+</span><span style="color:#bf616a;">Title: </span><span style="color:#65737e;">#146 - Armin Ronacher: Flask 3.0, Open Source, Rust and Developer Mindset
+</span><span style="color:#bf616a;">Link:</span><span> https://www.pybitespodcast.com/14165010/14165010-146-armin-ronacher-flask-3-0-open-source-rust-and-developer-mindset
+</span><span>
+</span><span style="color:#bf616a;">Type:</span><span> podcast
+</span><span style="color:#bf616a;">Title: </span><span style="color:#65737e;">#105 - Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://www.pybitespodcast.com/12368334/12368334-105-jim-hodapp-on-coaching-software-engineers-and-the-power-of-rust
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch rust video</span><span style="color:#bf616a;"> --title-only
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 146 - Armin Ronacher: Flask 3.0, Open Source, Rust and Developer Mindset
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=yV4OXDy_DwE
+</span><span>
+</span><span style="color:#bf616a;">Title:</span><span> Pybites Podcast 105 - Jim Hodapp on coaching software engineers and the power of Rust
+</span><span style="color:#bf616a;">Link:</span><span> https://www.youtube.com/watch?v=LojYjASdOHk
+</span></code></pre>
+<p>TIL we DO have some Rust content on Pybites! 🦀 😎</p>
+<p>Next steps:</p>
+<ul>
+<li>Deploy the new endpoint on our platform and have the script point to it</li>
+<li>Add some tests</li>
+<li>Deploy it to crates.io</li>
+<li>Automate the deployment with GitHub Actions (upon pushing a new tag)</li>
+<li>New features (as per your feedback ...)</li>
+</ul>
+<h2 id="practice-practice-practice-crab-work-on-projects-you-care-about-chart-with-upwards-trend">Practice, Practice, Practice 🦀 - work on projects you care about 📈</h2>
+<p>A note about this type of learning: I find it very effective to learn a new language by (re-)building something you already know and/or you're passionate about.</p>
+<p>You have to practice! It's a lot like language learning. You can't just read a book and expect to be fluent. You have to practice speaking and listening.</p>
+<p>This is exactly what I did when I was interrailing around Europe in my early 20s and wanted to become more fluent in French and Spanish. I would speak to locals, watch TV, and read newspapers. I completely immersed myself in the language. And I made a lot of mistakes. That's how you learn!</p>
+<p>The same is true for programming. Yes, you need to read the docs and books to grasp fundamentals, but above all you need to get into the trenches and write a lot of code, ideally in the context of building real-world projects. It's where things start to click and you start to see the bigger picture. It's also way more fun!</p>
+<h2 id="practice-this">Practice This</h2>
+<p>This project uses <code>serde</code> for JSON deserialization. Try the <a href="https://rustplatform.com/json-serialization">JSON Serialization</a> exercise on the Pybites Rust Platform to practice working with <code>serde</code> and <code>serde_json</code>.</p>
+<hr />
+<p>If you enjoy this content hit me up on <a href="https://twitter.com/bbelderbos">X</a>. I'm always up for a chat about programming. I also coach developers, so if you need help with your coding journey let me now, I can help you with this. 🚀</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/rust-in-python-pyo3-maturin/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">How to run Rust in Python with PyO3 and Maturin</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/shipped-first-crate/">
+                            <span class="button__text">How to ship code to crates.io and automate it with GitHub Actions</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

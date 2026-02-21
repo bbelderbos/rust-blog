@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Converting markdown files to HTML in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Converting markdown files to HTML in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/convert-markdown-to-html-script/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Converting markdown files to HTML in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/convert-markdown-to-html-script/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/convert-markdown-to-html-script/">Converting markdown files to HTML in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-12
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>In my journey of learning Rust, I decided to pick a small Python program that converts markdown files to html + makes an index page for those files, and rewrite it in Rust.</p>
+<p>To learn the syntax and also see if I could speed it up.</p>
+<p>In this post, I’ll walk you through the script and how I run it in a GitHub Action to automatically generate a zip file of the HTML files and upload it as an artifact.</p>
+<p>This is in the context of a new set of Python exercises I’m working on called Newbie Bites Part II. I wanted to convert the markdown files to HTML to make it easier to read and navigate for test users.</p>
+<h2 id="the-rust-script">The Rust script</h2>
+<p><a href="https://github.com/bbelderbos/md_to_html">Code repo</a>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::fs::{</span><span style="color:#bf616a;">self</span><span>, File};
+</span><span style="color:#b48ead;">use </span><span>std::io::{</span><span style="color:#bf616a;">self</span><span>, Write};
+</span><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span style="color:#b48ead;">use </span><span>std::ffi::OsStr;
+</span><span style="color:#b48ead;">use </span><span>pulldown_cmark::{Parser, Options, html};
+</span><span style="color:#b48ead;">use </span><span>clap::{App, Arg};
+</span><span style="color:#b48ead;">use </span><span>glob::glob;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">convert_md_to_html</span><span>(</span><span style="color:#bf616a;">md_files</span><span>: Vec&lt;String&gt;, </span><span style="color:#bf616a;">output_dir</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) -&gt; io::Result&lt;()&gt; {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>!Path::new(output_dir).</span><span style="color:#96b5b4;">exists</span><span>() {
+</span><span>        fs::create_dir(output_dir)?;
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> index_content = String::from(
+</span><span>        &quot;</span><span style="color:#a3be8c;">&lt;html&gt;&lt;head&gt;&lt;title&gt;Index of Newbies Bites Part II&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;h1&gt;Index of Newbie Bites Part II&lt;/h1&gt;&lt;ul&gt;</span><span>&quot;
+</span><span>    );
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">for</span><span> md_file in md_files {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> subdir_name = Path::new(&amp;md_file)
+</span><span>            .</span><span style="color:#96b5b4;">parent</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">and_then</span><span>(Path::file_name)
+</span><span>            .</span><span style="color:#96b5b4;">and_then</span><span>(OsStr::to_str)
+</span><span>            .</span><span style="color:#96b5b4;">unwrap_or</span><span>(&quot;&quot;);
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">if </span><span>!subdir_name.</span><span style="color:#96b5b4;">chars</span><span>().</span><span style="color:#96b5b4;">next</span><span>().</span><span style="color:#96b5b4;">unwrap_or</span><span>(&#39; &#39;).</span><span style="color:#96b5b4;">is_digit</span><span>(</span><span style="color:#d08770;">10</span><span>) {
+</span><span>            </span><span style="color:#b48ead;">continue</span><span>;
+</span><span>        }
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let</span><span> html_file_name = format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">.html</span><span>&quot;, subdir_name);
+</span><span>        </span><span style="color:#b48ead;">let</span><span> html_file_path = Path::new(output_dir).</span><span style="color:#96b5b4;">join</span><span>(&amp;html_file_name);
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let</span><span> md_content = fs::read_to_string(&amp;md_file)?;
+</span><span>        </span><span style="color:#b48ead;">let mut</span><span> html_content = String::new();
+</span><span>        </span><span style="color:#b48ead;">let</span><span> parser = Parser::new_ext(&amp;md_content, Options::empty());
+</span><span>        html::push_html(&amp;</span><span style="color:#b48ead;">mut</span><span> html_content, parser);
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let mut</span><span> html_file = File::create(html_file_path)?;
+</span><span>        write!(
+</span><span>            html_file,
+</span><span>            &quot;</span><span style="color:#a3be8c;">&lt;html&gt;&lt;head&gt;&lt;title&gt;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&lt;/title&gt;&lt;/head&gt;&lt;body&gt;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&lt;/body&gt;&lt;/html&gt;</span><span>&quot;,
+</span><span>            subdir_name, html_content
+</span><span>        )?;
+</span><span>
+</span><span>        index_content.</span><span style="color:#96b5b4;">push_str</span><span>(&amp;format!(
+</span><span>            &quot;</span><span style="color:#a3be8c;">&lt;li&gt;&lt;a href=</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">{}</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&gt;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&lt;/a&gt;&lt;/li&gt;</span><span style="color:#96b5b4;">\n</span><span>&quot;,
+</span><span>            html_file_name, subdir_name
+</span><span>        ));
+</span><span>    }
+</span><span>
+</span><span>    index_content.</span><span style="color:#96b5b4;">push_str</span><span>(&quot;</span><span style="color:#a3be8c;">&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</span><span>&quot;);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> index_file_path = Path::new(output_dir).</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">index.html</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> index_file = File::create(index_file_path)?;
+</span><span>    write!(index_file, &quot;</span><span style="color:#d08770;">{}</span><span>&quot;, index_content)?;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">HTML pages and index generated in </span><span style="color:#d08770;">{}</span><span>&quot;, output_dir);
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; io::Result&lt;()&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> matches = App::new(&quot;</span><span style="color:#a3be8c;">Markdown to HTML Converter</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">version</span><span>(&quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">author</span><span>(&quot;</span><span style="color:#a3be8c;">Your Name &lt;your.email@example.com&gt;</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">about</span><span>(&quot;</span><span style="color:#a3be8c;">Converts Markdown files to HTML and generates an index</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(
+</span><span>            Arg::new(&quot;</span><span style="color:#a3be8c;">directory</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">short</span><span>(&#39;</span><span style="color:#a3be8c;">d</span><span>&#39;)
+</span><span>                .</span><span style="color:#96b5b4;">long</span><span>(&quot;</span><span style="color:#a3be8c;">directory</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">value_name</span><span>(&quot;</span><span style="color:#a3be8c;">DIRECTORY</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">help</span><span>(&quot;</span><span style="color:#a3be8c;">Specifies the directory to search for Markdown files</span><span>&quot;)
+</span><span>                .</span><span style="color:#96b5b4;">takes_value</span><span>(</span><span style="color:#d08770;">true</span><span>)
+</span><span>                .</span><span style="color:#96b5b4;">required</span><span>(</span><span style="color:#d08770;">true</span><span>),
+</span><span>        )
+</span><span>        .</span><span style="color:#96b5b4;">get_matches</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> directory = matches.</span><span style="color:#96b5b4;">value_of</span><span>(&quot;</span><span style="color:#a3be8c;">directory</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> pattern = format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">/[0-9][0-9]_*/*.md</span><span>&quot;, directory);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> md_files: Vec&lt;String&gt; = </span><span style="color:#96b5b4;">glob</span><span>(&amp;pattern)
+</span><span>        .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to read glob pattern</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">filter_map</span><span>(Result::ok)
+</span><span>        .</span><span style="color:#96b5b4;">filter_map</span><span>(|</span><span style="color:#bf616a;">path</span><span>| path.</span><span style="color:#96b5b4;">to_str</span><span>().</span><span style="color:#96b5b4;">map</span><span>(String::from))
+</span><span>        .</span><span style="color:#96b5b4;">collect</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output_dir = &quot;</span><span style="color:#a3be8c;">html_pages</span><span>&quot;;
+</span><span>    fs::create_dir_all(output_dir)?;
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">convert_md_to_html</span><span>(md_files, output_dir)
+</span><span>}
+</span></code></pre>
+<ul>
+<li>The script uses <code>glob</code> to find all markdown files in a directory.</li>
+<li>It then converts each markdown file to HTML using <code>pulldown-cmark</code>.</li>
+<li>It creates an index page with links to each HTML file.</li>
+<li>The HTML files and index page are saved in an <code>html_pages</code> directory.</li>
+<li>The script uses <code>clap</code> for command-line argument parsing, which I showed in <a href="/command-line-apps-with-clap">my previous article</a>.</li>
+</ul>
+<h2 id="running-the-script-in-a-github-action">Running the script in a GitHub Action</h2>
+<p>I ended up using this script as part of another repo where I was working on mentioned Python exercises. I wanted to run this script in a GitHub Action to automatically generate the HTML files and upload them as an artifact.</p>
+<p>Here’s the GitHub Action workflow file:</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and Upload HTML Pages and Exercise Zip
+</span><span>
+</span><span style="color:#d08770;">on</span><span>:
+</span><span>  </span><span style="color:#bf616a;">push</span><span>:
+</span><span>    </span><span style="color:#bf616a;">branches</span><span>:
+</span><span>      - </span><span style="color:#a3be8c;">main
+</span><span>
+</span><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">build</span><span>:
+</span><span>    </span><span style="color:#bf616a;">runs-on</span><span>: </span><span style="color:#a3be8c;">ubuntu-latest
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Checkout repository
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/checkout@v2
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Set up Rust
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions-rs/toolchain@v1
+</span><span>        </span><span style="color:#bf616a;">with</span><span>:
+</span><span>          </span><span style="color:#bf616a;">toolchain</span><span>: </span><span style="color:#a3be8c;">stable
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Install dependencies
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">sudo apt-get install -y zip unzip
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and run Rust md to html script
+</span><span>        </span><span style="color:#bf616a;">working-directory</span><span>: </span><span style="color:#a3be8c;">./md_to_html
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">cargo run --release
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Run zip_bites.sh script to zip up exercises
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">./zip_bites.sh
+</span><span>
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Extract both zip files
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          mkdir newbies2
+</span><span style="color:#a3be8c;">          unzip md_to_html/bite_descriptions.zip -d newbies2/
+</span><span style="color:#a3be8c;">          unzip newbies-partII.zip -d newbies2/
+</span><span style="color:#a3be8c;">
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Create combined zip file
+</span><span>        </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          cd newbies2
+</span><span style="color:#a3be8c;">          zip -r ../newbies_part2.zip .
+</span><span style="color:#a3be8c;">
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Upload artifact
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/upload-artifact@v2
+</span><span>        </span><span style="color:#bf616a;">with</span><span>:
+</span><span>          </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">newbies-part2
+</span><span>          </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">newbies_part2.zip
+</span></code></pre>
+<p>There are some additional steps in the workflow file to zip up the exercises and combine them with the HTML files, but the main part is running the Rust script using <code>cargo run --release</code> after setting up the Rust toolchain.</p>
+<p>The script generates the HTML files and index page, which are then zipped up and uploaded as <a href="https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts">an <em>artifact</em></a>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I enjoyed rewriting a Python script in Rust and running it in a GitHub Action. It taught me some good Rust pieces, like how to work with files and directories, and how to use external crates like <code>clap</code> and <code>pulldown-cmark</code>. I also learned about Rust's release build performance improvements:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time cargo run -- --directory /Users/pybob/code/newbies-part2
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">cargo</span><span> run -- --directory /Users/pybob/code/newbies-part2  0.04s user 0.03s system 26% cpu 0.292 total
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> cargo build</span><span style="color:#bf616a;"> --release
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> time ./target/release/md_to_html</span><span style="color:#bf616a;"> --directory</span><span> /Users/pybob/code/newbies-part2
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">./target/release/md_to_html --directory</span><span> /Users/pybob/code/newbies-part2  0.00s user 0.01s system 79% cpu 0.020 total
+</span></code></pre>
+<p>As I always say, the most you learn by building concrete things and this exercise was no exception. 🎉</p>
+<p>And usually you learn a thing or two more as a bonus, in this case how to upload artifacts in a GitHub Action. 📈</p>
+<p>I hope this post was helpful if you’re looking to convert markdown files to HTML in Rust + how to run Rust scripts in GitHub Actions. 🦀 💡</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/command-line-apps-with-clap/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Building a nice command-line interface with Clap</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/environment-variables-rust/">
+                            <span class="button__text">How to handle environment variables in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

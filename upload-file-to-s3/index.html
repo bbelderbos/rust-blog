@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Using rusoto to upload a file to S3 | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Using rusoto to upload a file to S3 | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/upload-file-to-s3/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Using rusoto to upload a file to S3 | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/upload-file-to-s3/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/upload-file-to-s3/">Using rusoto to upload a file to S3</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-24
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>A while ago I made a Python script to upload files to an S3 bucket. It's a simple script that uses the <code>boto3</code> library to interact with the AWS API. Check it out <a href="https://github.com/PyBites-Open-Source/pybites-tools/blob/main/pybites_tools/aws.py">here</a>.</p>
+<p>Let's see how to do this with Rust and the <code>rusoto</code> crate.</p>
+<p>First, I added the following dependencies to my <code>Cargo.toml</code> file:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="background-color:#bf616a;color:#2b303b;">...</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">clap </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">4.5.7</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">derive</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">env</span><span>&quot;] }
+</span><span style="color:#bf616a;">rusoto_core </span><span>= &quot;</span><span style="color:#a3be8c;">0.48.0</span><span>&quot;
+</span><span style="color:#bf616a;">rusoto_s3 </span><span>= &quot;</span><span style="color:#a3be8c;">0.48.0</span><span>&quot;
+</span><span style="color:#bf616a;">tokio </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1.38.0</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">full</span><span>&quot;] }
+</span></code></pre>
+<p>This is what I came up with for the first iteration:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>rusoto_core::{Region, credential::EnvironmentProvider, HttpClient};
+</span><span style="color:#b48ead;">use </span><span>rusoto_s3::{S3Client, </span><span style="color:#d08770;">S3</span><span>, PutObjectRequest};
+</span><span style="color:#b48ead;">use </span><span>tokio::fs::File;
+</span><span style="color:#b48ead;">use </span><span>tokio::io::AsyncReadExt;
+</span><span style="color:#b48ead;">use </span><span>std::error::Error;
+</span><span style="color:#b48ead;">use </span><span>clap::Parser;
+</span><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Parser, Debug)]
+</span><span>#[</span><span style="color:#bf616a;">clap</span><span>(about, version, author)]
+</span><span style="color:#b48ead;">struct </span><span>Args {
+</span><span>    #[</span><span style="color:#bf616a;">clap</span><span>(short, long, env = &quot;</span><span style="color:#a3be8c;">S3_BUCKET_NAME</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">bucket</span><span>: String,
+</span><span>    #[</span><span style="color:#bf616a;">clap</span><span>(short, long, env = &quot;</span><span style="color:#a3be8c;">AWS_REGION</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">region</span><span>: String,
+</span><span>    #[</span><span style="color:#bf616a;">clap</span><span>(short, long)]
+</span><span>    </span><span style="color:#bf616a;">file</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">upload_image_to_s3</span><span>(</span><span style="color:#bf616a;">bucket</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">key</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">file</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">region</span><span>: Region) -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> s3_client = S3Client::new_with(HttpClient::new()?, EnvironmentProvider::default(), region);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> file = File::open(file).await?;
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> buffer = Vec::new();
+</span><span>    file.</span><span style="color:#96b5b4;">read_to_end</span><span>(&amp;</span><span style="color:#b48ead;">mut</span><span> buffer).await?;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> put_request = PutObjectRequest {
+</span><span>        bucket: bucket.</span><span style="color:#96b5b4;">to_string</span><span>(),
+</span><span>        key: key.</span><span style="color:#96b5b4;">to_string</span><span>(),
+</span><span>        body: Some(buffer.</span><span style="color:#96b5b4;">into</span><span>()),
+</span><span>        ..Default::default()
+</span><span>    };
+</span><span>
+</span><span>    s3_client.</span><span style="color:#96b5b4;">put_object</span><span>(put_request).await?;
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">File uploaded successfully to </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">/</span><span style="color:#d08770;">{}</span><span>&quot;, bucket, key);
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> args = Args::parse();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> key = Path::new(&amp;args.file)
+</span><span>        .</span><span style="color:#96b5b4;">file_name</span><span>()
+</span><span>        .</span><span style="color:#96b5b4;">and_then</span><span>(|</span><span style="color:#bf616a;">name</span><span>| name.</span><span style="color:#96b5b4;">to_str</span><span>())
+</span><span>        .</span><span style="color:#96b5b4;">ok_or</span><span>(&quot;</span><span style="color:#a3be8c;">Invalid file path</span><span>&quot;)?;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> region = args.region.parse::&lt;Region&gt;()?;
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">upload_image_to_s3</span><span>(&amp;args.bucket, key, &amp;args.file, region).await?;
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<ul>
+<li>I use Clap (<a href="/command-line-apps-with-clap">as usual</a>) for handling command-line arguments.</li>
+<li>I use the <code>rusoto_core</code> and <code>rusoto_s3</code> crates to interact with the AWS API.</li>
+<li>I use the <code>tokio</code> crate to make it asynchronous.</li>
+<li>The <code>upload_image_to_s3</code> function reads the file, creates a <code>PutObjectRequest</code>, and uploads the file to the specified S3 bucket.</li>
+<li>The <code>main</code> function parses the command-line arguments, extracts the file name, and uploads the file to S3.</li>
+</ul>
+<p>To run the program, you need to set the <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> environment variables:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> export AWS_ACCESS_KEY_ID=your_access_key_id
+</span><span style="color:#bf616a;">$</span><span> export AWS_SECRET_ACCESS_KEY=your_secret_access_key
+</span></code></pre>
+<p>And either specify region and bucket from the command line or set the <code>S3_BUCKET_NAME</code> and <code>AWS_REGION</code> environment variables if you always want to use the same bucket and region:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> export S3_BUCKET_NAME=example-bucket
+</span><span style="color:#bf616a;">$</span><span> export AWS_REGION=us-east-2
+</span></code></pre>
+<p>With all this set you only need to give the file you want to upload:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run -- -f </span><span style="color:#bf616a;">~</span><span>/Desktop/cat.png
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">File</span><span> uploaded successfully to example-bucket/cat.png
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>And that's it, a Rust utitlity to upload files to S3. 🚀</p>
+<p>I extended the program a bit to allow multiple files to be uploaded and list the images, including with pagination so I can use it later with HTMX' infinite scroll. I will write about that in a future post ...</p>
+<p>The repo is <a href="https://github.com/bbelderbos/s3_file_manager">here</a> and I pushed it to crates.io as well. 🦀</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/constant-hashmap-lookup/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Making an immutable hashmap constant</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/25-days-learning-rust-takeaways/">
+                            <span class="button__text">25 days of learning Rust: what worked + takeaways</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

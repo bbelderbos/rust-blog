@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsbit.es/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/rust-in-python-pyo3-maturin/">How to run Rust in Python with PyO3 and Maturin</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-04
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In this article I will show you how to run Rust code in Python using PyO3 + Maturin.</p>
+<p>PyO3 is a Rust library for building Python bindings and Maturin is a tool for building and publishing Python packages built with PyO3.</p>
+<p>Here is a quick overview of the steps we will follow:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/rust-in-python.png" alt="overview mind map of how PyO3 and Maturin work to run Rust code in Python" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>Let's do a quick demo to see how it works.</p>
+<h2 id="create-a-new-library">Create a new library</h2>
+<p>First, let's create a new Rust library using Cargo:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new</span><span style="color:#bf616a;"> --lib</span><span> sum_squares
+</span></code></pre>
+<p>This will create a new directory called <code>sum_squares</code> with the following structure:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> pyo3  $ tree
+</span><span style="color:#96b5b4;">.
+</span><span style="color:#bf616a;">└──</span><span> sum_squares
+</span><span>    </span><span style="color:#bf616a;">├──</span><span> Cargo.toml
+</span><span>    </span><span style="color:#bf616a;">└──</span><span> src
+</span><span>        </span><span style="color:#bf616a;">└──</span><span> lib.rs
+</span><span>
+</span><span style="color:#bf616a;">3</span><span> directories, 2 files
+</span></code></pre>
+<p>Next we update the <code>Cargo.toml</code> file to include the <code>pyo3</code> dependency:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[package]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">sum_squares</span><span>&quot;
+</span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1.0</span><span>&quot;
+</span><span style="color:#bf616a;">edition </span><span>= &quot;</span><span style="color:#a3be8c;">2021</span><span>&quot;
+</span><span>
+</span><span>[lib]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">sum_squares</span><span>&quot;
+</span><span style="color:#bf616a;">crate-type </span><span>= [&quot;</span><span style="color:#a3be8c;">cdylib</span><span>&quot;]
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">pyo3 </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.21</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">extension-module</span><span>&quot;] }
+</span></code></pre>
+<p>We also need the <code>cdylib</code> crate type to create a shared library that can be loaded by Python (so/.dylib/.dll files, <code>.so</code> for Unix, <code>.dll</code> for Windows).</p>
+<p>Next, we update the <code>src/lib.rs</code> file to include a simple function that sums the squares of two numbers:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>pyo3::prelude::*;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">pyfunction</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">sum_of_squares</span><span>(</span><span style="color:#bf616a;">n</span><span>: </span><span style="color:#b48ead;">u64</span><span>) -&gt; </span><span style="color:#b48ead;">u64 </span><span>{
+</span><span>    (</span><span style="color:#d08770;">1</span><span>..=n).</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">x</span><span>| x * x).</span><span style="color:#96b5b4;">sum</span><span>()
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">pymodule</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">sum_squares</span><span>(</span><span style="color:#bf616a;">_py</span><span>: Python, </span><span style="color:#bf616a;">m</span><span>: &amp;PyModule) -&gt; PyResult&lt;()&gt; {
+</span><span>    m.</span><span style="color:#96b5b4;">add_function</span><span>(wrap_pyfunction!(sum_of_squares, m)?)?;
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<p>At a high level:</p>
+<ul>
+<li>The <code>#[pyfunction]</code> attribute is used to mark the function as a Python function.</li>
+<li>The <code>#[pymodule]</code> attribute is used to mark the module as a Python module.</li>
+<li>The <code>m.add_function</code> method is used to add the <code>sum_of_squares</code> function to the module.</li>
+<li>The <code>wrap_pyfunction!</code> macro is used to wrap the Rust function in a Python function.</li>
+<li>The <code>Python</code> and <code>PyModule</code> types are used to interact with the Python runtime.</li>
+</ul>
+<p>Some Rust syntax I am learning about:</p>
+<ul>
+<li>We use the <code>use</code> statement to import the <code>pyo3::prelude</code> module, which contains common types and traits used in PyO3.</li>
+<li>The <code>sum_of_squares</code> function calculates the sum of squares of numbers from 1 to <code>n</code> using the <code>..=</code> operator (<code>=</code> is including the upper bound) to create a range and the <code>map</code> and <code>sum</code> methods to calculate the sum of squares,</li>
+<li>The function receives a single argument <code>n</code> of type <code>u64</code> and returns a single value of type <code>u64</code>. Unlike Python's optional type hints, Rust's type hints are mandatory.</li>
+<li>The <code>PyResult</code> in the <code>sum_squares</code> function signature is the return type of functions that can return errors. This is needed because the <code>add_function</code> method can return an error. The <code>?</code> operator is used to propagate the error if it occurs.</li>
+<li>The <code>Ok(())</code> expression is used to return a successful result. () is the unit type, which is similar to void in other languages.</li>
+</ul>
+<h2 id="create-a-python-package">Create a Python package</h2>
+<p>First make a virtual environment, enable it, and install the <code>maturin</code> package:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">python -m</span><span> venv venv
+</span><span style="color:#96b5b4;">source</span><span> venv/bin/activate
+</span><span style="color:#bf616a;">pip</span><span> install maturin
+</span></code></pre>
+<p>Normally you would run <code>maturin init</code> to create a new Python package, but in this case we already have a Cargo project, so we can skip this step.</p>
+<p>Let's build the Python package using Maturin:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">maturin</span><span> develop
+</span></code></pre>
+<p>It worked but I did get this warning:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">warning:</span><span> use of deprecated method `</span><span style="color:#bf616a;">pyo3::deprecations::GilRefs::</span><span>&lt;T&gt;::function_arg`: use `&amp;</span><span style="color:#bf616a;">Bound</span><span>&lt;&#39;</span><span style="color:#a3be8c;">_, T&gt;` instead for this function argument
+</span></code></pre>
+<p>To fix this error, I updated the function signature to use <code>&amp;Bound&lt;'_, PyModule&gt;</code> instead of <code>&amp;PyModule</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>...
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">sum_squares</span><span>(</span><span style="color:#bf616a;">m</span><span>: &amp;Bound&lt;&#39;_, PyModule&gt;) -&gt; PyResult&lt;()&gt; {
+</span><span>...
+</span></code></pre>
+<p>After that change, I ran <code>maturin develop</code> again and the warning was gone:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> maturin develop
+</span><span>
+</span><span style="color:#bf616a;">🔗</span><span> Found pyo3 bindings
+</span><span style="color:#bf616a;">🐍</span><span> Found CPython 3.11 at /Users/bbelderbos/code/rust/pyo3/sum_squares/venv/bin/python
+</span><span>    </span><span style="color:#bf616a;">Finished </span><span>`</span><span style="color:#bf616a;">dev</span><span>` profile </span><span style="color:#b48ead;">[</span><span>unoptimized + debuginfo</span><span style="color:#b48ead;">]</span><span> target(s) </span><span style="color:#bf616a;">in</span><span> 0.07s
+</span><span style="color:#bf616a;">📦</span><span> Built wheel for CPython 3.11 to /var/folders/jl/cfhvw0nj11n1496hk7vqhw_r0000gn/T/.tmp5qSsw8/sum_squares-0.1.0-cp311-cp311-macosx_10_12_x86_64.whl
+</span><span style="color:#bf616a;">✏️</span><span>  Setting installed package as editable
+</span><span style="color:#bf616a;">🛠</span><span> Installed sum_squares-0.1.0
+</span></code></pre>
+<p>I can now see the shared library (.so file) in my virtual environment:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> ls</span><span style="color:#bf616a;"> -lrth</span><span> venv/lib/python3.11/site-packages/sum_squares
+</span><span style="color:#bf616a;">total</span><span> 1936
+</span><span style="color:#bf616a;">-rw-r--r--@</span><span> 1 bbelderbos  staff   127B Jun  4 12:59 __init__.py
+</span><span style="color:#bf616a;">-rwxr-xr-x@</span><span> 1 bbelderbos  staff   961K Jun  4 12:59 sum_squares.cpython-311-darwin.so
+</span><span style="color:#bf616a;">drwxr-xr-x@</span><span> 3 bbelderbos  staff    96B Jun  4 12:59 __pycache__
+</span></code></pre>
+<p>And I can import it in the Python REPL:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>&gt;&gt;&gt; </span><span style="color:#b48ead;">import </span><span>sum_squares
+</span><span>&gt;&gt;&gt; sum_squares.</span><span style="color:#bf616a;">sum_of_squares</span><span>(</span><span style="color:#d08770;">5</span><span>)
+</span><span style="color:#d08770;">55
+</span></code></pre>
+<p>That's it! We have successfully built a Python package with Rust code using PyO3 and Maturin.</p>
+<p>I have not pushed one to PyPI, but you can do that by running <code>maturin publish</code>. I will blog here when I have done that for a real project ...</p>
+<p>Lastly, to see how it performs vs some Python code, I created a <code>test.py</code> file:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">import </span><span>time
+</span><span>
+</span><span style="color:#b48ead;">from </span><span>sum_squares </span><span style="color:#b48ead;">import </span><span>sum_of_squares
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">sum_of_squares_py</span><span>(</span><span style="color:#bf616a;">n</span><span>):
+</span><span>    </span><span style="color:#b48ead;">return </span><span style="color:#96b5b4;">sum</span><span>(x * x </span><span style="color:#b48ead;">for </span><span>x </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">range</span><span>(</span><span style="color:#d08770;">1</span><span>, n + </span><span style="color:#d08770;">1</span><span>))
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">if </span><span>__name__ == &quot;</span><span style="color:#a3be8c;">__main__</span><span>&quot;:
+</span><span>    n = </span><span style="color:#d08770;">10</span><span>**</span><span style="color:#d08770;">6
+</span><span>
+</span><span>    start_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    result = </span><span style="color:#bf616a;">sum_of_squares_py</span><span>(n)
+</span><span>    end_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Python result: </span><span>{result}&quot;)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Python execution time: </span><span>{end_time - start_time</span><span style="color:#d08770;">:.6f</span><span>}</span><span style="color:#a3be8c;"> seconds</span><span>&quot;)
+</span><span>
+</span><span>    start_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    result = </span><span style="color:#bf616a;">sum_of_squares</span><span>(n)
+</span><span>    end_time = time.</span><span style="color:#bf616a;">time</span><span>()
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Rust result: </span><span>{result}&quot;)
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Rust execution time: </span><span>{end_time - start_time</span><span style="color:#d08770;">:.6f</span><span>}</span><span style="color:#a3be8c;"> seconds</span><span>&quot;)
+</span></code></pre>
+<p>Running it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> python test.py
+</span><span style="color:#bf616a;">Python</span><span> result: 333333833333500000
+</span><span style="color:#bf616a;">Python</span><span> execution time: 0.066308 seconds
+</span><span style="color:#bf616a;">Rust</span><span> result: 333333833333500000
+</span><span style="color:#bf616a;">Rust</span><span> execution time: 0.023685 seconds
+</span></code></pre>
+<p>Nice, the Rust implementation is about 3x faster than the Python implementation. But that's not the point of this article, the point is to show you how to run Rust code in Python which opens up exciting new opportunities for performance improvements in your Python code. 😍 📈</p>
+<p>This is how Pydantic, the data validation library, is speeding up its codebase I believe. 😎</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this article, we learned how to run Rust code in Python using PyO3 and Maturin. We created a new Rust library with a simple function that sums the squares of two numbers, built a Python package using Maturin, and tested the performance of the Rust implementation against a Python implementation.</p>
+<p>There is a lot more to learn about PyO3 and Maturin, and Rust in general.</p>
+<p>Check out the <a href="https://pyo3.rs/v0.21.2/">PyO3 documentation</a> and the <a href="https://github.com/PyO3/maturin">Maturin documentation</a> for more information.</p>
+<p>What Python code do you want to speed up with Rust?</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/cargo-like-poetry/">Rust Cargo is a lot like Python Poetry 😍</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-03
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>When you start working in Rust, you'll quickly learn about Cargo and love it!</p>
+<p>It's a package manager and build system that helps you manage your Rust projects.</p>
+<p>Coming from Python, I found it very similar to Poetry, <a href="https://www.youtube.com/watch?v=G-OAVLBFxbw">which is a great tool as well</a>).</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Dependency management: <code>Cargo.toml</code></li>
+<li>Virtual environments: <code>Cargo.toml</code> and <code>Cargo.lock</code></li>
+<li>Lock files: <code>Cargo.lock</code></li>
+<li>Build system: <code>cargo build</code>, <code>cargo run</code>, <code>cargo test</code>, <code>cargo doc</code></li>
+<li>Publishing to crates.io: <code>cargo publish</code></li>
+</ul>
+<h2 id="cargo-vs-poetry-commands-cheat-sheet">Cargo vs Poetry Commands Cheat Sheet</h2>
+<p>Here's a quick comparison of some common commands in Cargo and Poetry. Notice how similar they are! 😎</p>
+<table><thead><tr><th>Action</th><th>Cargo Command</th><th>Poetry Command</th></tr></thead><tbody>
+<tr><td>Initialize a project</td><td><code>cargo new project_name</code></td><td><code>poetry new project_name</code></td></tr>
+<tr><td>Initialize in current dir</td><td><code>cargo init</code></td><td><code>poetry init</code></td></tr>
+<tr><td>Add a dependency</td><td><code>cargo add dependency_name</code></td><td><code>poetry add dependency_name</code></td></tr>
+<tr><td>Remove a dependency</td><td><code>cargo remove dependency_name</code></td><td><code>poetry remove dependency_name</code></td></tr>
+<tr><td>Update dependencies</td><td><code>cargo update</code></td><td><code>poetry update</code></td></tr>
+<tr><td>List dependencies</td><td><code>cargo tree</code></td><td><code>poetry show --tree</code></td></tr>
+<tr><td>Build the project</td><td><code>cargo build</code></td><td><code>poetry build</code></td></tr>
+<tr><td>Run the project</td><td><code>cargo run</code></td><td><code>poetry run python your_script.py</code></td></tr>
+<tr><td>Run tests</td><td><code>cargo test</code></td><td><code>poetry run pytest</code> (requires pytest)</td></tr>
+<tr><td>Generate documentation</td><td><code>cargo doc</code></td><td>Not built-in, use a tool liked Sphinx</td></tr>
+<tr><td>Build release binary</td><td><code>cargo build --release</code></td><td><code>poetry build</code> (for packaging)</td></tr>
+<tr><td>Run release binary</td><td><code>cargo run --release</code></td><td>Not directly supported</td></tr>
+<tr><td>Format code</td><td><code>cargo fmt</code></td><td><code>poetry run black .</code> (requires black)</td></tr>
+<tr><td>Lint code</td><td><code>cargo clippy</code></td><td><code>poetry run flake8 .</code> (requires flake8)</td></tr>
+</tbody></table>
+<p>One cool thing I noticed is that generating docs and testing is built-in in Cargo, while in Python you need to use external tools like Sphinx and pytest.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>If you love Poetry, you'll love Cargo too! They are both great tools for managing your projects and dependencies.</p>
+<p>Funny enough, in Python I actually stopped using <code>poetry</code> in favor of <code>venv</code> and <code>pip</code> because I felt this was faster and all I needed. But in Rust so far I feel Cargo is more integrated and I am using it more (well, don't have much choice, have I? 😅).</p>
+<p>I think it's mainly because I don't have to deal with virtual environments in Rust, which is a big plus. Also it infers the binary name from the project name, which is nice. 📈</p>
+<p>This post was just to quickly compare Cargo and Poetry and show you how similar they are. I hope you found it helpful! 😊</p>
+<p>I am sure I will do more in-depth posts on Cargo in the future. Stay tuned! 🚀</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/blog-with-zola/">How to blog with Zola, a Rust-based static site generator</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-02
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Here is how I am running this blog using Zola.</p>
+<h2 id="what-is-zola">What is Zola?</h2>
+<blockquote>
+<p>Zola is a static site generator (SSG), similar to Hugo, Pelican, and Jekyll (for a comprehensive list of SSGs, please see Jamstack). It is written in Rust and uses the Tera template engine, which is similar to Jinja2, Django templates, Liquid, and Twig. <a href="https://www.getzola.org/documentation/getting-started/overview/#markdown-content">source</a></p>
+</blockquote>
+<h2 id="installation">Installation</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">brew</span><span> install zola  </span><span style="color:#65737e;"># cargo would not work for me
+</span><span style="color:#bf616a;">zola</span><span> init .  </span><span style="color:#65737e;"># I had a repo, else: zola init myblog
+</span><span style="color:#65737e;"># follow the instructions
+</span><span style="color:#65737e;"># add a theme (https://www.getzola.org/themes/)
+</span><span style="color:#bf616a;">git</span><span> submodule add https://github.com/pawroman/zola-theme-terminimal themes/terminimal
+</span><span style="color:#bf616a;">zola</span><span> create post &quot;</span><span style="color:#a3be8c;">My First Post</span><span>&quot;
+</span></code></pre>
+<p>Maybe something more but these were the main steps.</p>
+<h2 id="configuration">Configuration</h2>
+<p>This is my <code>config.toml</code>:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">base_url </span><span>= &quot;</span><span style="color:#a3be8c;">https://rsbit.es</span><span>&quot;
+</span><span style="color:#bf616a;">title </span><span>= &quot;</span><span style="color:#a3be8c;">Bite‑sized Rust learning, powered by Pybites</span><span>&quot;
+</span><span style="color:#bf616a;">description </span><span>= &quot;</span><span style="color:#a3be8c;">Documenting the journey of a Pythonista learning Rust with bite-sized posts.</span><span>&quot;
+</span><span style="color:#bf616a;">theme </span><span>= &quot;</span><span style="color:#a3be8c;">terminimal</span><span>&quot;
+</span><span style="color:#bf616a;">compile_sass </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">build_search_index </span><span>= </span><span style="color:#d08770;">false
+</span><span style="color:#bf616a;">generate_feed </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">feed_filename </span><span>= &quot;</span><span style="color:#a3be8c;">atom.xml</span><span>&quot;
+</span><span>
+</span><span>[markdown]
+</span><span style="color:#bf616a;">highlight_code </span><span>= </span><span style="color:#d08770;">true
+</span><span>
+</span><span>[extra]
+</span><span style="color:#bf616a;">logo_text </span><span>= &quot;</span><span style="color:#a3be8c;">Bite-sized Rust</span><span>&quot;
+</span><span style="color:#bf616a;">logo_home_link </span><span>= &quot;</span><span style="color:#a3be8c;">/</span><span>&quot;
+</span><span style="color:#bf616a;">author </span><span>= &quot;</span><span style="color:#a3be8c;">Bob Belderbos</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Whether to show links to earlier and later posts
+</span><span style="color:#65737e;"># on each post page (defaults to true).
+</span><span style="color:#bf616a;">enable_post_view_navigation </span><span>= </span><span style="color:#d08770;">true
+</span><span>
+</span><span style="color:#65737e;"># The text shown at the bottom of a post,
+</span><span style="color:#65737e;"># before earlier/later post links.
+</span><span style="color:#65737e;"># Defaults to &quot;Thanks for reading! Read other posts?&quot;
+</span><span style="color:#bf616a;">post_view_navigation_prompt </span><span>= &quot;</span><span style="color:#a3be8c;">Read more</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># - &quot;combined&quot; -- combine like so: &quot;page_title | main_title&quot;,
+</span><span style="color:#65737e;">#                 or if page_title is not defined or empty, fall back to `main_title`
+</span><span style="color:#bf616a;">page_titles </span><span>= &quot;</span><span style="color:#a3be8c;">combined</span><span>&quot;
+</span></code></pre>
+<ul>
+<li><code>base_url</code> is important for the theme to work correctly (I forgot to update https://example.com at the start and it broke the theme's styling)</li>
+<li><code>theme</code> is the name of the theme folder in <code>themes/</code></li>
+<li><code>compile_sass</code> - Sass compilation is required (see <a href="https://github.com/pawroman/zola-theme-terminimal">theme docs</a>)</li>
+<li>the settings under <code>[extra]</code> are theme specific.</li>
+</ul>
+<h2 id="writing">Writing</h2>
+<p>For each new post, you create a new markdown file in the <code>content</code> folder. The file name should be the title of the post with dashes instead of spaces.</p>
+<p>The file should start with a TOML front matter block, which is the metadata for the post. Here is an example:</p>
+<pre data-lang="markdown" style="background-color:#2b303b;color:#c0c5ce;" class="language-markdown "><code class="language-markdown" data-lang="markdown"><span>+++
+</span><span>title = &quot;How to set up Zola&quot;
+</span><span>date = 2024-06-02
+</span><span>+++
+</span></code></pre>
+<p>If you want to add more metadata, you can add it in this front matter block. If you don't want to publish the post yet, you can add <code>draft = true</code> for example.</p>
+<p>Then write the content in markdown beneath this block.</p>
+<p>To make a new post I made a quick shell script:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cat new_post.sh
+</span><span style="color:#65737e;">#!/bin/bash
+</span><span>
+</span><span style="color:#65737e;"># Prompt for the slug and title
+</span><span style="color:#96b5b4;">read </span><span style="color:#bf616a;">-p </span><span>&quot;</span><span style="color:#a3be8c;">Enter the slug (e.g., my-new-post): </span><span>&quot; slug
+</span><span style="color:#96b5b4;">read </span><span style="color:#bf616a;">-p </span><span>&quot;</span><span style="color:#a3be8c;">Enter the title: </span><span>&quot; title
+</span><span>
+</span><span style="color:#65737e;"># Get today&#39;s date
+</span><span style="color:#bf616a;">date</span><span>=$</span><span style="color:#a3be8c;">(</span><span style="color:#bf616a;">date</span><span style="color:#a3be8c;"> +</span><span>&quot;</span><span style="color:#a3be8c;">%Y-%m-%d</span><span>&quot;</span><span style="color:#a3be8c;">)
+</span><span>
+</span><span style="color:#65737e;"># Define the file path
+</span><span style="color:#bf616a;">file_path</span><span>=&quot;</span><span style="color:#a3be8c;">content/</span><span>$</span><span style="color:#a3be8c;">{</span><span style="color:#bf616a;">slug</span><span style="color:#a3be8c;">}.md</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Create the new markdown file with front matter
+</span><span style="color:#bf616a;">cat </span><span>&lt;&lt;</span><span style="color:#b48ead;">EOL </span><span>&gt; $</span><span style="color:#bf616a;">file_path
+</span><span style="color:#a3be8c;">+++
+</span><span style="color:#a3be8c;">title = &quot;</span><span>$</span><span style="color:#a3be8c;">{</span><span style="color:#bf616a;">title</span><span style="color:#a3be8c;">}&quot;
+</span><span style="color:#a3be8c;">date = </span><span>$</span><span style="color:#a3be8c;">{</span><span style="color:#bf616a;">date</span><span style="color:#a3be8c;">}
+</span><span style="color:#a3be8c;">+++
+</span><span style="color:#a3be8c;">
+</span><span style="color:#b48ead;">EOL
+</span><span>
+</span><span style="color:#96b5b4;">echo </span><span>&quot;</span><span style="color:#a3be8c;">New post created at </span><span>$</span><span style="color:#bf616a;">file_path</span><span>&quot;
+</span></code></pre>
+<h2 id="building">Building</h2>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">zola</span><span> build
+</span></code></pre>
+<p>This will generate the static site in the <code>public</code> folder.</p>
+<p>Then run a local server to preview the site:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">zola</span><span> serve
+</span></code></pre>
+<p>For convenience I made a Makefile with some aliases including a combined <code>dev</code> command:</p>
+<pre data-lang="makefile" style="background-color:#2b303b;color:#c0c5ce;" class="language-makefile "><code class="language-makefile" data-lang="makefile"><span style="color:#8fa1b3;">.PHONY</span><span>: </span><span style="color:#a3be8c;">build serve dev clean checkout-theme
+</span><span>
+</span><span style="color:#8fa1b3;">build</span><span>:
+</span><span>	</span><span style="color:#bf616a;">zola</span><span> build
+</span><span>
+</span><span style="color:#8fa1b3;">serve</span><span>:
+</span><span>	</span><span style="color:#bf616a;">zola</span><span> serve
+</span><span>
+</span><span style="color:#8fa1b3;">dev</span><span>:
+</span><span>	</span><span style="color:#bf616a;">zola</span><span> build &amp;&amp; </span><span style="color:#bf616a;">zola</span><span> serve
+</span><span>
+</span><span style="color:#8fa1b3;">clean</span><span>:
+</span><span>	</span><span style="color:#bf616a;">rm -rf</span><span> public
+</span><span>
+</span><span style="color:#8fa1b3;">checkout-theme</span><span>:
+</span><span>	</span><span style="color:#bf616a;">git</span><span> submodule update</span><span style="color:#bf616a;"> --init
+</span></code></pre>
+<p><code>checkout-theme</code> I added later when I git clone'd this repo on a new machine and detected that the theme repo was not cloned automatically.</p>
+<h2 id="deployment">Deployment</h2>
+<p>I use GitHub Actions to build and deploy the site (so nice!)</p>
+<p>Here is the workflow file (<code>.github/workflows/deploy.yml</code>):</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#65737e;"># On every push this script is executed
+</span><span style="color:#d08770;">on</span><span>: </span><span style="color:#a3be8c;">push
+</span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and deploy GH Pages
+</span><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">build</span><span>:
+</span><span>    </span><span style="color:#bf616a;">runs-on</span><span>: </span><span style="color:#a3be8c;">ubuntu-latest
+</span><span>    </span><span style="color:#bf616a;">if</span><span>: </span><span style="color:#a3be8c;">github.ref == &#39;refs/heads/main&#39;
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Checkout main
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/checkout@v4
+</span><span>      - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Build and deploy
+</span><span>        </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">shalzz/zola-deploy-action@v0.18.0
+</span><span>        </span><span style="color:#bf616a;">env</span><span>:
+</span><span>          </span><span style="color:#bf616a;">PAGES_BRANCH</span><span>: </span><span style="color:#a3be8c;">gh-pages
+</span><span>          </span><span style="color:#bf616a;">GITHUB_TOKEN</span><span>: </span><span style="color:#a3be8c;">${{ secrets.GITHUB_TOKEN }}
+</span></code></pre>
+<p>This workflow will build the site and push the changes to the <code>gh-pages</code> branch upon every push to the <code>main</code> branch.</p>
+<ul>
+<li>
+<p>Interestingly ChatGPT overcomplicated this, but I found in Zola's docs that you can actually use shalzz/zola-deploy-action. I only had to update from 0.17.x to 0.18.x to make it work.</p>
+</li>
+<li>
+<p>You don't have to setup the <code>secrets.GITHUB_TOKEN</code> as it is a default secret provided by GitHub if you use your action for the same repository.</p>
+</li>
+<li>
+<p>I did have to update the &quot;Workflow permissions&quot; under GitHub's repo Settings &gt; Actions, to enable &quot;Read and write permissions&quot; (<em>Workflows have read and write permissions in the repository for all scopes.</em>), otherwise the action would fail.</p>
+</li>
+<li>
+<p>I also had to set &quot;Build and deployment&quot; to &quot;Deploy form a branch&quot; (under Settings &gt; Pages) and set the branch to <code>gh-pages</code> + <code>/ (root)</code>.</p>
+</li>
+</ul>
+<h2 id="static-files">Static files</h2>
+<p>I did hit one issue when showing images in the post.</p>
+<p>I thought this would work:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>![overview mind map of how PyO3 and Maturin work to run Rust code in Python](/rust-in-python.png)
+</span></code></pre>
+<p>Having the image in my <code>static/</code> folder, but it didn't show up on the live site.</p>
+<p>I played with the path making it relative and absolute, but in the end, I had to use the <code>image()</code> shortcode with the <code>src</code> attribute pointing to the image in the <code>static/</code> folder (just the file name, not the full path). See <a href="https://github.com/pawroman/zola-theme-terminimal?tab=readme-ov-file#shortcodes">theme docs</a> as well.</p>
+<h2 id="add-pages">Add pages</h2>
+<p>This was a bit less straight-forward so I am adding it here as an extra. See <a href="https://github.com/bbelderbos/rust-blog/commit/29648aefb30b46a0dab7d110d833d65370c26964">commit</a>:</p>
+<ul>
+<li>I created a <code>menu_items</code> array in the <code>config.toml</code> with the pages I wanted to add to the menu.</li>
+<li>I created a <code>content/pages</code> folder and added a markdown file for each page using existing templates from the theme (about and archive).</li>
+<li>I also made an <code>content/pages/_index.md</code>, I cannot 100% remember but I think it would not compile without it.</li>
+<li>I could move the post entries to a new <code>content/posts</code> folder (and use the <code>content/posts/_index.md</code> to list the posts), but I decided to keep them in the root <code>content</code> folder for now.</li>
+</ul>
+<p>OK that seems easier than it was, but I had to try a few things to get it right. 😅</p>
+<h2 id="add-search">Add search</h2>
+<p>You can enable search in the theme by setting <code>build_search_index = true</code> in the <code>config.toml</code>. This will generate <code>search_index.json</code> and <code>elasticlunr.min.js</code> files in the <code>public</code> folder upon build.</p>
+<p><code>elasticlunr.js</code> is a lightweight full-text search engine in JavaScript for browser search. The search index is generated from the content of the site upon build, the index is stored in mentioned <code>search_index.json</code> file.</p>
+<p><a href="https://github.com/bbelderbos/rust-blog/commit/304d708a9454ad5d9bf43e58387803e5594c0f86">Here</a> is the commit I made to get search working on this site:</p>
+<ul>
+<li>
+<p>I created a <code>templates/search.html</code> file with the search form and results.</p>
+</li>
+<li>
+<p>It contains the necessary JavaScript to make this work. First we define an <code>idx</code> constant: <code>const idx = elasticlunr.Index.load(window.searchIndex);</code> which we can then use to search the index (<code>idx.search(query)</code>). It returns an array of search results which we then render in the DOM.</p>
+</li>
+<li>
+<p>I added some CSS to style the search results and added the page to the navigation menu with <code>{name = &quot;Search&quot;, url = &quot;$BASE_URL/pages/search&quot;},</code> in the <code>config.toml</code>.</p>
+</li>
+</ul>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/search-example1.png" alt="doing a search on this website" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/search-example2.png" alt="another search" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<h2 id="add-a-custom-domain">Add a custom domain</h2>
+<p>Apart from mentioned <code>base_url</code> in the <code>config.toml</code>, you also need to add a <code>CNAME</code> file in the <code>static/</code> folder with the domain you want to use, e.g.:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cat static/CNAME
+</span><span style="color:#bf616a;">rsbit.es
+</span></code></pre>
+<p>Then under the repo's Settings &gt; GitHub Pages, you can add the custom domain. You can also turn on HTTPS there.</p>
+<p>Lastly you need to update your DNS settings of your domain provider to point to GitHub's IP addresses, see <a href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site">GitHub's docs</a>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Zola is a great SSG so far, I am happy with the setup. I like the simplicity of the tool and the speed of the generated site (Rust 📈 -&gt; <code>zola build</code> -&gt; <code>Done in 91ms.</code> for me) and automatic deployment with GitHub Actions. 😍</p>
+<p>If you're looking for a Rust based SSG solution I hope this post will help you with the setup. 📈</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/my-first-post/">Hello World</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-01
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Welcome to my first blog post on <em>A Pythonista Learning Rust</em> (update: I changed it to a more Pybites-like name now in 2025: rsbit.es): where I'll share my journey of learning Rust as a Python developer.</p>
+<h2 id="why-rust">Why Rust?</h2>
+<p>I've been a Python developer for a while now, and I love the language. However, I've been hearing a lot about Rust lately and wanted to explore it further. Rust is known for its performance, safety, and concurrency support, things I have not learned much about so far and are fascinating.</p>
+<p>Popular projects in the Python space that leverage Rust include <a href="https://pydantic-docs.helpmanual.io/">Pydantic</a> and <a href="https://github.com/astral-sh/ruff">Ruff</a>. We recently had <a href="https://www.youtube.com/watch?v=KZHvs_j6fuA">Samuel Colvin</a> (creator of Pydantic) on our Pybites podcast and at Pycon 2024 I saw Charlie Marsh talk about how Rust makes Ruff so fast. This inspired me to dive into Rust.</p>
+<h2 id="learning-rust">Learning Rust</h2>
+<p>As per our <a href="https://pybit.es">Pybites</a> motto you have to build projects and share your learning to get the most benefit, hence this blog.</p>
+<p>Of course I will heavily use AI tools, most notably <a href="https://copilot.github.com">Co-Pilot</a> and <a href="http://chatgpt.com">ChatGPT</a> to help me learn and write Rust code. I will also share how this process goes ...</p>
+<p>And lastly shout-out to Jim Hodapp who has a community called <a href="https://github.com/Jim-Hodapp-Coaching">Rust Never Sleeps</a>. When learning new skills it's important to join a community and his is very welcoming and helpful. For Python I recommend you join us <a href="https://pybites.circle.so/">on Circle</a>.</p>
+<h2 id="tools-for-this-blog">Tools for this blog</h2>
+<p>To keep it Rust I use <a href="https://www.getzola.org">Zola</a> to generate this blog. It's a static site generator written in Rust. The nice dark theme you're seeing here is <a href="https://github.com/pawroman/zola-theme-terminimal">Terminimal</a> which goes well with my love for the terminal.</p>
+<p>I will do another post how I set this up with GitHub Actions to deploy it to <a href="https://pages.github.com">GitHub Pages</a>.</p>
+<p>I am looking forward to learning a lot of Rust and see how I can speed up some Python with it.</p>
+<p>Even if I keep doing most of my coding in Python, I expect that learning Rust will make me a better programmer.</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/page/6/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Newer posts</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

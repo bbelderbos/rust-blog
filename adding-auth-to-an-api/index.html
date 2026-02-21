@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Adding API Key Authentication to a Rust CLI | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Adding API Key Authentication to a Rust CLI | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/adding-auth-to-an-api/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Adding API Key Authentication to a Rust CLI | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/adding-auth-to-an-api/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/adding-auth-to-an-api/">Adding API Key Authentication to a Rust CLI</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-21
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Our <a href="https://github.com/PyBites-Open-Source/pybites_rust">exercise downloader</a> started as a simple tool that fetched free exercises from an API.</p>
+<p>When we added <a href="https://rustplatform.com">premium exercises</a> behind authentication this week, I needed to add API key support — without breaking the free tier experience.</p>
+<h2 id="the-design">The Design</h2>
+<p>The requirements were straightforward:</p>
+<ul>
+<li>No API key? Download free exercises (existing behavior, unchanged)</li>
+<li>API key set? Send it as a header, get all exercises</li>
+<li>Key comes from an environment variable (<code>PYBITES_API_KEY</code>)</li>
+</ul>
+<p>No config files, no interactive prompts, no flags. Just an env var.</p>
+<h2 id="reading-the-key">Reading the Key</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::env;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> api_key = env::var(&quot;</span><span style="color:#a3be8c;">PYBITES_API_KEY</span><span>&quot;).</span><span style="color:#96b5b4;">ok</span><span>();
+</span></code></pre>
+<p><code>env::var</code> returns <code>Result&lt;String, VarError&gt;</code>. Calling <code>.ok()</code> converts it to <code>Option&lt;String&gt;</code> — <code>Some(&quot;the-key&quot;)</code> if set, <code>None</code> if not. No error handling needed because a missing key is a valid state, not an error.</p>
+<p>Coming from Python where you'd write <code>os.environ.get(&quot;KEY&quot;)</code> and get <code>None</code> back, I found this two-step dance surprising at first. But it makes sense — Rust forces you to acknowledge that reading an env var can fail, then lets you explicitly opt into treating &quot;missing&quot; as <code>None</code> (related exercise: <a href="https://rustplatform.com/option-handling">Option Handling</a>).</p>
+<h2 id="conditional-header">Conditional Header</h2>
+<p>The <code>build_request</code> function attaches the header only when a key exists:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">build_request</span><span>(
+</span><span>    </span><span style="color:#bf616a;">client</span><span>: &amp;reqwest::blocking::Client,
+</span><span>    </span><span style="color:#bf616a;">url</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>,
+</span><span>    </span><span style="color:#bf616a;">api_key</span><span>: Option&lt;&amp;</span><span style="color:#b48ead;">str</span><span>&gt;,
+</span><span>) -&gt; reqwest::blocking::RequestBuilder {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> request = client.</span><span style="color:#96b5b4;">get</span><span>(url);
+</span><span>    </span><span style="color:#b48ead;">if let </span><span>Some(key) = api_key {
+</span><span>        request = request.</span><span style="color:#96b5b4;">header</span><span>(&quot;</span><span style="color:#a3be8c;">X-API-Key</span><span>&quot;, key);
+</span><span>    }
+</span><span>    request
+</span><span>}
+</span></code></pre>
+<p>The function takes <code>Option&lt;&amp;str&gt;</code> rather than <code>Option&lt;String&gt;</code> — the caller passes <code>api_key.as_deref()</code> to borrow rather than move the value. This keeps ownership with <code>main()</code> so the key can be used elsewhere (like in status messages).</p>
+<p>I initially passed <code>Option&lt;String&gt;</code> and hit a &quot;value used after move&quot; error. In Python you never think about this — everything is a reference. In Rust, I learned to reach for borrows (<code>&amp;str</code>) by default and only pass owned data when the function needs to keep it (learn about Ownership and Borrowing in <a href="https://rustplatform.com/track/ownership/">our exercise track</a>).</p>
+<h2 id="user-feedback">User Feedback</h2>
+<p>A small touch that matters in CLIs: tell the user what mode they're in.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">auth_status_message</span><span>(</span><span style="color:#bf616a;">api_key</span><span>: &amp;Option&lt;String&gt;) -&gt; &amp;</span><span style="color:#b48ead;">&#39;static str </span><span>{
+</span><span>    </span><span style="color:#b48ead;">if</span><span> api_key.</span><span style="color:#96b5b4;">is_some</span><span>() {
+</span><span>        &quot;</span><span style="color:#a3be8c;">Authenticating with API key</span><span>&quot;
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        &quot;</span><span style="color:#a3be8c;">No API key set (PYBITES_API_KEY), downloading free exercises only</span><span>&quot;
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>The message includes the env var name so users know exactly what to set if they want premium exercises.</p>
+<p>One thing I learned here: idiomatic Rust prefers <code>Option&lt;&amp;str&gt;</code> over <code>&amp;Option&lt;String&gt;</code> in function signatures (clippy will even flag it). A cleaner version would be:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">auth_status_message</span><span>(</span><span style="color:#bf616a;">api_key</span><span>: Option&lt;&amp;</span><span style="color:#b48ead;">str</span><span>&gt;) -&gt; &amp;</span><span style="color:#b48ead;">&#39;static str </span><span>{
+</span><span>    </span><span style="color:#b48ead;">if</span><span> api_key.</span><span style="color:#96b5b4;">is_some</span><span>() {
+</span><span>        &quot;</span><span style="color:#a3be8c;">Authenticating with API key</span><span>&quot;
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        &quot;</span><span style="color:#a3be8c;">No API key set (PYBITES_API_KEY), downloading free exercises only</span><span>&quot;
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>The caller would pass <code>api_key.as_deref()</code> — the same pattern we used in <code>build_request</code>.</p>
+<h2 id="testing-without-a-server">Testing Without a Server</h2>
+<p>I learned that you don't need to make HTTP requests to test request construction. Build the request, inspect it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">test</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_build_request_without_api_key</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> client = reqwest::blocking::Client::new();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> request = </span><span style="color:#96b5b4;">build_request</span><span>(&amp;client, &quot;</span><span style="color:#a3be8c;">https://example.com/api/</span><span>&quot;, None);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> built = request.</span><span style="color:#96b5b4;">build</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    assert!(built.</span><span style="color:#96b5b4;">headers</span><span>().</span><span style="color:#96b5b4;">get</span><span>(&quot;</span><span style="color:#a3be8c;">X-API-Key</span><span>&quot;).</span><span style="color:#96b5b4;">is_none</span><span>());
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">test</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_build_request_with_api_key</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> client = reqwest::blocking::Client::new();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> request = </span><span style="color:#96b5b4;">build_request</span><span>(
+</span><span>        &amp;client,
+</span><span>        &quot;</span><span style="color:#a3be8c;">https://example.com/api/</span><span>&quot;,
+</span><span>        Some(&quot;</span><span style="color:#a3be8c;">test-key-123</span><span>&quot;),
+</span><span>    );
+</span><span>    </span><span style="color:#b48ead;">let</span><span> built = request.</span><span style="color:#96b5b4;">build</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    assert_eq!(
+</span><span>        built.</span><span style="color:#96b5b4;">headers</span><span>().</span><span style="color:#96b5b4;">get</span><span>(&quot;</span><span style="color:#a3be8c;">X-API-Key</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">to_str</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>(),
+</span><span>        &quot;</span><span style="color:#a3be8c;">test-key-123</span><span>&quot;
+</span><span>    );
+</span><span>}
+</span></code></pre>
+<p><code>RequestBuilder::build()</code> gives you the final <code>Request</code> object without sending it. You can assert on URL, method, headers — everything except the actual response.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul>
+<li>Use <code>env::var(&quot;KEY&quot;).ok()</code> to get an <code>Option&lt;String&gt;</code> — missing env vars aren't errors when they're optional</li>
+<li><code>Option&lt;&amp;str&gt;</code> in function signatures avoids unnecessary ownership transfer</li>
+<li><code>RequestBuilder::build()</code> lets you test HTTP request construction without making network calls</li>
+<li>Always tell the user what mode the CLI is operating in</li>
+</ul>
+<h2 id="the-open-source-side">The Open Source Side</h2>
+<p>This feature came out of iterating on the tool together with <a href="https://github.com/markgreene74">Giuseppe Cunsolo</a>, who originally built the CLI downloader. We added the auth support, full test coverage, and a CI gate that fails below 80% coverage (using <a href="https://github.com/xd009642/tarpaulin">tarpaulin</a>). Then we published it to <a href="https://crates.io">crates.io</a> so you can install it with a single command instead of cloning a repo.</p>
+<p>It reminded me how much you learn from open source collaboration — and how nice the Rust tooling is (no wonder <a href="https://docs.astral.sh/uv/">uv</a> got its inspiration from Cargo).</p>
+<h2 id="try-it-yourself">Try It Yourself</h2>
+<p>If you have a CLI that talks to an API, try adding optional authentication. The pattern is always the same: env var to <code>Option</code>, conditional header, clear status message.</p>
+<hr />
+<p>If you're a Pythonista curious about Rust, you'll feel right at home — <code>Option</code> is like Python's <code>Optional</code>, pattern matching replaces your <code>if/else</code> chains, and Cargo works like the beloved uv. Our <a href="https://rustplatform.com">exercises at rustplatform.com</a> are designed with that Python-to-Rust bridging in mind.</p>
+<p>Use the <a href="https://github.com/PyBites-Open-Source/pybites_rust">exercise downloader</a> to code locally — it's a real-world Rust CLI you can learn from too:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install pybites-rust-download
+</span><span style="color:#65737e;"># free exercises
+</span><span style="color:#bf616a;">pybites-rust-download
+</span><span style="color:#65737e;"># premium exercises with API key
+</span><span style="color:#bf616a;">PYBITES_API_KEY</span><span>=</span><span style="color:#a3be8c;">your_key </span><span style="color:#bf616a;">pybites-rust-download
+</span></code></pre>
+<p>Happy coding!</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/rust-no-none-crashes/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Rust Makes None.attribute Crashes Impossible — Your Code Won&#x27;t Even Compile</span>
+                        </a>
+                    </span>
+                
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

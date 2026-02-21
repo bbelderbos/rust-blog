@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Building a nice command-line interface with Clap | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Building a nice command-line interface with Clap | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/command-line-apps-with-clap/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Building a nice command-line interface with Clap | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/command-line-apps-with-clap/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/command-line-apps-with-clap/">Building a nice command-line interface with Clap</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-11
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Yesterday I wanted to improve the command-line of Pybites Search that which was pretty primitive:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#65737e;"># new code is in v0.5.0
+</span><span style="color:#bf616a;">$</span><span> git checkout v0.4.0
+</span><span style="color:#bf616a;">$</span><span> cargo build</span><span style="color:#bf616a;"> --release
+</span><span>   </span><span style="color:#bf616a;">Compiling</span><span> pybites-search v0.4.0 (/Users/bbelderbos/code/rust/pybites-search)
+</span><span>   </span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># old usage message
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch
+</span><span style="color:#bf616a;">Usage:</span><span> search &lt;search_term&gt; </span><span style="color:#b48ead;">[</span><span>&lt;content_type&gt;</span><span style="color:#b48ead;">] [</span><span>--title-only</span><span style="color:#b48ead;">]
+</span><span>
+</span><span style="color:#65737e;"># no help
+</span><span>
+</span><span style="color:#bf616a;">?127</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch</span><span style="color:#bf616a;"> --help
+</span><span style="color:#bf616a;">[bite]</span><span> Using argparse to interface with a grocery cart
+</span><span style="color:#bf616a;">https://codechalleng.es/bites/58
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># no version
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch</span><span style="color:#bf616a;"> --version
+</span><span>
+</span><span style="color:#65737e;"># no multiple search terms
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch grocery cart
+</span><span>
+</span><span style="color:#65737e;"># no short options
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch grocery</span><span style="color:#bf616a;"> -t
+</span><span>
+</span><span style="color:#65737e;"># not clear that the 2nd arg here is the content type
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (tags/v0.4.0) </span><span style="color:#bf616a;">$</span><span> ./target/release/psearch fastapi video
+</span><span style="color:#bf616a;">Pybites</span><span> podcast 151 - Mastering Open Source: The Journey to FastAPI Expertise, One Issue at a Time
+</span><span style="color:#bf616a;">https://www.youtube.com/watch?v</span><span>=</span><span style="color:#a3be8c;">pz2gzSgw7y8
+</span><span style="color:#bf616a;">...
+</span></code></pre>
+<p>I just read about <a href="https://docs.rs/clap/latest/clap/">Clap</a> in the <a href="https://www.oreilly.com/library/view/command-line-rust/9781098109424/">Command-line Rust book</a> and decided to give it a go.</p>
+<p>Here is the new version:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> cargo install pybites-search
+</span><span style="color:#bf616a;">...
+</span><span>     </span><span style="color:#bf616a;">Ignored</span><span> package `</span><span style="color:#bf616a;">pybites-search</span><span> v0.5.0` is already installed, use</span><span style="color:#bf616a;"> --force</span><span> to override
+</span><span>
+</span><span style="color:#65737e;"># using the installed binary
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> which psearch
+</span><span style="color:#bf616a;">/Users/bbelderbos/.cargo/bin/psearch
+</span><span>
+</span><span style="color:#65737e;"># version and help are supported now
+</span><span>
+</span><span style="color:#bf616a;">?1</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch</span><span style="color:#bf616a;"> --version
+</span><span style="color:#bf616a;">psearch</span><span> 0.5.0
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch</span><span style="color:#bf616a;"> --help
+</span><span style="color:#bf616a;">A</span><span> command-line search tool for Pybites content
+</span><span>
+</span><span style="color:#bf616a;">Usage:</span><span> psearch </span><span style="color:#b48ead;">[</span><span>OPTIONS</span><span style="color:#b48ead;">] [</span><span>SEARCH_TERMS</span><span style="color:#b48ead;">]</span><span>...
+</span><span>
+</span><span style="color:#bf616a;">Arguments:
+</span><span>  </span><span style="color:#bf616a;">[SEARCH_TERMS]...
+</span><span>
+</span><span style="color:#bf616a;">Options:
+</span><span>  </span><span style="color:#bf616a;">-c, --content-type </span><span>&lt;CONTENT_TYPE&gt;
+</span><span>  </span><span style="color:#bf616a;">-t, --title-only
+</span><span>  </span><span style="color:#bf616a;">-h, --help</span><span>                         Print help
+</span><span>  </span><span style="color:#bf616a;">-V, --version</span><span>                      Print version
+</span><span>
+</span><span style="color:#65737e;"># required search term argument
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch
+</span><span style="color:#bf616a;">Error:</span><span> At least one search term should be given.
+</span><span style="color:#bf616a;">A</span><span> command-line search tool for Pybites content
+</span><span>
+</span><span style="color:#bf616a;">Usage:</span><span> psearch </span><span style="color:#b48ead;">[</span><span>OPTIONS</span><span style="color:#b48ead;">] [</span><span>SEARCH_TERMS</span><span style="color:#b48ead;">]</span><span>...
+</span><span>
+</span><span style="color:#bf616a;">Arguments:
+</span><span>  </span><span style="color:#bf616a;">[SEARCH_TERMS]...
+</span><span>
+</span><span style="color:#bf616a;">Options:
+</span><span>  </span><span style="color:#bf616a;">-c, --content-type </span><span>&lt;CONTENT_TYPE&gt;
+</span><span>  </span><span style="color:#bf616a;">-t, --title-only
+</span><span>  </span><span style="color:#bf616a;">-h, --help</span><span>                         Print help
+</span><span>  </span><span style="color:#bf616a;">-V, --version</span><span>                      Print version
+</span></code></pre>
+<p>The Error message actually renders red in the terminal for which I used the <code>colored</code> crate.</p>
+<p>Continuing with the new version:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi
+</span><span style="color:#bf616a;">[article]</span><span> Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://pybit.es/articles/using-python-and-fastapi-to-support-pfas-research/
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># search for podcasts only
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi</span><span style="color:#bf616a;"> -c</span><span> podcast
+</span><span style="color:#65737e;">#160 - Unpacking Pydantic&#39;s Growth and the Launch of Logfire with Samuel Colvin
+</span><span style="color:#bf616a;">https://www.pybitespodcast.com/14997890/14997890-160-unpacking-pydantic-s-growth-and-the-launch-of-logfire-with-samuel-colvin
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># search title only
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi</span><span style="color:#bf616a;"> -t
+</span><span style="color:#bf616a;">[article]</span><span> Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://pybit.es/articles/using-python-and-fastapi-to-support-pfas-research/
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># multiple search terms (joined and regex compiled)
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi pfas</span><span style="color:#bf616a;"> -t
+</span><span style="color:#bf616a;">[article]</span><span> Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://pybit.es/articles/using-python-and-fastapi-to-support-pfas-research/
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#65737e;"># short options combined: search only in titles and content type == video
+</span><span>
+</span><span style="color:#bf616a;">√</span><span> pybites-search (main) </span><span style="color:#bf616a;">$</span><span> psearch fastapi pfas</span><span style="color:#bf616a;"> -t -c</span><span> video
+</span><span style="color:#bf616a;">Pybites</span><span> podcast 122 - Using Python (and FastAPI) </span><span style="color:#bf616a;">to</span><span> support PFAS research
+</span><span style="color:#bf616a;">https://www.youtube.com/watch?v</span><span>=</span><span style="color:#a3be8c;">c5EtLNhrnH0
+</span></code></pre>
+<h2 id="clap-code">Clap code</h2>
+<p>The code change was <a href="https://github.com/bbelderbos/pybites-search/commit/78cff36be5be028d19484349a8771a859e9daf81">relatively small</a>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">derive</span><span>(Parser)]
+</span><span>#[</span><span style="color:#bf616a;">command</span><span>(name = &quot;</span><span style="color:#a3be8c;">psearch</span><span>&quot;, version, about)]
+</span><span style="color:#b48ead;">struct </span><span>Cli {
+</span><span>    </span><span style="color:#bf616a;">search_terms</span><span>: Vec&lt;String&gt;,
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;c&#39;, long = &quot;</span><span style="color:#a3be8c;">content-type</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">content_type</span><span>: Option&lt;String&gt;,
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;t&#39;, long = &quot;</span><span style="color:#a3be8c;">title-only</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">title_only</span><span>: </span><span style="color:#b48ead;">bool</span><span>,
+</span><span>}
+</span><span>
+</span><span>...
+</span><span>...
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>     </span><span style="color:#b48ead;">let</span><span> cli = Cli::parse();
+</span><span>
+</span><span>     </span><span style="color:#b48ead;">if</span><span> cli.search_terms.</span><span style="color:#96b5b4;">is_empty</span><span>() {
+</span><span>         eprintln!(&quot;</span><span style="color:#d08770;">{}</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">Error: At least one search term should be given.</span><span>&quot;.</span><span style="color:#96b5b4;">red</span><span>());
+</span><span>         Cli::command().</span><span style="color:#96b5b4;">print_help</span><span>()?;
+</span><span>         std::process::exit(</span><span style="color:#d08770;">1</span><span>);
+</span><span>     }
+</span><span>
+</span><span>     </span><span style="color:#b48ead;">let</span><span> search_term = cli.search_terms.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">term</span><span>| regex::escape(term)).collect::&lt;Vec&lt;_&gt;&gt;().</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">.*</span><span>&quot;);
+</span><span>     </span><span style="color:#b48ead;">let</span><span> content_type = cli.content_type.</span><span style="color:#96b5b4;">as_deref</span><span>();
+</span><span>     </span><span style="color:#b48ead;">let</span><span> title_only = cli.title_only;
+</span><span>
+</span><span>     ...
+</span><span>     ...
+</span><span>
+</span><span>     </span><span style="color:#96b5b4;">search_items</span><span>(&amp;items, &amp;search_term, content_type, title_only);
+</span></code></pre>
+<ul>
+<li>I defined a struct <code>Cli</code> with the fields I needed (<a href="/namedtuple-in-rust-struct">related article</a>).</li>
+<li>I used the <code>#[arg]</code> attribute to define the short and long options.</li>
+<li>I used the <code>#[command]</code> attribute to define the name, version, and about, which are inferred from the <code>Cargo.toml</code> file.</li>
+<li>In the main function, I used <code>Cli::parse()</code> to parse the command-line arguments.</li>
+<li>I checked if the search terms are empty and printed an error message if they are. It's best practice to print the error message to <code>stderr</code> (using <code>eprintln</code>) and exit the script with a non-zero status code (Unix convention).</li>
+<li>I used the <code>regex</code> crate to make a regex pattern from the search terms. I had to escape the search terms because they could contain special characters. I used the <code>regex::escape</code> function for this.</li>
+<li>I needed the <code>as_deref</code> method to convert the <code>Option&lt;String&gt;</code> to an <code>Option&lt;&amp;str&gt;</code>. This is useful because I wanted to pass the content type to the <code>search_items</code> function, which accepts an <code>Option&lt;&amp;str&gt;</code>. I still need to get used to the ownership and borrowing rules in Rust, but <a href="/ownership-and-borrowing">I am getting there</a>. It will become more intuitive with more practice ...</li>
+<li>Lastly I passed the parsed arguments to the <code>search_items</code> function.</li>
+</ul>
+<p>This looks pretty clean and the pleasant way of defining CLI interfaces this way reminds me of Python's <code>Typer</code> library.</p>
+<p>Typer also uses type annotations (and other beautiful abstractions) to make it easy to define CLI interfaces.</p>
+<p>Here is an example for comparison:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">import </span><span>typer  </span><span style="color:#65737e;"># pip install typer
+</span><span>
+</span><span>app = typer.</span><span style="color:#bf616a;">Typer</span><span>()
+</span><span>
+</span><span>@app.</span><span style="color:#bf616a;">command</span><span>()
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">psearch</span><span>(
+</span><span>    </span><span style="color:#bf616a;">search_terms</span><span>: list[str],
+</span><span>    </span><span style="color:#bf616a;">content_type</span><span>: str = typer.</span><span style="color:#bf616a;">Option</span><span>(</span><span style="color:#d08770;">None</span><span>, &quot;</span><span style="color:#a3be8c;">--content-type</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">-c</span><span>&quot;, </span><span style="color:#bf616a;">help</span><span>=&quot;</span><span style="color:#a3be8c;">The type of content to search for</span><span>&quot;),
+</span><span>    </span><span style="color:#bf616a;">title_only</span><span>: bool = typer.</span><span style="color:#bf616a;">Option</span><span>(</span><span style="color:#d08770;">False</span><span>, &quot;</span><span style="color:#a3be8c;">--title-only</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">-t</span><span>&quot;, </span><span style="color:#bf616a;">help</span><span>=&quot;</span><span style="color:#a3be8c;">Search only in titles</span><span>&quot;)
+</span><span>):
+</span><span>    search_term = &quot;</span><span style="color:#a3be8c;">.*</span><span>&quot;.</span><span style="color:#bf616a;">join</span><span>(search_terms)
+</span><span>    </span><span style="color:#65737e;"># ... rest of the implementation ...
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>I am happy with the new 0.5.0 version of Pybites Search, which thanks to Clap has a much nicer command-line interface.</p>
+<p>Clap reminds me of Typer in Python, which makes it easy to define CLI interfaces using type annotations.</p>
+<p>I will surely use Clap in future command-line apps, it's a great library to work with.</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/rustlings-exercises-to-practice-rust/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Rustlings 😍 - Small exercises to get you used to reading + writing Rust 🦀</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/convert-markdown-to-html-script/">
+                            <span class="button__text">Converting markdown files to HTML in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

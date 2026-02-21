@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Use rust-analyzer + ALE to show errors as you code in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Use rust-analyzer + ALE to show errors as you code in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/rust-analyzer-ale-errors-while-coding/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Use rust-analyzer + ALE to show errors as you code in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/rust-analyzer-ale-errors-while-coding/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/rust-analyzer-ale-errors-while-coding/">Use rust-analyzer + ALE to show errors as you code in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-16
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>The more advanced you become as a developer the more you realize that the speed of coding is not just about language syntax or typing, it's as much about the tools and techniques you use.</p>
+<p>One of my best Python coding setup tweaks has been showing errors upon saving files, for which I use <a href="https://gist.github.com/kyokley/0d7bb03eede831bea3fa">this plugin</a>. This speeds up development significantly! 😍 📈</p>
+<p>I wanted to do the same for Rust coding, specially because there is, compared to Python, an extra compilation step in Rust.</p>
+<p>In this article I'll show you how I have set it up ...</p>
+<p><em>Note that I use Vim as my text editor and Mac as my operating system. I hope most of the setup is easily transferable to other text editors and operating systems. Or that at least it gets you thinking about how you can speed up your coding workflow.</em> 💡</p>
+<h2 id="install-rust-analyzer">Install rust-analyzer</h2>
+<p>First, you need to install <code>rust-analyzer</code>. I did this with <code>brew</code>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">brew</span><span> install rust-analyzer
+</span></code></pre>
+<h2 id="install-ale-the-asynchronous-lint-engine">Install ALE, the Asynchronous Lint Engine</h2>
+<p>I use <a href="https://github.com/VundleVim/Vundle.vim">Vundle</a> as my Vim plugin manager so I added this plugin to my <code>.vimrc</code>:</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span>Plugin </span><span style="color:#a3be8c;">&#39;dense-analysis/ale&#39;
+</span></code></pre>
+<p>And installed it with:</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span>:PluginInstall
+</span></code></pre>
+<h2 id="setup-in-vimrc">Setup in <code>.vimrc</code></h2>
+<p>I added the following code to my <code>.vimrc</code>. I learned I can use ALE for Python as well in one go :)</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span style="color:#65737e;">&quot; ALE Configuration
+</span><span style="color:#65737e;">&quot; Enable ALE for Rust and Python
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_linters</span><span> = {
+</span><span>    </span><span style="color:#b48ead;">\   </span><span style="color:#a3be8c;">&#39;rust&#39;</span><span>: [</span><span style="color:#a3be8c;">&#39;analyzer&#39;</span><span>],
+</span><span>    </span><span style="color:#b48ead;">\   </span><span style="color:#a3be8c;">&#39;python&#39;</span><span>: [</span><span style="color:#a3be8c;">&#39;pyflakes&#39;</span><span>],
+</span><span>    </span><span style="color:#b48ead;">\</span><span>}
+</span><span>
+</span><span style="color:#65737e;">&quot; Only lint on save, not on text changed or insert leave
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_text_changed</span><span> = </span><span style="color:#a3be8c;">&#39;never&#39;
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_insert_leave</span><span> = </span><span style="color:#d08770;">0
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_enter</span><span> = </span><span style="color:#d08770;">0
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_save</span><span> = </span><span style="color:#d08770;">1
+</span><span>
+</span><span style="color:#65737e;">&quot; Ensure rust-analyzer is installed and in your PATH
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_rust_analyzer_executable</span><span> = </span><span style="color:#a3be8c;">&#39;rust-analyzer&#39;
+</span></code></pre>
+<ol>
+<li>
+<p>The <code>ale_linters</code> variable is set to use <code>rust-analyzer</code> for Rust files and <code>pyflakes</code> for Python files. I installed <code>pyflakes</code> with <a href="https://www.youtube.com/watch?v=xvCShK1Bqxk"><code>pipx</code></a>. By the way, this might become a replacement for the Python plugin I mentioned in the beginning, not sure yet ...</p>
+</li>
+<li>
+<p>The <code>ale_lint_on_save</code> variable is set to <code>1</code> to check the syntax on save.</p>
+</li>
+<li>
+<p>The <code>ale_rust_analyzer_executable</code> variable is set to <code>rust-analyzer</code> to ensure that <code>rust-analyzer</code> is installed and in your PATH.</p>
+</li>
+<li>
+<p>The <code>ale_lint_on_text_changed</code>, <code>ale_lint_on_insert_leave</code>, and <code>ale_lint_on_enter</code> variables are set to <code>never</code>, <code>0</code>, and <code>0</code> respectively to prevent linting on text changed, insert leave, and enter. Tweak these settings as you see fit.</p>
+</li>
+</ol>
+<p>Playing around with this plugin I added some more settings to my <code>.vimrc</code>:</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span style="color:#65737e;">&quot; Enable ALE&#39;s virtual text feature for inline messages
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_virtualtext_cursor</span><span> = </span><span style="color:#d08770;">1
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_virtualtext_prefix</span><span> = </span><span style="color:#a3be8c;">&#39;⚠ &#39;
+</span><span>
+</span><span style="color:#65737e;">&quot; Customize the ALE sign column for better readability
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_sign_error</span><span> = </span><span style="color:#a3be8c;">&#39;&gt;&gt;&#39;
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_sign_warning</span><span> = </span><span style="color:#a3be8c;">&#39;--&#39;
+</span><span>
+</span><span style="color:#65737e;">&quot; Enable ALE to use the quickfix list
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_open_list</span><span> = </span><span style="color:#d08770;">1
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_set_quickfix</span><span> = </span><span style="color:#d08770;">1
+</span><span>
+</span><span style="color:#65737e;">&quot; Enable line wrapping only in quickfix and loclist buffers
+</span><span style="color:#96b5b4;">autocmd </span><span>FileType qf </span><span style="color:#96b5b4;">setlocal</span><span> wrap linebreak
+</span><span style="color:#96b5b4;">autocmd </span><span>FileType loclist </span><span style="color:#96b5b4;">setlocal</span><span> wrap linebreak
+</span><span>
+</span><span style="color:#65737e;">&quot; Enable ALE&#39;s floating window preview feature to show detailed error messages
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_detail_to_floating_preview</span><span> = </span><span style="color:#d08770;">1
+</span></code></pre>
+<h2 id="see-it-in-action">See it in action</h2>
+<p>Here is some code to try this on:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">mod </span><span>data;
+</span><span>
+</span><span style="color:#b48ead;">use</span><span> tokio;
+</span><span style="color:#b48ead;">use crate</span><span>::data::fetch_data;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> data = </span><span style="color:#96b5b4;">fetch_data</span><span>().await.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{:#?}</span><span>&quot;, data);
+</span><span>}
+</span></code></pre>
+<p>Let's make a couple of errors and see the ALE checker in action 💡 🚀</p>
+<ol>
+<li>changing <code>mod data;</code> to <code>mod data</code></li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>E </span><span style="color:#b48ead;">mod </span><span>data </span><span style="color:#65737e;">// E: Syntax Error: expected `;` or `{`
+</span></code></pre>
+<ol start="2">
+<li><code>data</code> to <code>data2</code> which is not defined</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>E     println!(&quot;</span><span style="color:#d08770;">{:#?}</span><span>&quot;, data2); </span><span style="color:#65737e;">// E: cannot find value `data2` in this scope
+</span></code></pre>
+<ol start="3">
+<li>removing a <code>use</code> statement</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>W </span><span style="color:#b48ead;">use</span><span> tokio; </span><span style="color:#65737e;">// W: consider importing this function: `use crate::data::fetch_data; `
+</span><span>...
+</span><span>E     </span><span style="color:#b48ead;">let</span><span> data = </span><span style="color:#96b5b4;">fetch_data</span><span>().await.</span><span style="color:#96b5b4;">unwrap</span><span>(); </span><span style="color:#65737e;">// E: cannot find function `fetch_data` in this scope not found in this sc
+</span></code></pre>
+<ol start="4">
+<li>removing the <code>#[tokio::main]</code> attribute</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>W </span><span style="color:#b48ead;">use</span><span> tokio; </span><span style="color:#65737e;">// W: remove the whole `use` item
+</span><span>E async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() { </span><span style="color:#65737e;">// E: `main` function is not allowed to be `async` `main` function is not allowed to be `async`
+</span></code></pre>
+<ol start="5">
+<li>removing the <code>async</code> keyword</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>E </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() { </span><span style="color:#65737e;">// E: the `async` keyword is missing from the function declaration
+</span></code></pre>
+<p>Specially the <code>ale_open_list</code> and <code>ale_set_quickfix</code> settings are useful. The quickfix panel shows all the errors in a separate window, which is useful when you have mulitple errors that wrap in the editor window. For example:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/example-ale-errors-pane.png" alt="Example of ALE errors pane" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>And it also works for Python 😎 🎉</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#d08770;">...
+</span><span>E </span><span style="color:#96b5b4;">print</span><span>(c) </span><span style="color:#65737e;"># E: undefined name &#39;c&#39;
+</span></code></pre>
+<p>And:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>E </span><span style="color:#96b5b4;">print</span><span>(a </span><span style="color:#65737e;"># E: &#39;(&#39; was never closed
+</span></code></pre>
+<h2 id="complementing-with-github-copilot">Complementing with GitHub Copilot</h2>
+<p>If an error is not 100% you can always add a &quot;question comment&quot; like this to get more suggestions. Here for example I purposely removed the <code>await</code> method from the <code>fetch_data</code> function:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>...
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    E     </span><span style="color:#b48ead;">let</span><span> data = </span><span style="color:#96b5b4;">fetch_data</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>(); </span><span style="color:#65737e;">// E: no method named `unwrap` found for opaque type `impl Future&lt;Output = Resul…
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{:#?}</span><span>&quot;, data);
+</span><span>}
+</span><span>
+</span><span># q: why does the above fail?
+</span></code></pre>
+<p>GitHub Copilot will suggest the following answer right below the question:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span># a: the fetch_data function is async, so it returns a Future, not the data itself
+</span></code></pre>
+<p>This is a useful technique and faster, because I can stay in Vim rather than making the round trip to ChatGPT. 🤖 🚀</p>
+<hr />
+<p>Hope this helps you speed up your Rust coding! 🦀</p>
+<p>Either as a Vim user or not, you can use the same principle to speed up your coding in your favorite text editor.</p>
+<p>Or at least get into the mindset of speeding up your coding through efficient tools and techniques. 💪 📈</p>
+<p>If you want to learn more about my Vim setup overall, check out this video: <a href="https://www.youtube.com/watch?v=B9tZyFXr1Yw">Supercharge Your Vim Workflow: Essential Tips and Plugins for Efficiency</a>. 🎥 🚀</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/deploy-rust-app-to-heroku/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">How to deploy a Rust app to Heroku</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/resizing-images/">
+                            <span class="button__text">How to resize images in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

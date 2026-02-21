@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Rust iterators over loops: one function that shows why | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Rust iterators over loops: one function that shows why | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/rust-iterators-over-loops-one-function-that-shows-why/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Rust iterators over loops: one function that shows why | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/rust-iterators-over-loops-one-function-that-shows-why/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/rust-iterators-over-loops-one-function-that-shows-why/">Rust iterators over loops: one function that shows why</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-16
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Most developers reaching for Rust write their first <code>for</code> loop within minutes. But Rust's iterator methods let you express the same logic in fewer lines, with less room for bugs. One small function shows the difference clearly.</p>
+<h2 id="the-imperative-instinct">The Imperative Instinct</h2>
+<p>When asked to sum a slice of integers, the instinct is a classic accumulator loop:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">sum_slice</span><span>(</span><span style="color:#bf616a;">v</span><span>: &amp;[</span><span style="color:#b48ead;">i32</span><span>]) -&gt; </span><span style="color:#b48ead;">i32 </span><span>{
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> total = </span><span style="color:#d08770;">0</span><span>;
+</span><span>    </span><span style="color:#b48ead;">for</span><span> item in v {
+</span><span>        total += item;
+</span><span>    }
+</span><span>    total
+</span><span>}
+</span></code></pre>
+<p>A mutable variable, an explicit loop, and a trailing return. It works, but it forces the reader to trace state through the body to understand intent.</p>
+<h2 id="the-functional-alternative">The Functional Alternative</h2>
+<p>Here's the same logic using Rust's iterator combinators:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">sum_slice</span><span>(</span><span style="color:#bf616a;">v</span><span>: &amp;[</span><span style="color:#b48ead;">i32</span><span>]) -&gt; </span><span style="color:#b48ead;">i32 </span><span>{
+</span><span>    v.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">sum</span><span>()
+</span><span>}
+</span></code></pre>
+<p>That's it. One line that reads almost like English: <em>iterate over the slice, sum everything.</em></p>
+<p>No mutable accumulator. No explicit loop. No room for bugs.</p>
+<h2 id="why-this-works">Why This Works</h2>
+<p>Rust's <code>Iterator</code> trait provides a rich set of composable methods.</p>
+<p><strong><code>iter().sum()</code></strong> works because <code>sum()</code> is a consuming adaptor. It takes ownership of the iterator, accumulates every element using the <code>Sum</code> trait, and returns the result. The type system infers <code>i32</code> from the function signature, so you don't even need a turbofish (<code>::&lt;Type&gt;</code> annotation). If the compiler couldn't infer the type, you'd write <code>v.iter().sum::&lt;i32&gt;()</code> instead.</p>
+<p>The <code>Sum</code> trait is more powerful than it looks. It's also implemented for <code>Option&lt;T&gt;</code> and <code>Result&lt;T, E&gt;</code>, which means you can sum a list that might contain missing or failed values — no manual <code>if</code> checks needed:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> v = vec![Some(</span><span style="color:#d08770;">1</span><span>), Some(</span><span style="color:#d08770;">2</span><span>), None];
+</span><span style="color:#b48ead;">let</span><span> total: Option&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = v.</span><span style="color:#96b5b4;">into_iter</span><span>().</span><span style="color:#96b5b4;">sum</span><span>(); </span><span style="color:#65737e;">// Returns None
+</span></code></pre>
+<p>If all elements are <code>Some(n)</code>, you get <code>Some(total)</code>. If <em>any</em> element is <code>None</code>, the whole result is <code>None</code>. In many languages, this would require a messy loop with null checks.</p>
+<h2 id="zero-cost-abstractions">Zero-Cost Abstractions</h2>
+<p>In Python or JavaScript, chaining higher-order functions like <code>map</code> and <code>filter</code> typically allocates intermediate collections at each step. In Rust, it doesn't. Rust iterators use a <em>pull</em> model — nothing happens until something consumes the chain. The compiler inlines the entire pipeline and optimizes it into a single tight loop, the same machine code you'd get from writing the <code>for</code> loop by hand.</p>
+<p>This is what Rust means by <em>zero-cost abstractions</em>: you don't pay a runtime price for the higher-level expression. No heap allocations for intermediate results, no virtual dispatch, no hidden overhead. The abstraction exists at compile time and disappears in the binary.</p>
+<p>In fact, the iterator version can sometimes be <em>faster</em> than a hand-written loop. The compiler may apply SIMD (Single Instruction, Multiple Data) optimizations to <code>iter().sum()</code>, summing multiple numbers in a single CPU instruction — an optimization that's harder to trigger with a manual accumulator loop.</p>
+<p>That's the deal Rust offers — write the clearer version and trust the compiler to make it at least as fast, sometimes faster.</p>
+<h2 id="when-to-reach-for-iterators">When to Reach for Iterators</h2>
+<p>Iterators shine when the operation maps to a well-known pattern:</p>
+<ul>
+<li><strong>Summing</strong>: <code>iter().sum()</code></li>
+<li><strong>Transforming</strong>: <code>iter().map(f).collect()</code></li>
+<li><strong>Filtering</strong>: <code>iter().filter(p).collect()</code></li>
+<li><strong>Mutating in place</strong>: <code>iter_mut().for_each(f)</code></li>
+<li><strong>Finding</strong>: <code>iter().find(p)</code></li>
+<li><strong>Checking conditions</strong>: <code>iter().all(p)</code> / <code>iter().any(p)</code> (just like Python's <a href="https://docs.python.org/3/library/functions.html#all"><code>all()</code> and <code>any()</code></a>, but as iterator methods instead of free functions)</li>
+</ul>
+<p>If your loop body does one of these things, the iterator version is almost always clearer.</p>
+<p>That said, a <code>for</code> loop is still the right choice when the logic is highly stateful, involves complex early breaks, or doesn't map cleanly to a single combinator. Iterators replace boilerplate loops, not all loops.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul>
+<li>Rust iterators express intent directly, removing boilerplate state management</li>
+<li><code>iter()</code> borrows, <code>iter_mut()</code> borrows mutably, <code>into_iter()</code> takes ownership — pick the one that matches your access pattern (see <a href="/ownership-and-borrowing/">Ownership and Borrowing</a> for a refresher)</li>
+<li>Zero-cost abstractions mean you get clarity without sacrificing performance</li>
+<li>One-liner iterator chains are not &quot;clever code&quot; — they're idiomatic Rust</li>
+</ul>
+<h2 id="practice-this">Practice This</h2>
+<p>Try the <a href="https://rustplatform.com/vectors-and-slices">Vectors and Slices exercise on Pybites Rust Platform</a> and see how far you can get without writing a single <code>for</code> loop.</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/your-first-rust-function/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Your first Rust function (from a Python perspective)</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/rust-no-none-crashes/">
+                            <span class="button__text">Rust Makes None.attribute Crashes Impossible — Your Code Won&#x27;t Even Compile</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

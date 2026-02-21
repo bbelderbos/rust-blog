@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsbit.es/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/exception-handling-in-rust/">Exception handling in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-07-10
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>I am working on an AWS Lambda function to validate Rust code submitted from our coding platform. It led to some exception handling code, which I found interesting to compare with Python.</p>
+<h2 id="adding-exception-to-running-an-external-command">Adding exception to running an external command</h2>
+<p>Here is an example of exception handling I added to my lambda function to run a cargo command in a temporary directory. The function returns the output of the command if it is successful, or an error message if it fails:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">run_cargo_command</span><span>(</span><span style="color:#bf616a;">temp_dir_path</span><span>: &amp;Path) -&gt; Result&lt;Output, String&gt; {
+</span><span>    </span><span style="color:#b48ead;">match </span><span>Command::new(&quot;</span><span style="color:#a3be8c;">cargo</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">test</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">--verbose</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">current_dir</span><span>(temp_dir_path)
+</span><span>        .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>        .await
+</span><span>    {
+</span><span>        Ok(output) =&gt; {
+</span><span>            </span><span style="color:#b48ead;">if</span><span> output.status.</span><span style="color:#96b5b4;">success</span><span>() {
+</span><span>                Ok(output)
+</span><span>            } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>                Err(format!(
+</span><span>                    &quot;</span><span style="color:#a3be8c;">Command executed with errors: </span><span style="color:#d08770;">{}</span><span>&quot;,
+</span><span>                    String::from_utf8_lossy(&amp;output.stderr)
+</span><span>                ))
+</span><span>            }
+</span><span>        }
+</span><span>        Err(e) =&gt; Err(format!(
+</span><span>            &quot;</span><span style="color:#a3be8c;">Failed to execute command: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">. Is &#39;cargo&#39; installed and accessible in your PATH?</span><span>&quot;,
+</span><span>            e
+</span><span>        )),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Here is the equivalent code in Python:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">import </span><span>subprocess
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">run_cargo_command</span><span>(</span><span style="color:#bf616a;">temp_dir_path</span><span>):
+</span><span>    </span><span style="color:#b48ead;">try</span><span>:
+</span><span>        output = subprocess.</span><span style="color:#bf616a;">run</span><span>(
+</span><span>            [&quot;</span><span style="color:#a3be8c;">cargo</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">test</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">--verbose</span><span>&quot;],
+</span><span>            </span><span style="color:#bf616a;">cwd</span><span>=temp_dir_path,
+</span><span>            </span><span style="color:#bf616a;">capture_output</span><span>=</span><span style="color:#d08770;">True</span><span>,
+</span><span>            </span><span style="color:#bf616a;">check</span><span>=</span><span style="color:#d08770;">True</span><span>,
+</span><span>        )
+</span><span>        </span><span style="color:#b48ead;">return </span><span>output
+</span><span>    </span><span style="color:#b48ead;">except </span><span>subprocess.CalledProcessError </span><span style="color:#b48ead;">as </span><span>e:
+</span><span>        </span><span style="color:#b48ead;">raise </span><span style="color:#bf616a;">Exception</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Command executed with errors: </span><span>{e.stderr}&quot;)
+</span><span>    </span><span style="color:#b48ead;">except </span><span>FileNotFoundError </span><span style="color:#b48ead;">as </span><span>e:
+</span><span>        </span><span style="color:#b48ead;">raise </span><span style="color:#bf616a;">Exception</span><span>(
+</span><span>            &quot;</span><span style="color:#a3be8c;">Failed to execute command: Is &#39;cargo&#39; installed and accessible in your PATH?</span><span>&quot;
+</span><span>        )
+</span></code></pre>
+<h2 id="rust-and-python-error-handling-comparison">Rust and Python Error Handling Comparison</h2>
+<ul>
+<li>
+<p>In Rust, we use the <code>Result</code> type (Ok/Err) to represent success or failure, while in Python, we use exceptions.</p>
+</li>
+<li>
+<p>Rust requires explicit handling of both success and failure cases, while Python allows for more flexible error handling.</p>
+</li>
+<li>
+<p>Rust's error handling is enforced at compile time, while Python's error handling is checked at runtime.</p>
+</li>
+<li>
+<p>Rust's pattern matching allows for concise and clear error handling, while Python's exception handling requires less boilerplate, it's more flexible, but can also lead to more runtime errors (because they are detected later).</p>
+</li>
+<li>
+<p>In Python you have to specifically catch the <code>FileNotFoundError</code> exception (and fall back to a generic <code>Exception</code>), while in Rust, it is handled by the <code>Err</code> case of the <code>match</code> statement which could include any error that occurs during the execution of the command.</p>
+</li>
+</ul>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice error handling on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/result-handling">Result Handling</a></li>
+<li><a href="https://rustplatform.com/custom-error-types">Custom Error Types</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>Python's exception handling allows for rapid and flexible development, making it easier to write code quickly. However, this same flexibility can lead to more runtime errors because errors are often detected later (at runtime) and it's easier to overlook proper error handling.</p>
+<p>Rust, on the other hand, enforces more rigorous error handling at compile time, leading to more reliable and predictable code, though it can be more verbose and require more upfront effort.</p>
+<p>This is just a small example, when I get into more nuances of error handling in Rust, I will follow up with a more detailed post. I also understand there are some common crates you can use like <code>anyhow</code> to make error handling in Rust more concise and flexible. To be continued ...</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/automating-test-runs-and-checking-coverage/">Automating test runs and checking coverage</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-07-06
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>The other day I did <a href="/testing-in-rust">a post on testing in Rust</a> and the next logical step is to automate test runs and check coverage. Here's how you can do that:</p>
+<ol>
+<li>Automating test runs using GitHub Actions</li>
+</ol>
+<p>This is quite easy to do with a workflow file that runs the tests on every push and pull request. Here's an example:</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#65737e;"># .github/workflows/tests.yml
+</span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Rust
+</span><span>
+</span><span style="color:#d08770;">on</span><span>: [</span><span style="color:#a3be8c;">push</span><span>, </span><span style="color:#a3be8c;">pull_request</span><span>]
+</span><span>
+</span><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">test</span><span>:
+</span><span>    </span><span style="color:#bf616a;">runs-on</span><span>: </span><span style="color:#a3be8c;">ubuntu-latest
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>    - </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/checkout@v2
+</span><span>
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Set up Rust
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions-rs/toolchain@v1
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">toolchain</span><span>: </span><span style="color:#a3be8c;">stable
+</span><span>        </span><span style="color:#bf616a;">override</span><span>: </span><span style="color:#d08770;">true
+</span><span>
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo registry
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">~/.cargo/registry
+</span><span>        </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-registry-${{ hashFiles(&#39;**/Cargo.lock&#39;) }}
+</span><span>        </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          ${{ runner.os }}-cargo-registry-
+</span><span style="color:#a3be8c;">
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo index
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">~/.cargo/git
+</span><span>        </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-index-${{ hashFiles(&#39;**/Cargo.lock&#39;) }}
+</span><span>        </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          ${{ runner.os }}-cargo-index-
+</span><span style="color:#a3be8c;">
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo build
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">target
+</span><span>        </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-build-${{ hashFiles(&#39;**/Cargo.lock&#39;) }}
+</span><span>        </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          ${{ runner.os }}-cargo-build-
+</span><span style="color:#a3be8c;">
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Run tests
+</span><span>      </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">cargo test --verbose
+</span></code></pre>
+<p><a href="https://github.com/bbelderbos/cli_alarm/actions/runs/9777385892/job/26991960298">Example job</a></p>
+<ol start="2">
+<li>Checking test coverage using <code>tarpaulin</code></li>
+</ol>
+<p>I was wondering if there was an equivalent to <code>pytest-cov</code> in Rust and I found <code>tarpaulin</code>. First install it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install cargo-tarpaulin
+</span></code></pre>
+<p>Then run it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo install cargo-tarpaulin
+</span><span style="color:#bf616a;">2024-07-03T11:29:24.739505Z</span><span>  INFO cargo_tarpaulin::process_handling: running /Users/bbelderbos/code/rust/cli_alarm/target/debug/deps/alarm-556e1e717eaa9b33
+</span><span style="color:#bf616a;">2024-07-03T11:29:24.739591Z</span><span>  INFO cargo_tarpaulin::process_handling: Setting LLVM_PROFILE_FILE
+</span><span>
+</span><span style="color:#bf616a;">running</span><span> 4 tests
+</span><span style="color:#bf616a;">test</span><span> tests::test_edge_cases ... ok
+</span><span style="color:#bf616a;">test</span><span> tests::test_exact_minute_durations ... ok
+</span><span style="color:#bf616a;">test</span><span> tests::test_minute_and_second_durations ... ok
+</span><span style="color:#bf616a;">test</span><span> tests::test_short_durations ... ok
+</span><span>
+</span><span style="color:#bf616a;">test</span><span> result: ok. 4 passed; </span><span style="color:#bf616a;">0</span><span> failed; </span><span style="color:#bf616a;">0</span><span> ignored; </span><span style="color:#bf616a;">0</span><span> measured; </span><span style="color:#bf616a;">0</span><span> filtered out; </span><span style="color:#bf616a;">finished</span><span> in 0.00s
+</span><span>
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.052962Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: For binary: target/debug/deps/alarm-556e1e717eaa9b33
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.052976Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: Generated: target/tarpaulin/profraws/alarm-556e1e717eaa9b33_14793736282992077593_0-7692.profraw
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.052979Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: Merging coverage reports
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.056944Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: Mapping coverage data to source
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.083725Z</span><span>  INFO cargo_tarpaulin::report: Coverage Results:
+</span><span>|| </span><span style="color:#bf616a;">Uncovered</span><span> Lines:
+</span><span>|| </span><span style="color:#bf616a;">src/main.rs:</span><span> 55, 57-58, 62, 64, 68-69, 73, 75, 78-79, 91-92, 94, 97-98, 100-101, 104-105
+</span><span>|| </span><span style="color:#bf616a;">Tested/Total</span><span> Lines:
+</span><span>|| </span><span style="color:#bf616a;">src/main.rs:</span><span> 12/32
+</span><span>||
+</span><span style="color:#bf616a;">37.50</span><span>% coverage, 12/32 lines covered
+</span></code></pre>
+<p>And to make it more visual, generate an HTML report (the equivalent of <code>pytest --cov --cov-report=html</code>):</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo tarpaulin</span><span style="color:#bf616a;"> --out</span><span> Html
+</span></code></pre>
+<p>Beautiful:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/tarpaulin-example.png" alt="example test report tarpaulin makes" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>There you go, two more tools to help you test your Rust code.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/testing-in-rust/">How to write unit tests in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-07-03
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In Python you can use <code>unittest</code> (Standard Library) or <code>pytest</code> (PyPI) to write tests. In Rust, you can use the <code>#[cfg(test)]</code> and <code>#[test]</code> attributes to write tests. Let's explore how ...</p>
+<h2 id="writing-a-test">Writing a test</h2>
+<p>To get some boilerplace code, make a library project with <code>cargo new mylib --lib</code> and you get this:</p>
+<pre data-lang="shell" style="background-color:#2b303b;color:#c0c5ce;" class="language-shell "><code class="language-shell" data-lang="shell"><span>√ rust  $ cargo new --lib testproject
+</span><span>    Creating library `testproject` package
+</span><span>note: see more `Cargo.toml` keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+</span><span>√ rust  $ cat testproject/src/lib.rs
+</span><span>pub fn add(left: usize, right: usize) -&gt; usize {
+</span><span>    left + right
+</span><span>}
+</span><span>
+</span><span>#[cfg(test)]
+</span><span>mod tests {
+</span><span>    use super::*;
+</span><span>
+</span><span>    #[test]
+</span><span>    fn it_works() {
+</span><span>        let result = add(2, 2);
+</span><span>        assert_eq!(result, 4);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<ul>
+<li>
+<p><code>#[cfg(test)]</code> is a conditional compilation attribute that tells the compiler to only compile the module when running tests.</p>
+</li>
+<li>
+<p><code>mod tests</code> is a module that contains all the tests.</p>
+</li>
+<li>
+<p><code>use super::*;</code> imports all the functions from the parent module.</p>
+</li>
+<li>
+<p><code>#[test]</code> is an attribute that tells the compiler that the function is a test, you prepend it to each test function.</p>
+</li>
+<li>
+<p><code>assert_eq!</code> is a macro that checks if the two arguments are equal.</p>
+</li>
+</ul>
+<p>That's it. Now you can run <code>cargo test</code> to run the tests. If you want to run a specific test, you can run <code>cargo test it_works</code> (similar to <code>pytest -k</code>).</p>
+<h2 id="writing-some-tests-for-my-cli-alarm-project">Writing some tests for my CLI alarm project</h2>
+<p>This both a good and bad project to demo this. Bad because it uses system audio which is hard to test. Good because it's a simple project and has one function I am interested in testing for this article.</p>
+<p>Here is the code:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>...
+</span><span>...
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">humanize_duration</span><span>(</span><span style="color:#bf616a;">duration</span><span>: Duration) -&gt; String {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> secs = duration.</span><span style="color:#96b5b4;">as_secs</span><span>();
+</span><span>    </span><span style="color:#b48ead;">if</span><span> secs &lt; </span><span style="color:#d08770;">60 </span><span>{
+</span><span>        format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> second</span><span style="color:#d08770;">{}</span><span>&quot;, secs, </span><span style="color:#b48ead;">if</span><span> secs == </span><span style="color:#d08770;">1 </span><span>{ &quot;&quot; } </span><span style="color:#b48ead;">else </span><span>{ &quot;</span><span style="color:#a3be8c;">s</span><span>&quot; })
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        </span><span style="color:#b48ead;">let</span><span> mins = secs / </span><span style="color:#d08770;">60</span><span>;
+</span><span>        </span><span style="color:#b48ead;">let</span><span> remaining_secs = secs % </span><span style="color:#d08770;">60</span><span>;
+</span><span>        </span><span style="color:#b48ead;">if</span><span> remaining_secs &gt; </span><span style="color:#d08770;">0 </span><span>{
+</span><span>            format!(
+</span><span>                &quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> minute</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> and </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> second</span><span style="color:#d08770;">{}</span><span>&quot;,
+</span><span>                mins,
+</span><span>                </span><span style="color:#b48ead;">if</span><span> mins == </span><span style="color:#d08770;">1 </span><span>{ &quot;&quot; } </span><span style="color:#b48ead;">else </span><span>{ &quot;</span><span style="color:#a3be8c;">s</span><span>&quot; },
+</span><span>                remaining_secs,
+</span><span>                </span><span style="color:#b48ead;">if</span><span> remaining_secs == </span><span style="color:#d08770;">1 </span><span>{ &quot;&quot; } </span><span style="color:#b48ead;">else </span><span>{ &quot;</span><span style="color:#a3be8c;">s</span><span>&quot; }
+</span><span>            )
+</span><span>        } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>            format!(&quot;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;"> minute</span><span style="color:#d08770;">{}</span><span>&quot;, mins, </span><span style="color:#b48ead;">if</span><span> mins == </span><span style="color:#d08770;">1 </span><span>{ &quot;&quot; } </span><span style="color:#b48ead;">else </span><span>{ &quot;</span><span style="color:#a3be8c;">s</span><span>&quot; })
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>...
+</span><span>...
+</span></code></pre>
+<p>Copying above boilerplace over I got to write these tests:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">cfg</span><span>(test)]
+</span><span style="color:#b48ead;">mod </span><span>tests {
+</span><span>    </span><span style="color:#b48ead;">use super</span><span>::*;
+</span><span>    </span><span style="color:#b48ead;">use </span><span>std::time::Duration;
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">test</span><span>]
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_short_durations</span><span>() {
+</span><span>        assert_eq!(</span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">0</span><span>)), &quot;</span><span style="color:#a3be8c;">0 seconds</span><span>&quot;);
+</span><span>        assert_eq!(</span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">1</span><span>)), &quot;</span><span style="color:#a3be8c;">1 second</span><span>&quot;);
+</span><span>        assert_eq!(</span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">30</span><span>)), &quot;</span><span style="color:#a3be8c;">30 seconds</span><span>&quot;);
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">test</span><span>]
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_exact_minute_durations</span><span>() {
+</span><span>        assert_eq!(</span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">60</span><span>)), &quot;</span><span style="color:#a3be8c;">1 minute</span><span>&quot;);
+</span><span>        assert_eq!(</span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">180</span><span>)), &quot;</span><span style="color:#a3be8c;">3 minutes</span><span>&quot;);
+</span><span>        assert_eq!(</span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">3600</span><span>)), &quot;</span><span style="color:#a3be8c;">60 minutes</span><span>&quot;);
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">test</span><span>]
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_minute_and_second_durations</span><span>() {
+</span><span>        assert_eq!(
+</span><span>            </span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">61</span><span>)),
+</span><span>            &quot;</span><span style="color:#a3be8c;">1 minute and 1 second</span><span>&quot;
+</span><span>        );
+</span><span>        assert_eq!(
+</span><span>            </span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">122</span><span>)),
+</span><span>            &quot;</span><span style="color:#a3be8c;">2 minutes and 2 seconds</span><span>&quot;
+</span><span>        );
+</span><span>        assert_eq!(
+</span><span>            </span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">333</span><span>)),
+</span><span>            &quot;</span><span style="color:#a3be8c;">5 minutes and 33 seconds</span><span>&quot;
+</span><span>        );
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">test</span><span>]
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_edge_cases</span><span>() {
+</span><span>        assert_eq!(</span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">59</span><span>)), &quot;</span><span style="color:#a3be8c;">59 seconds</span><span>&quot;);
+</span><span>        assert_eq!(
+</span><span>            </span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">119</span><span>)),
+</span><span>            &quot;</span><span style="color:#a3be8c;">1 minute and 59 seconds</span><span>&quot;
+</span><span>        );
+</span><span>        assert_eq!(
+</span><span>            </span><span style="color:#96b5b4;">humanize_duration</span><span>(Duration::from_secs(</span><span style="color:#d08770;">3599</span><span>)),
+</span><span>            &quot;</span><span style="color:#a3be8c;">59 minutes and 59 seconds</span><span>&quot;
+</span><span>        );
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>I could have grouped them all into one test, but I wanted:</p>
+<ul>
+<li>To show how you can write multiple tests.</li>
+<li>To have better naming for each test for readability and targeting.</li>
+</ul>
+<p>On the other hand having a test function for each test would be way too verbose.</p>
+<p>Unfortunately there is no <code>parametrize</code> feature in Rust like in pytest, so this was my &quot;workaround&quot; for now.</p>
+<p>Running <code>cargo test</code> I get:</p>
+<pre data-lang="shell" style="background-color:#2b303b;color:#c0c5ce;" class="language-shell "><code class="language-shell" data-lang="shell"><span>$ cargo test
+</span><span>...
+</span><span>running 4 tests
+</span><span>test tests::test_minute_and_second_durations ... ok
+</span><span>test tests::test_edge_cases ... ok
+</span><span>test tests::test_exact_minute_durations ... ok
+</span><span>test tests::test_short_durations ... ok
+</span><span>
+</span><span>test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+</span><span>
+</span><span>$ cargo test edge_ca
+</span><span>...
+</span><span>running 1 test
+</span><span>test tests::test_edge_cases ... ok
+</span><span>
+</span><span>test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+</span></code></pre>
+<h2 id="unittest-vs-integration-tests">Unittest vs integration tests</h2>
+<p>This has been an example of a unit test: a test that tests a single piece of code, often a single function.</p>
+<p>You can also write integration tests in Rust. Integration tests are tests that test the interaction between multiple modules or components.</p>
+<p>You can write integration tests in a <code>tests</code> directory, I will show here when I cross that bridge ...</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The <code>#[cfg(test)]</code> attribute is a conditional compilation attribute that instructs the Rust compiler to only compile the annotated module when running tests.</p>
+<p>Within this module, the <code>#[test]</code> attribute is used to mark functions as tests, and the <code>assert_eq!</code> macro is employed to check if two values are equal.</p>
+<p>It is common practice to bundle unit tests within the same module as the code being tested. Integration tests, however, are typically placed in a dedicated module within the <code>tests</code> directory.</p>
+<p>Rust does not have a built-in <code>parametrize</code> feature like pytest. To manage multiple test cases, you can either write individual test functions for each case or group similar tests within a few functions to improve naming and targeting options.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/from-script-to-library-in-rust/">From script to library in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-29
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In Rust you can write a script or a library. Turning your code into the latter is useful when you want to reuse the code in the script in other projects.</p>
+<p>Compare it to a script vs a package in Python. In Python you can write a script and then turn it into a package by adding an <code>__init__.py</code> file. In Rust you can write a script and then turn it into a library by moving the code into a library project. Let's see how to do this ...</p>
+<h2 id="writing-a-script">Writing a script</h2>
+<p>Let's start by writing the simplest script that prints a greeting to the console. And a main function that calls the <code>hello</code> function with a name:</p>
+<p>Create a new project called <code>project</code>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new project
+</span></code></pre>
+<p>And edit the <code>src/main.rs</code> file to contain the following code:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#96b5b4;">hello</span><span>(&quot;</span><span style="color:#a3be8c;">Alice</span><span>&quot;);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">hello</span><span>(</span><span style="color:#bf616a;">name</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, name);
+</span><span>}
+</span></code></pre>
+<p>This script defines a <code>hello</code> function that takes a name as an argument and prints a greeting to the console. The <code>main</code> function calls the <code>hello</code> function with the name &quot;Alice&quot; (no command line arguments, this is for example's sake).</p>
+<h2 id="turning-the-script-into-a-library">Turning the script into a library</h2>
+<p>To turn the script into a library, we need to create a new library project and move the code from the script into the library. We can do this by running the following commands:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new</span><span style="color:#bf616a;"> --lib</span><span> my_library
+</span><span style="color:#bf616a;">mv</span><span> project/src/main.rs my_library/src/lib.rs
+</span></code></pre>
+<p>The <code>--lib</code> flag tells Cargo to create a library project instead of a binary project.</p>
+<p>This will create a new library project called <code>my_library</code> and move the code from the script into the library. The <code>lib.rs</code> file is the entry point for the library, and it contains the code that will be executed when the library is used.</p>
+<h2 id="using-the-library">Using the library</h2>
+<p>To use the library in the first project, we need to add it as a dependency in the <code>Cargo.toml</code> file of the project. We can do this by adding the following line to the <code>Cargo.toml</code> file of the project:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">my_library </span><span>= { </span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">../my_library</span><span>&quot; }
+</span></code></pre>
+<p>Normally you would list one or more crates from crates.io in the <code>dependencies</code> section, but in this case we are using a relative path to the library project.</p>
+<p>We can now use the library in the project by importing it and calling the hello function. Create <code>main.rs</code> again (it was previously moved to the library) under <code>src</code> in the project and add the following code to it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use</span><span> my_library;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    my_library::hello(&quot;</span><span style="color:#a3be8c;">Tim</span><span>&quot;);
+</span><span>}
+</span></code></pre>
+<p>The path works, because <a href="/rust-analyzer-ale-errors-while-coding">ALE</a> complains about the next thing:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">src/main.rs</span><span>|</span><span style="color:#bf616a;">4</span><span> col 17-21 error| </span><span style="color:#bf616a;">E0603:</span><span> function `</span><span style="color:#bf616a;">hello</span><span>` is private private function
+</span></code></pre>
+<p>Rust makes functions private by default. So back in the library I need to make the function public explicitly by adding <code>pub</code> in front of it in <code>lib.rs</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">hello</span><span>(</span><span style="color:#bf616a;">name</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, name);
+</span><span>}
+</span></code></pre>
+<p>And then it works:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run</span><span style="color:#bf616a;"> -q
+</span><span style="color:#bf616a;">warning:</span><span> function `</span><span style="color:#bf616a;">main</span><span>` is never used
+</span><span> </span><span style="color:#bf616a;">--</span><span>&gt; /Users/pybob/code/rust/lib-example/my_library/src/lib.rs:1:4
+</span><span>  |
+</span><span style="color:#bf616a;">1 </span><span>| </span><span style="color:#bf616a;">fn</span><span> main() {
+</span><span>  |    </span><span style="color:#bf616a;">^^^^
+</span><span>  |
+</span><span>  = </span><span style="color:#bf616a;">note: </span><span>`</span><span style="color:#bf616a;">#[warn</span><span>(dead_code)</span><span style="color:#bf616a;">]</span><span>` on by default
+</span><span>
+</span><span style="color:#bf616a;">Hello,</span><span> Tim!
+</span></code></pre>
+<p>I do get this warning that the <code>main</code> function in the library is never used, which makes sense, because unlike a binary project, the library is not an executable. Therefor I can remove the <code>main</code> function from the library, no more warnings:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run</span><span style="color:#bf616a;"> -q
+</span><span style="color:#bf616a;">Hello,</span><span> Tim!
+</span></code></pre>
+<p>Similar to Python where you can do <code>import pathlib</code> as well as <code>from pathlib import Path</code>, you can do the same in Rust. You can import the whole library with <code>use my_library;</code> or just the <code>hello</code> function with <code>use my_library::hello;</code>.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>my_library::hello;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#96b5b4;">hello</span><span>(&quot;</span><span style="color:#a3be8c;">Tim</span><span>&quot;);
+</span><span>}
+</span></code></pre>
+<p>And that'll work equally well.</p>
+<p>Sometimes people opt for the first option, because it's more explicit where the function comes from (<code>my_library::hello</code> vs <code>hello</code>). But in this case it's a bit overkill, because there's only one function in the library.</p>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice modules and visibility on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/module-basics">Module Basics</a></li>
+<li><a href="https://rustplatform.com/visibility-rules">Visibility Rules</a></li>
+<li><a href="https://rustplatform.com/use-and-paths">Use and Paths</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>We learned how to make a library as opposed to a script (binary) in Rust (which is what I have mostly done up until this point). This is useful when you want to reuse the code in the script in other projects.</p>
+<p>We also learned how to use the library in another project and the fact that Rust makes module functions private by default (another example where it's more strict than Python!)</p>
+<p>This is a good thing because it forces you to think about what you want to expose to the outside world.</p>
+<p>We also learned about the two ways to import functions from a library: importing the whole library or just the function you need. And lastly the fact that libraries don't have a <code>main</code> function, because they are not executables.</p>
+<p>Now you know how to write libraries in Rust so you can write code that is easier to reuse and maintain. 😍 🎉 📈</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/25-days-learning-rust-takeaways/">25 days of learning Rust: what worked + takeaways</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-26
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>I have been having a blast learning Rust, now 25 days in a row! 🎉</p>
+<h2 id="what-has-worked">What has worked</h2>
+<h3 id="1-start-building-asap">1. Start building ASAP</h3>
+<p>Do a bit of initial study, but leave the theory soon and start building from day one (<em>fake it before you make it</em>).</p>
+<p>Back it up with reading/study, but code every day! Converting Pybites tools, originally written in Python, to Rust kept it fun for me.</p>
+<h3 id="2-use-ai-tools">2. Use AI tools</h3>
+<p>Use AI for both coding and explaining concepts.</p>
+<p>It's like having a dedicated research assistant and is much faster than googling or using Stack Overflow. Combined with the first strategy, you are knee-deep in code quickly, which boosts your learning.</p>
+<h3 id="3-blog-about-your-journey">3. Blog about your journey</h3>
+<p>Blogging forces you to understand concepts more thoroughly and share your insights. The first strategy ensures you always have content to talk about, and using AI tools, like ChatGPT for research and Co-pilot for writing, you can do this faster and better.</p>
+<p>Additionally, blogging regularly forces you to put content out there, which also helps with the impostor syndrome that often comes with learning something new. 💡</p>
+<h3 id="4-find-an-accountability-partner">4. Find an accountability partner</h3>
+<p>Find someone who is further along with the language to guide and encourage you.</p>
+<p>A special shout-out to <a href="https://x.com/jhodapp?lang=en">Jim Hodapp</a>, who has been instrumental in clarifying doubts and supporting my journey.</p>
+<h2 id="some-wins-takeaways">Some wins / takeaways</h2>
+<h3 id="1-re-thinking-things-in-python">1. Re-thinking things in Python</h3>
+<p>Rust’s emphasis on safety and correctness through its strict compiler checks and ownership system has highlighted the areas where Python’s flexibility could potentially lead to bugs and less maintainable code.</p>
+<p>For example, with the Rust learning experience so far, I am even more eager to use type hints in Python or add stricter validation with Pydantic. These tools add a layer of safety and correctness to Python code, which learning Rust made me more aware of and appreciate more.</p>
+<p>Similarly, Rust's default immutability makes you reflect on what that can mean for your Python code. It has made me more aware of the potential risks and benefits of mutable data structures, encouraging me to adopt immutability in Python where possible to enhance code safety and maintainability.</p>
+<p>So a side effect of learning Rust is that I will become a better Python programmer. 🐍</p>
+<h3 id="2-learning-rust-is-a-journey-it-s-hard-but-rewarding">2. Learning Rust is a journey - it's hard, but rewarding</h3>
+<p>Rust is a complex language, and the learning curve is steep. But the challenge is what makes it fun and rewarding. 🚀</p>
+<p>I think the most important thing is to not take it all in at once. Break it down into small, manageable chunks, and build something at every step, even if it's small. 💡</p>
+<p>Then gradually expose yourself to more advanced concepts, but be realistic with your timelines.</p>
+<p>I have been mostly doing scripting so far and that's fine, at least I got quite some code written, <a href="/shipped-first-crate">and even shipped</a>.</p>
+<p>And there is something special about the compiler. 😍 It's strict and unforgiving, but it also becomes your best friend.</p>
+<p>The feeling of accomplishment when you get the code to compile and run is awesome, specially knowing that that code is probably safe and performant. 🎉</p>
+<h3 id="3-adding-an-amazing-tool-to-my-toolbox">3. Adding an amazing tool to my toolbox</h3>
+<p>Rust's performance capabilities are impressive. Even though I haven't delved deeply into this aspect yet, <a href="/rust-in-python-pyo3-maturin">I did learn how to integrate Rust into Python</a>.</p>
+<p>So when I need to write performance-critical code, I can now try to use Rust and integrate it with Python.</p>
+<h3 id="4-reaffirming-the-pybites-trifecta">4. Reaffirming the Pybites trifecta</h3>
+<p>The combination of &quot;building - JIT learning - putting content out&quot; works beyond Python. It turns out to be an effective <em>template</em> to learn any new language or technology. 😎</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Learning Rust has been useful on many levels, but it's easy to get into <em><a href="https://pybit.es/articles/are-you-overwhelmed-by-tutorial-paralysis/">tutorial paralysis</a></em> when learning a new language.</p>
+<p>So by building concrete tools, using AI, blogging, and finding an accountability partner, I have been able to keep the learning fun and productive. 🚀</p>
+<p>I am only 25 days in, and I have a long way to go. But I am excited to see where this journey takes me over time ... 📈</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Newer posts</span>
+                        </a>
+                    </span>
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/page/3/">
+                            <span class="button__text">Older posts</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

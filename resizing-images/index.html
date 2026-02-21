@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>How to resize images in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="How to resize images in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/resizing-images/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="How to resize images in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/resizing-images/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/resizing-images/">How to resize images in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-17
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>The other day <a href="https://rsbit.es/resizing-images/building-website-axum.md">I built a simple website</a> and needed to resize some images so I decided to figure out how to do this in Rust.</p>
+<p>I found a crate called <code>image</code> that made this easy. Here's how I did it.</p>
+<p>Full code <a href="https://github.com/bbelderbos/resize-images">in this repo</a>.</p>
+<p>After adding <code>image</code> to your <code>Cargo.toml</code> or doing a <code>cargo add image</code> you can use it like this.</p>
+<p>First you make an <code>image</code> object:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> input_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop.jpg</span><span>&quot;);
+</span><span style="color:#b48ead;">let</span><span> img = image::open(input_path)?;
+</span></code></pre>
+<p>Here is the original image:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/workshop_original.jpg" alt="Image to make a thumb of" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>The <code>?</code> operator is a concise way to handle errors, if <code>image::open</code> fails it will return an error and the function will return early.</p>
+<p>Next we can use the <code>resize_exact</code> method to resize the image to the desired width and height:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize_exact</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span></code></pre>
+<p>The <code>FilterType</code> is optional, it defaults to <code>Lanczos3</code> which is a high-quality resampling filter.</p>
+<p>Finally we can save the resized image to disk:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> output_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop_thumbnail.jpg</span><span>&quot;);
+</span><span>thumbnail.</span><span style="color:#96b5b4;">save</span><span>(output_path)?;
+</span></code></pre>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/workshop_thumbnail_exact.jpg" alt="200 x 200 thumbnail image" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>That's a bit skewed though, because the original image was 800x600 and we resized it to 200x200. If you want to keep the aspect ratio you can use the <code>resize</code> method instead of <code>resize_exact</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span></code></pre>
+<p>That leads to an image of 200x150 in my case which looks better:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/workshop_thumbnail.jpg" alt="200 x 150 thumbnail image" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>Putting it all together:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>image::ImageError;
+</span><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), ImageError&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> input_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop.jpg</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> img = image::open(input_path)?;
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// Resize image to fit within 200x200 while maintaining aspect ratio
+</span><span>    </span><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop_thumbnail.jpg</span><span>&quot;);
+</span><span>    thumbnail.</span><span style="color:#96b5b4;">save</span><span>(output_path)?;
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<p>Note that because we're using the <code>?</code> operator we need to update the return type of our function to <code>Result&lt;(), ImageError&gt;</code>.</p>
+<p>The repo has some other interesting things:</p>
+<ul>
+<li>
+<p>I use <code>clap</code> to parse command line arguments, see also <a href="https://rsbit.es/resizing-images/mcommand-line-apps-with-clap">this article</a>.</p>
+</li>
+<li>
+<p>I use <code>img.save_with_format(output_path, ImageFormat::Png)?;</code> to save the image in a different format (ChatGPT gave me <code>webp</code> fake images so I converted them to <code>png</code>).</p>
+</li>
+<li>
+<p>It uses <code>glob</code> (similar to Python's <code>glob</code>) with a pattern (<code>&quot;{}/*{}&quot;</code>) to find all files in a directory with a certain extension, which can be provided as an argument to the program.</p>
+</li>
+<li>
+<p>I use the <code>match</code> statement to handle errors and print messages to the console in various places.</p>
+</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>There you go, a quick way to resize images in Rust.</p>
+<p>The <code>image</code> crate is powerful and easy to use, similar to <code>Pillow</code> in Python. 😍 📈</p>
+<p>You can use the <code>resize</code> method to keep the aspect ratio or <code>resize_exact</code> to resize to an exact width and height.</p>
+<p>Again, the full code of this mini project is <a href="https://github.com/bbelderbos/resize-images">here</a>.</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/rust-analyzer-ale-errors-while-coding/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Use rust-analyzer + ALE to show errors as you code in Rust</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/constants-python-vs-rust/">
+                            <span class="button__text">Constants in Python vs Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

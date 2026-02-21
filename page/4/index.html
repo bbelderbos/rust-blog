@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsbit.es/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/play-alarm-from-command-line/">A little alarm clock CLI app in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-19
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>The other day I pushed my second crate to crates.io. It's called <a href="https://crates.io/crates/cli-alarm">cli-alarm</a> and it's a simple command line tool to play an alarm sound after a specified amount of time. It has an option to repeat the alarm at regular intervals as well.</p>
+<h2 id="why-this-project">Why this project?</h2>
+<p>I created it because I wanted to play an alarm sound from the terminal as a reminder to take a break from the computer every hour, we progammers tend to sit for too long without moving which is really bad!</p>
+<p>I had built this with Python before, but I wanted to try it with Rust this time. And that's actually a good way to learn a new language: by building something you've already built with another language. You already know what you want to build, so you can focus on the new language.</p>
+<h2 id="how-to-use-it">How to use it?</h2>
+<p>Here's how you can use it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install cli-alarm
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> alarm</span><span style="color:#bf616a;"> -m</span><span> 1
+</span><span style="color:#bf616a;">Alarm</span><span> set to go off in 1 minutes.
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">plays</span><span> sound once after 1 minute
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> alarm</span><span style="color:#bf616a;"> -m</span><span> 1</span><span style="color:#bf616a;"> -r
+</span><span style="color:#bf616a;">Recurring</span><span> alarm set for every 1 minutes.
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">plays</span><span> sound every minute
+</span><span style="color:#bf616a;">...
+</span></code></pre>
+<p>Curious how it got this alias? It's because of the <code>[[bin]]</code> section in the <code>Cargo.toml</code> file:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[[bin]]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">alarm</span><span>&quot;
+</span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;
+</span></code></pre>
+<h2 id="learnings">Learnings</h2>
+<p>Code so far <a href="https://github.com/bbelderbos/cli_alarm">here</a>.</p>
+<p>A couple of cool things I learned while building this:</p>
+<ul>
+<li>I used <a href="https://crates.io/crates/clap">clap</a>  again for the CLI, great library, see also <a href="/command-line-apps-with-clap">this article</a>.</li>
+</ul>
+<p>Like last time I am using attributes (derive macros) to define the CLI interface which is pretty concise:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">derive</span><span>(Parser, Debug)]
+</span><span>#[</span><span style="color:#bf616a;">command</span><span>(author, version, about, long_about = None)]
+</span><span style="color:#b48ead;">struct </span><span>Cli {
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;m&#39;, long, required = true)]
+</span><span>    </span><span style="color:#bf616a;">minutes</span><span>: </span><span style="color:#b48ead;">u64</span><span>,
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;r&#39;, long, default_value_t = false)]
+</span><span>    </span><span style="color:#bf616a;">repeat</span><span>: </span><span style="color:#b48ead;">bool</span><span>,
+</span><span>    #[</span><span style="color:#bf616a;">arg</span><span>(short, long, env = &quot;</span><span style="color:#a3be8c;">ALARM_FILE</span><span>&quot;)]
+</span><span>    </span><span style="color:#bf616a;">file</span><span>: Option&lt;String&gt;,
+</span><span>}
+</span></code></pre>
+<p>This time around I learned that clap also supports environment variables. Here I use it to set the alarm sound file if not provided as an argument.</p>
+<ul>
+<li>I used the <a href="https://crates.io/crates/rodio">rodio</a> crate to play the alarm sound. It's a simple and easy-to-use audio library. Next step is to figure out how to play an audio message in addition to the alarm sound.</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>rodio::{Decoder, OutputStream, source::Source};
+</span><span>...
+</span><span style="color:#b48ead;">let </span><span>(_stream, stream_handle) = OutputStream::try_default().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> file = File::open(audio_file).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> source = Decoder::new(BufReader::new(file)).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>stream_handle.</span><span style="color:#96b5b4;">play_raw</span><span>(source.</span><span style="color:#96b5b4;">convert_samples</span><span>()).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span></code></pre>
+<p>That's a lot of unwrapping, I should probably handle the errors more gracefully, still a lot to learn ...</p>
+<ul>
+<li>I used the <a href="https://crates.io/crates/chrono">chrono</a> crate to print the current time in the log messages:</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>chrono::Local;
+</span><span>...
+</span><span>println!(&quot;</span><span style="color:#a3be8c;">Playing alarm at </span><span style="color:#d08770;">{}</span><span>&quot;, Local::now().</span><span style="color:#96b5b4;">format</span><span>(&quot;</span><span style="color:#a3be8c;">%Y-%m-%d %H:%M:%S</span><span>&quot;));
+</span></code></pre>
+<p>Unlike Python's <code>datetime</code>, Rust doesn't have a built-in way to format dates and times, so you need to use a crate for that. This is a common pattern in Rust: the standard library is kept small and you use crates for additional functionality.</p>
+<p>Other notable Python Standard Library packages you'll miss as a Pythonista for example are: <code>random</code>, <code>re</code>, <code>csv</code>, and <code>json</code>, but once you get used to just <code>cargo add</code>ing the crates you need, you hardly notice the difference.</p>
+<ul>
+<li>
+<p>I used the <a href="https://crates.io/crates/reqwest">reqwest</a> crate to download the default alarm sound. It's a simple and easy-to-use HTTP client, which I had already used for my <em>Pybites Search</em> app, see <a href="/pybites-search-in-rust">here</a>.</p>
+</li>
+<li>
+<p>Where in Python you use <code>while True:</code> to create an infinite loop, in Rust you use <code>loop { ... }</code>.</p>
+</li>
+<li>
+<p>You can use <code>thread::sleep</code> to pause the execution of the program for a specified amount of time, which seems a fit for this app.</p>
+</li>
+<li>
+<p>Like Python, Rust has a <code>Path</code> struct (object) to work with file paths in a platform-independent way. I like structs in Rust, see also <a href="/namedtuple-in-rust-struct">here</a>.</p>
+</li>
+<li>
+<p>I use <code>cfg!(target_os = &quot;windows&quot;)</code> to check if the OS is Windows. This is a built-in macro in Rust (in Python you'd use <code>sys.platform</code> or the <code>platform</code> module).</p>
+</li>
+</ul>
+<h2 id="improvement-ideas-next-steps">Improvement ideas / next steps</h2>
+<p>Although this is not very good Rust code yet, I'm happy with the progress so far, specially having a working program that does something useful.</p>
+<p>Some things to improve:</p>
+<ul>
+<li>
+<p>Play an audio message as mentioned.</p>
+</li>
+<li>
+<p>Download the default alarm file to a sensible location or maybe a temp dir to not clutter the user's filesystem.</p>
+</li>
+<li>
+<p>Handle errors more gracefully, e.g. using <code>Result</code> instead of <code>unwrap</code> to better propagate errors.</p>
+</li>
+<li>
+<p>Modularize the code more to learn how to work with multiple files / modules.</p>
+</li>
+<li>
+<p>Linting and formatting (and automate this with a pre-commit hook as I tend to do with Python, see <a href="https://www.youtube.com/watch?v=XFyLzr5Ehf0">here</a>).</p>
+</li>
+<li>
+<p>Add documentation (and host it somewhere, e.g. GitHub Pages).</p>
+</li>
+<li>
+<p>Add tests (although this app being heavy on IO and time-based, probably not the best app to start to learn about testing in Rust lol).</p>
+</li>
+</ul>
+<p>So good for a couple of more articles here ...</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The best way to learn is to build small projects! This way you learn to put things together which is an important skill in programming. You can also gradually increase the complexity of the projects you build.</p>
+<p>I'm happy with the progress so far and how this way of learning Rust constantly challenges me to learn more about the language and tooling. I'm looking forward to diving into more advanced topics like error handling, testing, modularization, and more ...</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/constants-python-vs-rust/">Constants in Python vs Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-18
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In Python you define constants using uppercase variable names (dictated by PEP8), for example:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#bf616a;">TIMEOUT </span><span>= </span><span style="color:#d08770;">10
+</span><span style="color:#bf616a;">ENDPOINT </span><span>= &quot;</span><span style="color:#a3be8c;">https://codechalleng.es/api/content/</span><span>&quot;
+</span><span style="color:#bf616a;">CACHE_FILE_NAME </span><span>= &quot;</span><span style="color:#a3be8c;">.pybites-search-cache.json</span><span>&quot;
+</span><span style="color:#bf616a;">DEFAULT_CACHE_DURATION </span><span>= </span><span style="color:#d08770;">86400  </span><span style="color:#65737e;"># Cache API response for 1 day
+</span></code></pre>
+<p>Nothing prevents you from overriding these values, but it's a convention to treat them as constants.</p>
+<p>To add a layer of immutability, you can use type hints with the <code>Final</code> qualifier from the <code>typing</code> module:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">from </span><span>typing </span><span style="color:#b48ead;">import </span><span>Final
+</span><span>
+</span><span style="color:#bf616a;">TIMEOUT</span><span>: Final[int] = </span><span style="color:#d08770;">10
+</span><span style="color:#bf616a;">ENDPOINT</span><span>: Final[str] = &quot;</span><span style="color:#a3be8c;">https://codechalleng.es/api/content/</span><span>&quot;
+</span><span style="color:#bf616a;">CACHE_FILE_NAME</span><span>: Final[str] = &quot;</span><span style="color:#a3be8c;">.pybites-search-cache.json</span><span>&quot;
+</span><span style="color:#bf616a;">DEFAULT_CACHE_DURATION</span><span>: Final[int] = </span><span style="color:#d08770;">86400  </span><span style="color:#65737e;"># Cache API response for 1 day
+</span></code></pre>
+<p>When you try to override these values mypy will raise an error. Your IDE might also proactively warn you about it.</p>
+<p>Overall type hints are a good practice in Python, they make your code more readable and bring some of Rust's strictness to Python. 💡 😍 📈</p>
+<p>Another example of enforcing immutability in Python is using <code>frozen=True</code> on a <code>dataclass</code>.</p>
+<p>Now let's look at Rust. You define constants using the <code>const</code> keyword and define the type explicitly:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">TIMEOUT</span><span>: </span><span style="color:#b48ead;">u64 </span><span>= </span><span style="color:#d08770;">10</span><span>;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">ENDPOINT</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">https://codechalleng.es/api/content/</span><span>&quot;;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">CACHE_FILE_NAME</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">.pybites-search-cache.json</span><span>&quot;;
+</span><span style="color:#b48ead;">const </span><span style="color:#d08770;">DEFAULT_CACHE_DURATION</span><span>: </span><span style="color:#b48ead;">u64 </span><span>= </span><span style="color:#d08770;">86400</span><span>; </span><span style="color:#65737e;">// Cache API response for 1 day
+</span></code></pre>
+<p>The <code>&amp;str</code> type is a reference to a string, which avoids copying data around. In contrast, <code>String</code> is a heap-allocated string.</p>
+<p><code>&amp;str</code> does not allocate memory itself; it references an existing string slice. This is more efficient for passing around string literals, which are stored in the program's binary and are immutable, making <code>&amp;str</code> ideal for constants.</p>
+<p>The key point is that you cannot override these values; the compiler will raise an error.</p>
+<p>Rust also has a <code>static</code> keyword which is used for global variables, but that's a topic for another article.</p>
+<p>In both Python and Rust, you can define enums to group related constants together, but that's a topic for another article too.</p>
+<h2 id="practice-this">Practice This</h2>
+<p>Try the <a href="https://rustplatform.com/variables-and-mutability">Variables and Mutability</a> exercise on the Pybites Rust Platform to practice <code>let</code>, <code>mut</code>, and <code>const</code> in Rust.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Both Python and Rust have clear conventions for defining constants. Rust enforces immutability strictly at the language level, while in Python, you can achieve a similar level of strictness by using type hints.</p>
+<p>Each language offers tools and conventions that help maintain the integrity of your constants, ensuring reliable and predictable behavior in your programs.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/resizing-images/">How to resize images in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-17
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>The other day <a href="https://rsbit.es/resizing-images/building-website-axum.md">I built a simple website</a> and needed to resize some images so I decided to figure out how to do this in Rust.</p>
+<p>I found a crate called <code>image</code> that made this easy. Here's how I did it.</p>
+<p>Full code <a href="https://github.com/bbelderbos/resize-images">in this repo</a>.</p>
+<p>After adding <code>image</code> to your <code>Cargo.toml</code> or doing a <code>cargo add image</code> you can use it like this.</p>
+<p>First you make an <code>image</code> object:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> input_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop.jpg</span><span>&quot;);
+</span><span style="color:#b48ead;">let</span><span> img = image::open(input_path)?;
+</span></code></pre>
+<p>Here is the original image:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/workshop_original.jpg" alt="Image to make a thumb of" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>The <code>?</code> operator is a concise way to handle errors, if <code>image::open</code> fails it will return an error and the function will return early.</p>
+<p>Next we can use the <code>resize_exact</code> method to resize the image to the desired width and height:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize_exact</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span></code></pre>
+<p>The <code>FilterType</code> is optional, it defaults to <code>Lanczos3</code> which is a high-quality resampling filter.</p>
+<p>Finally we can save the resized image to disk:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> output_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop_thumbnail.jpg</span><span>&quot;);
+</span><span>thumbnail.</span><span style="color:#96b5b4;">save</span><span>(output_path)?;
+</span></code></pre>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/workshop_thumbnail_exact.jpg" alt="200 x 200 thumbnail image" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>That's a bit skewed though, because the original image was 800x600 and we resized it to 200x200. If you want to keep the aspect ratio you can use the <code>resize</code> method instead of <code>resize_exact</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span></code></pre>
+<p>That leads to an image of 200x150 in my case which looks better:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/workshop_thumbnail.jpg" alt="200 x 150 thumbnail image" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>Putting it all together:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>image::ImageError;
+</span><span style="color:#b48ead;">use </span><span>std::path::Path;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; Result&lt;(), ImageError&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> input_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop.jpg</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> img = image::open(input_path)?;
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// Resize image to fit within 200x200 while maintaining aspect ratio
+</span><span>    </span><span style="color:#b48ead;">let</span><span> thumbnail = img.</span><span style="color:#96b5b4;">resize</span><span>(</span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">200</span><span>, image::imageops::FilterType::Lanczos3);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output_path = Path::new(&quot;</span><span style="color:#a3be8c;">workshop_thumbnail.jpg</span><span>&quot;);
+</span><span>    thumbnail.</span><span style="color:#96b5b4;">save</span><span>(output_path)?;
+</span><span>
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<p>Note that because we're using the <code>?</code> operator we need to update the return type of our function to <code>Result&lt;(), ImageError&gt;</code>.</p>
+<p>The repo has some other interesting things:</p>
+<ul>
+<li>
+<p>I use <code>clap</code> to parse command line arguments, see also <a href="https://rsbit.es/resizing-images/mcommand-line-apps-with-clap">this article</a>.</p>
+</li>
+<li>
+<p>I use <code>img.save_with_format(output_path, ImageFormat::Png)?;</code> to save the image in a different format (ChatGPT gave me <code>webp</code> fake images so I converted them to <code>png</code>).</p>
+</li>
+<li>
+<p>It uses <code>glob</code> (similar to Python's <code>glob</code>) with a pattern (<code>&quot;{}/*{}&quot;</code>) to find all files in a directory with a certain extension, which can be provided as an argument to the program.</p>
+</li>
+<li>
+<p>I use the <code>match</code> statement to handle errors and print messages to the console in various places.</p>
+</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>There you go, a quick way to resize images in Rust.</p>
+<p>The <code>image</code> crate is powerful and easy to use, similar to <code>Pillow</code> in Python. 😍 📈</p>
+<p>You can use the <code>resize</code> method to keep the aspect ratio or <code>resize_exact</code> to resize to an exact width and height.</p>
+<p>Again, the full code of this mini project is <a href="https://github.com/bbelderbos/resize-images">here</a>.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/rust-analyzer-ale-errors-while-coding/">Use rust-analyzer + ALE to show errors as you code in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-16
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>The more advanced you become as a developer the more you realize that the speed of coding is not just about language syntax or typing, it's as much about the tools and techniques you use.</p>
+<p>One of my best Python coding setup tweaks has been showing errors upon saving files, for which I use <a href="https://gist.github.com/kyokley/0d7bb03eede831bea3fa">this plugin</a>. This speeds up development significantly! 😍 📈</p>
+<p>I wanted to do the same for Rust coding, specially because there is, compared to Python, an extra compilation step in Rust.</p>
+<p>In this article I'll show you how I have set it up ...</p>
+<p><em>Note that I use Vim as my text editor and Mac as my operating system. I hope most of the setup is easily transferable to other text editors and operating systems. Or that at least it gets you thinking about how you can speed up your coding workflow.</em> 💡</p>
+<h2 id="install-rust-analyzer">Install rust-analyzer</h2>
+<p>First, you need to install <code>rust-analyzer</code>. I did this with <code>brew</code>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">brew</span><span> install rust-analyzer
+</span></code></pre>
+<h2 id="install-ale-the-asynchronous-lint-engine">Install ALE, the Asynchronous Lint Engine</h2>
+<p>I use <a href="https://github.com/VundleVim/Vundle.vim">Vundle</a> as my Vim plugin manager so I added this plugin to my <code>.vimrc</code>:</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span>Plugin </span><span style="color:#a3be8c;">&#39;dense-analysis/ale&#39;
+</span></code></pre>
+<p>And installed it with:</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span>:PluginInstall
+</span></code></pre>
+<h2 id="setup-in-vimrc">Setup in <code>.vimrc</code></h2>
+<p>I added the following code to my <code>.vimrc</code>. I learned I can use ALE for Python as well in one go :)</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span style="color:#65737e;">&quot; ALE Configuration
+</span><span style="color:#65737e;">&quot; Enable ALE for Rust and Python
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_linters</span><span> = {
+</span><span>    </span><span style="color:#b48ead;">\   </span><span style="color:#a3be8c;">&#39;rust&#39;</span><span>: [</span><span style="color:#a3be8c;">&#39;analyzer&#39;</span><span>],
+</span><span>    </span><span style="color:#b48ead;">\   </span><span style="color:#a3be8c;">&#39;python&#39;</span><span>: [</span><span style="color:#a3be8c;">&#39;pyflakes&#39;</span><span>],
+</span><span>    </span><span style="color:#b48ead;">\</span><span>}
+</span><span>
+</span><span style="color:#65737e;">&quot; Only lint on save, not on text changed or insert leave
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_text_changed</span><span> = </span><span style="color:#a3be8c;">&#39;never&#39;
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_insert_leave</span><span> = </span><span style="color:#d08770;">0
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_enter</span><span> = </span><span style="color:#d08770;">0
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_lint_on_save</span><span> = </span><span style="color:#d08770;">1
+</span><span>
+</span><span style="color:#65737e;">&quot; Ensure rust-analyzer is installed and in your PATH
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_rust_analyzer_executable</span><span> = </span><span style="color:#a3be8c;">&#39;rust-analyzer&#39;
+</span></code></pre>
+<ol>
+<li>
+<p>The <code>ale_linters</code> variable is set to use <code>rust-analyzer</code> for Rust files and <code>pyflakes</code> for Python files. I installed <code>pyflakes</code> with <a href="https://www.youtube.com/watch?v=xvCShK1Bqxk"><code>pipx</code></a>. By the way, this might become a replacement for the Python plugin I mentioned in the beginning, not sure yet ...</p>
+</li>
+<li>
+<p>The <code>ale_lint_on_save</code> variable is set to <code>1</code> to check the syntax on save.</p>
+</li>
+<li>
+<p>The <code>ale_rust_analyzer_executable</code> variable is set to <code>rust-analyzer</code> to ensure that <code>rust-analyzer</code> is installed and in your PATH.</p>
+</li>
+<li>
+<p>The <code>ale_lint_on_text_changed</code>, <code>ale_lint_on_insert_leave</code>, and <code>ale_lint_on_enter</code> variables are set to <code>never</code>, <code>0</code>, and <code>0</code> respectively to prevent linting on text changed, insert leave, and enter. Tweak these settings as you see fit.</p>
+</li>
+</ol>
+<p>Playing around with this plugin I added some more settings to my <code>.vimrc</code>:</p>
+<pre data-lang="vim" style="background-color:#2b303b;color:#c0c5ce;" class="language-vim "><code class="language-vim" data-lang="vim"><span style="color:#65737e;">&quot; Enable ALE&#39;s virtual text feature for inline messages
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_virtualtext_cursor</span><span> = </span><span style="color:#d08770;">1
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_virtualtext_prefix</span><span> = </span><span style="color:#a3be8c;">&#39;⚠ &#39;
+</span><span>
+</span><span style="color:#65737e;">&quot; Customize the ALE sign column for better readability
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_sign_error</span><span> = </span><span style="color:#a3be8c;">&#39;&gt;&gt;&#39;
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_sign_warning</span><span> = </span><span style="color:#a3be8c;">&#39;--&#39;
+</span><span>
+</span><span style="color:#65737e;">&quot; Enable ALE to use the quickfix list
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_open_list</span><span> = </span><span style="color:#d08770;">1
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_set_quickfix</span><span> = </span><span style="color:#d08770;">1
+</span><span>
+</span><span style="color:#65737e;">&quot; Enable line wrapping only in quickfix and loclist buffers
+</span><span style="color:#96b5b4;">autocmd </span><span>FileType qf </span><span style="color:#96b5b4;">setlocal</span><span> wrap linebreak
+</span><span style="color:#96b5b4;">autocmd </span><span>FileType loclist </span><span style="color:#96b5b4;">setlocal</span><span> wrap linebreak
+</span><span>
+</span><span style="color:#65737e;">&quot; Enable ALE&#39;s floating window preview feature to show detailed error messages
+</span><span style="color:#96b5b4;">let </span><span style="color:#bf616a;">g:ale_detail_to_floating_preview</span><span> = </span><span style="color:#d08770;">1
+</span></code></pre>
+<h2 id="see-it-in-action">See it in action</h2>
+<p>Here is some code to try this on:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">mod </span><span>data;
+</span><span>
+</span><span style="color:#b48ead;">use</span><span> tokio;
+</span><span style="color:#b48ead;">use crate</span><span>::data::fetch_data;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">tokio</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> data = </span><span style="color:#96b5b4;">fetch_data</span><span>().await.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{:#?}</span><span>&quot;, data);
+</span><span>}
+</span></code></pre>
+<p>Let's make a couple of errors and see the ALE checker in action 💡 🚀</p>
+<ol>
+<li>changing <code>mod data;</code> to <code>mod data</code></li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>E </span><span style="color:#b48ead;">mod </span><span>data </span><span style="color:#65737e;">// E: Syntax Error: expected `;` or `{`
+</span></code></pre>
+<ol start="2">
+<li><code>data</code> to <code>data2</code> which is not defined</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>E     println!(&quot;</span><span style="color:#d08770;">{:#?}</span><span>&quot;, data2); </span><span style="color:#65737e;">// E: cannot find value `data2` in this scope
+</span></code></pre>
+<ol start="3">
+<li>removing a <code>use</code> statement</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>W </span><span style="color:#b48ead;">use</span><span> tokio; </span><span style="color:#65737e;">// W: consider importing this function: `use crate::data::fetch_data; `
+</span><span>...
+</span><span>E     </span><span style="color:#b48ead;">let</span><span> data = </span><span style="color:#96b5b4;">fetch_data</span><span>().await.</span><span style="color:#96b5b4;">unwrap</span><span>(); </span><span style="color:#65737e;">// E: cannot find function `fetch_data` in this scope not found in this sc
+</span></code></pre>
+<ol start="4">
+<li>removing the <code>#[tokio::main]</code> attribute</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>W </span><span style="color:#b48ead;">use</span><span> tokio; </span><span style="color:#65737e;">// W: remove the whole `use` item
+</span><span>E async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() { </span><span style="color:#65737e;">// E: `main` function is not allowed to be `async` `main` function is not allowed to be `async`
+</span></code></pre>
+<ol start="5">
+<li>removing the <code>async</code> keyword</li>
+</ol>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>E </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() { </span><span style="color:#65737e;">// E: the `async` keyword is missing from the function declaration
+</span></code></pre>
+<p>Specially the <code>ale_open_list</code> and <code>ale_set_quickfix</code> settings are useful. The quickfix panel shows all the errors in a separate window, which is useful when you have mulitple errors that wrap in the editor window. For example:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/example-ale-errors-pane.png" alt="Example of ALE errors pane" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>And it also works for Python 😎 🎉</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#d08770;">...
+</span><span>E </span><span style="color:#96b5b4;">print</span><span>(c) </span><span style="color:#65737e;"># E: undefined name &#39;c&#39;
+</span></code></pre>
+<p>And:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>E </span><span style="color:#96b5b4;">print</span><span>(a </span><span style="color:#65737e;"># E: &#39;(&#39; was never closed
+</span></code></pre>
+<h2 id="complementing-with-github-copilot">Complementing with GitHub Copilot</h2>
+<p>If an error is not 100% you can always add a &quot;question comment&quot; like this to get more suggestions. Here for example I purposely removed the <code>await</code> method from the <code>fetch_data</code> function:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>...
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    E     </span><span style="color:#b48ead;">let</span><span> data = </span><span style="color:#96b5b4;">fetch_data</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>(); </span><span style="color:#65737e;">// E: no method named `unwrap` found for opaque type `impl Future&lt;Output = Resul…
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{:#?}</span><span>&quot;, data);
+</span><span>}
+</span><span>
+</span><span># q: why does the above fail?
+</span></code></pre>
+<p>GitHub Copilot will suggest the following answer right below the question:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span># a: the fetch_data function is async, so it returns a Future, not the data itself
+</span></code></pre>
+<p>This is a useful technique and faster, because I can stay in Vim rather than making the round trip to ChatGPT. 🤖 🚀</p>
+<hr />
+<p>Hope this helps you speed up your Rust coding! 🦀</p>
+<p>Either as a Vim user or not, you can use the same principle to speed up your coding in your favorite text editor.</p>
+<p>Or at least get into the mindset of speeding up your coding through efficient tools and techniques. 💪 📈</p>
+<p>If you want to learn more about my Vim setup overall, check out this video: <a href="https://www.youtube.com/watch?v=B9tZyFXr1Yw">Supercharge Your Vim Workflow: Essential Tips and Plugins for Efficiency</a>. 🎥 🚀</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/deploy-rust-app-to-heroku/">How to deploy a Rust app to Heroku</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-15
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>In <a href="/building-website-axum">yesterday's post</a>, I showed how to build a simple web application with Rust. Today, I'll show how to deploy this application to Heroku.</p>
+<h2 id="steps">Steps</h2>
+<ol>
+<li>Add a <code>Procfile</code> to the root of your project</li>
+</ol>
+<p>For a simple web application, the <code>Procfile</code> should contain the following line, assuming <code>artist_portfolio</code> is the name of the application:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">web:</span><span> ./target/release/artist_portfolio
+</span></code></pre>
+<p>Note that we don't need to run a web server like Gunicorn, because the Rust application is self-contained.</p>
+<p>No other files are needed, because the Rust buildpack (see below) will take care of the rest based on the <code>Cargo.toml</code> file.</p>
+<ol start="2">
+<li>Create a new Heroku application</li>
+</ol>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku login
+</span><span style="color:#bf616a;">$</span><span> heroku create artist-portfolio
+</span></code></pre>
+<p>This adds a new remote to the Git repository (see <code>git remote -v</code>). You can also add the remote manually:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> git remote add heroku https://git.heroku.com/artist-portfolio.git
+</span></code></pre>
+<ol start="3">
+<li>Add the Rust buildpack:</li>
+</ol>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku buildpacks:set emk/rust
+</span></code></pre>
+<p>This buildpack will compile the Rust application on Heroku.</p>
+<ol start="4">
+<li>Environment variables</li>
+</ol>
+<p>You can set them either via the Heroku dashboard or the CLI:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku config:set KEY=VALUE
+</span></code></pre>
+<p>See also my post about <a href="/environment-variables-rust">using environment variables in Rust</a>.</p>
+<ol start="5">
+<li>Kick off the build</li>
+</ol>
+<p>You only have to push your code to Heroku to trigger the build:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> git push heroku main
+</span></code></pre>
+<hr />
+<p>That's it! You can now navigate to the URL provided by Heroku to see your application. If you don't know the URL, you can find it with:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku info
+</span></code></pre>
+<p>You can also open it directly from the CLI:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku open
+</span></code></pre>
+<p>If there is any issue (for example, upon first attempt I forgot to use the correct port: 8000, instead of Axum's default 3000), you can check the logs:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> heroku logs</span><span style="color:#bf616a;"> --tail
+</span></code></pre>
+<h2 id="automate-the-deployment">Automate the deployment</h2>
+<p>Heroku is well integrated with GitHub, so you can automate the deployment process.</p>
+<p>Go to the Heroku dashboard, select the application, and navigate to the &quot;Deploy&quot; tab. Connect your GitHub repository and select the branch you want to deploy. You can also conveniently enable automatic deployments.</p>
+<p>For more information, see the <a href="https://devcenter.heroku.com/articles/github-integration">Heroku documentation</a>.</p>
+<p>You can also map a custom domain to your Heroku application and get an SSL certificate.</p>
+<hr />
+<p>That's it! Your Rust application on Heroku in a few simple steps.</p>
+<p>When I try other platforms and deploy options (e.g. Docker), I will share them here ...</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/page/3/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Newer posts</span>
+                        </a>
+                    </span>
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/page/5/">
+                            <span class="button__text">Older posts</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

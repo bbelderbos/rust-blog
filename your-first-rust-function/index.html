@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Your first Rust function (from a Python perspective) | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Your first Rust function (from a Python perspective) | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/your-first-rust-function/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Your first Rust function (from a Python perspective) | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/your-first-rust-function/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/your-first-rust-function/">Your first Rust function (from a Python perspective)</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-15
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Here's a Python function:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">greet</span><span>() -&gt; str:
+</span><span>    </span><span style="color:#b48ead;">return </span><span>&quot;</span><span style="color:#a3be8c;">Hello, Rustacean!</span><span>&quot;
+</span></code></pre>
+<p>Here's the Rust equivalent:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">greet</span><span>() -&gt; String {
+</span><span>    &quot;</span><span style="color:#a3be8c;">Hello, Rustacean!</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>()
+</span><span>}
+</span></code></pre>
+<p>Four differences, all visible in three lines:</p>
+<p><strong>1. <code>fn</code> instead of <code>def</code>.</strong> Cosmetic, easy.</p>
+<p><strong>2. <code>-&gt; String</code> is required.</strong> Python type hints are optional documentation. Rust return types are mandatory — the compiler uses them.</p>
+<p><strong>3. No <code>return</code> keyword.</strong> The last expression (without a semicolon) is the return value. Add a semicolon and it becomes a statement that returns nothing — a common gotcha.</p>
+<p><strong>4. <code>String</code> vs <code>str</code>.</strong> Python has one string type. Rust has two: <code>&amp;str</code> (borrowed slice, like a read-only view) and <code>String</code> (owned, heap-allocated). The literal <code>&quot;Hello&quot;</code> is a <code>&amp;str</code>. <code>.to_string()</code> converts it to an owned <code>String</code>.</p>
+<p>That fourth point is the one that will take the longest to internalize. For now, just remember: Rust has two string types, and you need to choose the right one for your function's return type: literals are <code>&amp;str</code>, owned data is <code>String</code>, and <code>.to_string()</code> bridges them.</p>
+<h2 id="practice-this">Practice this</h2>
+<p>Try these exercises on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/hello-rustacean">Hello, Rustacean!</a> — your first Rust function, returning a String</li>
+<li><a href="https://rustplatform.com/functions-and-return-values">Functions and Return Values</a> — practice <code>fn</code>, return types, and implicit returns</li>
+<li><a href="https://rustplatform.com/strings-and-slices">Strings and Slices</a> — get comfortable with <code>&amp;str</code> vs <code>String</code></li>
+</ul>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/writing-a-rust-code-validation-api/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Writing a Rust code validation API</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/rust-iterators-over-loops-one-function-that-shows-why/">
+                            <span class="button__text">Rust iterators over loops: one function that shows why</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

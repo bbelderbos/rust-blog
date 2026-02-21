@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Rustlings 😍 - Small exercises to get you used to reading + writing Rust 🦀 | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Rustlings 😍 - Small exercises to get you used to reading + writing Rust 🦀 | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/rustlings-exercises-to-practice-rust/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Rustlings 😍 - Small exercises to get you used to reading + writing Rust 🦀 | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/rustlings-exercises-to-practice-rust/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/rustlings-exercises-to-practice-rust/">Rustlings 😍 - Small exercises to get you used to reading + writing Rust 🦀</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-10
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>I have been going through the <a href="https://github.com/rust-lang/rustlings">Rustlings exercises</a> and I have found them to be a great way to practice Rust. 🔥</p>
+<p>As I said in <a href="/pybites-search-in-rust">a previous post</a>, it's all about pratice. 💡</p>
+<p>Rust is also a language that requires some time to get used to, specially when coming from a dynamic language like Python. All of a sudden you have to get used to the strictness of the compiler and the ownership system.</p>
+<p>Reading books like <a href="https://doc.rust-lang.org/book/">The Rust Programming Language</a> and <a href="https://www.oreilly.com/library/view/programming-rust-2nd/9781492052586/">Programming Rust 2nd ed</a> (both fantastic!), a lot might not stick until you put it into practice, there is a lot to take in!</p>
+<p>That's where Rustlings comes in. It's a set of small exercises that you can work through to reinforce what you've learned.</p>
+<p>Not only will you write and fix code, you'll also read a lot of code forcing yourself to understand what it does.</p>
+<p>And you'll get to see a lot of compiler error messages in the process. Rust is strict and unforgiving so the sooner you get used to that the better.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>Just follow <a href="https://github.com/rust-lang/rustlings">the README</a>, the only thing I had to do on my Mac was:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -L</span><span> https://raw.githubusercontent.com/rust-lang/rustlings/main/install.sh | </span><span style="color:#bf616a;">bash
+</span></code></pre>
+<p>And then <code>cd</code> into the <code>rustlings</code> directory.</p>
+<h2 id="watch-mode">Watch mode</h2>
+<p>There are various ways you can do the exercises, but I really liked this workflow:</p>
+<ul>
+<li>
+<p>In the first terminal window, run <code>rustlings watch</code>.</p>
+</li>
+<li>
+<p>In the second terminal window, open the <code>exercises</code> directory in your favorite editor (in my case Vim + fzf for quick file search) and start coding, as soon as you save a file, <code>watch</code> will pick it up and the corresponding tests will run.</p>
+</li>
+</ul>
+<p>Toggling between the two terminal windows writing code + seeing the tests run + reading the error messages, felt like learning on steroids. 💪</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I'm through ~80% of the 96 exercises and I can say that I've learned a lot: ownership, borrowing, lifetimes, pattern matching, enums, structs, traits, generics, iterators, error handling, writing tests, it's all there! 🚀</p>
+<p>I highly recommend giving it a go, it's a great tool to really solidify what you've learned from reading books and watching videos. You might be surprised how little actually has stuck from any passive learning you've done. 🤯</p>
+<p>This effective learning also happens when you try to build smaller projects, but <em>Rustlings</em> is a great way to reinforce the basics and fundamental concepts. 📈</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/ownership-and-borrowing/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Ownership and borrowing in Rust</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/command-line-apps-with-clap/">
+                            <span class="button__text">Building a nice command-line interface with Clap</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

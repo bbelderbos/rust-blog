@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Exception handling in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Exception handling in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/exception-handling-in-rust/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Exception handling in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/exception-handling-in-rust/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/exception-handling-in-rust/">Exception handling in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-07-10
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>I am working on an AWS Lambda function to validate Rust code submitted from our coding platform. It led to some exception handling code, which I found interesting to compare with Python.</p>
+<h2 id="adding-exception-to-running-an-external-command">Adding exception to running an external command</h2>
+<p>Here is an example of exception handling I added to my lambda function to run a cargo command in a temporary directory. The function returns the output of the command if it is successful, or an error message if it fails:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">run_cargo_command</span><span>(</span><span style="color:#bf616a;">temp_dir_path</span><span>: &amp;Path) -&gt; Result&lt;Output, String&gt; {
+</span><span>    </span><span style="color:#b48ead;">match </span><span>Command::new(&quot;</span><span style="color:#a3be8c;">cargo</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">test</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">--verbose</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">current_dir</span><span>(temp_dir_path)
+</span><span>        .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>        .await
+</span><span>    {
+</span><span>        Ok(output) =&gt; {
+</span><span>            </span><span style="color:#b48ead;">if</span><span> output.status.</span><span style="color:#96b5b4;">success</span><span>() {
+</span><span>                Ok(output)
+</span><span>            } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>                Err(format!(
+</span><span>                    &quot;</span><span style="color:#a3be8c;">Command executed with errors: </span><span style="color:#d08770;">{}</span><span>&quot;,
+</span><span>                    String::from_utf8_lossy(&amp;output.stderr)
+</span><span>                ))
+</span><span>            }
+</span><span>        }
+</span><span>        Err(e) =&gt; Err(format!(
+</span><span>            &quot;</span><span style="color:#a3be8c;">Failed to execute command: </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">. Is &#39;cargo&#39; installed and accessible in your PATH?</span><span>&quot;,
+</span><span>            e
+</span><span>        )),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Here is the equivalent code in Python:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">import </span><span>subprocess
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">run_cargo_command</span><span>(</span><span style="color:#bf616a;">temp_dir_path</span><span>):
+</span><span>    </span><span style="color:#b48ead;">try</span><span>:
+</span><span>        output = subprocess.</span><span style="color:#bf616a;">run</span><span>(
+</span><span>            [&quot;</span><span style="color:#a3be8c;">cargo</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">test</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">--verbose</span><span>&quot;],
+</span><span>            </span><span style="color:#bf616a;">cwd</span><span>=temp_dir_path,
+</span><span>            </span><span style="color:#bf616a;">capture_output</span><span>=</span><span style="color:#d08770;">True</span><span>,
+</span><span>            </span><span style="color:#bf616a;">check</span><span>=</span><span style="color:#d08770;">True</span><span>,
+</span><span>        )
+</span><span>        </span><span style="color:#b48ead;">return </span><span>output
+</span><span>    </span><span style="color:#b48ead;">except </span><span>subprocess.CalledProcessError </span><span style="color:#b48ead;">as </span><span>e:
+</span><span>        </span><span style="color:#b48ead;">raise </span><span style="color:#bf616a;">Exception</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Command executed with errors: </span><span>{e.stderr}&quot;)
+</span><span>    </span><span style="color:#b48ead;">except </span><span>FileNotFoundError </span><span style="color:#b48ead;">as </span><span>e:
+</span><span>        </span><span style="color:#b48ead;">raise </span><span style="color:#bf616a;">Exception</span><span>(
+</span><span>            &quot;</span><span style="color:#a3be8c;">Failed to execute command: Is &#39;cargo&#39; installed and accessible in your PATH?</span><span>&quot;
+</span><span>        )
+</span></code></pre>
+<h2 id="rust-and-python-error-handling-comparison">Rust and Python Error Handling Comparison</h2>
+<ul>
+<li>
+<p>In Rust, we use the <code>Result</code> type (Ok/Err) to represent success or failure, while in Python, we use exceptions.</p>
+</li>
+<li>
+<p>Rust requires explicit handling of both success and failure cases, while Python allows for more flexible error handling.</p>
+</li>
+<li>
+<p>Rust's error handling is enforced at compile time, while Python's error handling is checked at runtime.</p>
+</li>
+<li>
+<p>Rust's pattern matching allows for concise and clear error handling, while Python's exception handling requires less boilerplate, it's more flexible, but can also lead to more runtime errors (because they are detected later).</p>
+</li>
+<li>
+<p>In Python you have to specifically catch the <code>FileNotFoundError</code> exception (and fall back to a generic <code>Exception</code>), while in Rust, it is handled by the <code>Err</code> case of the <code>match</code> statement which could include any error that occurs during the execution of the command.</p>
+</li>
+</ul>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice error handling on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/result-handling">Result Handling</a></li>
+<li><a href="https://rustplatform.com/custom-error-types">Custom Error Types</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>Python's exception handling allows for rapid and flexible development, making it easier to write code quickly. However, this same flexibility can lead to more runtime errors because errors are often detected later (at runtime) and it's easier to overlook proper error handling.</p>
+<p>Rust, on the other hand, enforces more rigorous error handling at compile time, leading to more reliable and predictable code, though it can be more verbose and require more upfront effort.</p>
+<p>This is just a small example, when I get into more nuances of error handling in Rust, I will follow up with a more detailed post. I also understand there are some common crates you can use like <code>anyhow</code> to make error handling in Rust more concise and flexible. To be continued ...</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/automating-test-runs-and-checking-coverage/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Automating test runs and checking coverage</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/writing-a-rust-code-validation-api/">
+                            <span class="button__text">Writing a Rust code validation API</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

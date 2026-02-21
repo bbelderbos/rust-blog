@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Automating test runs and checking coverage | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Automating test runs and checking coverage | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/automating-test-runs-and-checking-coverage/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Automating test runs and checking coverage | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/automating-test-runs-and-checking-coverage/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/automating-test-runs-and-checking-coverage/">Automating test runs and checking coverage</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-07-06
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>The other day I did <a href="/testing-in-rust">a post on testing in Rust</a> and the next logical step is to automate test runs and check coverage. Here's how you can do that:</p>
+<ol>
+<li>Automating test runs using GitHub Actions</li>
+</ol>
+<p>This is quite easy to do with a workflow file that runs the tests on every push and pull request. Here's an example:</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#65737e;"># .github/workflows/tests.yml
+</span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Rust
+</span><span>
+</span><span style="color:#d08770;">on</span><span>: [</span><span style="color:#a3be8c;">push</span><span>, </span><span style="color:#a3be8c;">pull_request</span><span>]
+</span><span>
+</span><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">test</span><span>:
+</span><span>    </span><span style="color:#bf616a;">runs-on</span><span>: </span><span style="color:#a3be8c;">ubuntu-latest
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>    - </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/checkout@v2
+</span><span>
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Set up Rust
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions-rs/toolchain@v1
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">toolchain</span><span>: </span><span style="color:#a3be8c;">stable
+</span><span>        </span><span style="color:#bf616a;">override</span><span>: </span><span style="color:#d08770;">true
+</span><span>
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo registry
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">~/.cargo/registry
+</span><span>        </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-registry-${{ hashFiles(&#39;**/Cargo.lock&#39;) }}
+</span><span>        </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          ${{ runner.os }}-cargo-registry-
+</span><span style="color:#a3be8c;">
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo index
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">~/.cargo/git
+</span><span>        </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-index-${{ hashFiles(&#39;**/Cargo.lock&#39;) }}
+</span><span>        </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          ${{ runner.os }}-cargo-index-
+</span><span style="color:#a3be8c;">
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Cache Cargo build
+</span><span>      </span><span style="color:#bf616a;">uses</span><span>: </span><span style="color:#a3be8c;">actions/cache@v2
+</span><span>      </span><span style="color:#bf616a;">with</span><span>:
+</span><span>        </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">target
+</span><span>        </span><span style="color:#bf616a;">key</span><span>: </span><span style="color:#a3be8c;">${{ runner.os }}-cargo-build-${{ hashFiles(&#39;**/Cargo.lock&#39;) }}
+</span><span>        </span><span style="color:#bf616a;">restore-keys</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">          ${{ runner.os }}-cargo-build-
+</span><span style="color:#a3be8c;">
+</span><span>    - </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">Run tests
+</span><span>      </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">cargo test --verbose
+</span></code></pre>
+<p><a href="https://github.com/bbelderbos/cli_alarm/actions/runs/9777385892/job/26991960298">Example job</a></p>
+<ol start="2">
+<li>Checking test coverage using <code>tarpaulin</code></li>
+</ol>
+<p>I was wondering if there was an equivalent to <code>pytest-cov</code> in Rust and I found <code>tarpaulin</code>. First install it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install cargo-tarpaulin
+</span></code></pre>
+<p>Then run it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo install cargo-tarpaulin
+</span><span style="color:#bf616a;">2024-07-03T11:29:24.739505Z</span><span>  INFO cargo_tarpaulin::process_handling: running /Users/bbelderbos/code/rust/cli_alarm/target/debug/deps/alarm-556e1e717eaa9b33
+</span><span style="color:#bf616a;">2024-07-03T11:29:24.739591Z</span><span>  INFO cargo_tarpaulin::process_handling: Setting LLVM_PROFILE_FILE
+</span><span>
+</span><span style="color:#bf616a;">running</span><span> 4 tests
+</span><span style="color:#bf616a;">test</span><span> tests::test_edge_cases ... ok
+</span><span style="color:#bf616a;">test</span><span> tests::test_exact_minute_durations ... ok
+</span><span style="color:#bf616a;">test</span><span> tests::test_minute_and_second_durations ... ok
+</span><span style="color:#bf616a;">test</span><span> tests::test_short_durations ... ok
+</span><span>
+</span><span style="color:#bf616a;">test</span><span> result: ok. 4 passed; </span><span style="color:#bf616a;">0</span><span> failed; </span><span style="color:#bf616a;">0</span><span> ignored; </span><span style="color:#bf616a;">0</span><span> measured; </span><span style="color:#bf616a;">0</span><span> filtered out; </span><span style="color:#bf616a;">finished</span><span> in 0.00s
+</span><span>
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.052962Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: For binary: target/debug/deps/alarm-556e1e717eaa9b33
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.052976Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: Generated: target/tarpaulin/profraws/alarm-556e1e717eaa9b33_14793736282992077593_0-7692.profraw
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.052979Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: Merging coverage reports
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.056944Z</span><span>  INFO cargo_tarpaulin::statemachine::instrumented: Mapping coverage data to source
+</span><span style="color:#bf616a;">2024-07-03T11:29:25.083725Z</span><span>  INFO cargo_tarpaulin::report: Coverage Results:
+</span><span>|| </span><span style="color:#bf616a;">Uncovered</span><span> Lines:
+</span><span>|| </span><span style="color:#bf616a;">src/main.rs:</span><span> 55, 57-58, 62, 64, 68-69, 73, 75, 78-79, 91-92, 94, 97-98, 100-101, 104-105
+</span><span>|| </span><span style="color:#bf616a;">Tested/Total</span><span> Lines:
+</span><span>|| </span><span style="color:#bf616a;">src/main.rs:</span><span> 12/32
+</span><span>||
+</span><span style="color:#bf616a;">37.50</span><span>% coverage, 12/32 lines covered
+</span></code></pre>
+<p>And to make it more visual, generate an HTML report (the equivalent of <code>pytest --cov --cov-report=html</code>):</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo tarpaulin</span><span style="color:#bf616a;"> --out</span><span> Html
+</span></code></pre>
+<p>Beautiful:</p>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/tarpaulin-example.png" alt="example test report tarpaulin makes" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<p>There you go, two more tools to help you test your Rust code.</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/testing-in-rust/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">How to write unit tests in Rust</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/exception-handling-in-rust/">
+                            <span class="button__text">Exception handling in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Alarm clock part II - text to speech | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Alarm clock part II - text to speech | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/tts-in-rust/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Alarm clock part II - text to speech | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/tts-in-rust/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/tts-in-rust/">Alarm clock part II - text to speech</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-21
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>I tweaked <a href="/play-alarm-from-command-line">my alarm clock app</a> today to add text-to-speech (TTS).</p>
+<p>I started with the obvious choice: <a href="https://crates.io/crates/tts">tts crate</a>, but it did not work on my Mac, no audio.</p>
+<h2 id="adding-text-to-speech">Adding text-to-speech</h2>
+<p>So I got a bit creative and ended up with this function:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">speak_message</span><span>(</span><span style="color:#bf616a;">message</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">macos</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">say</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(message)
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute say command on macOS</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">windows</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">powershell</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">-Command</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(&amp;format!(&quot;</span><span style="color:#a3be8c;">Add-Type –TypeDefinition </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">using System.Speech; var synth = new Speech.Synthesis.SpeechSynthesizer(); synth.Speak(&#39;</span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">&#39;);</span><span style="color:#96b5b4;">\&quot;</span><span>&quot;, message))
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute PowerShell TTS on Windows</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else if </span><span>cfg!(target_os = &quot;</span><span style="color:#a3be8c;">linux</span><span>&quot;) {
+</span><span>        Command::new(&quot;</span><span style="color:#a3be8c;">espeak</span><span>&quot;)
+</span><span>            .</span><span style="color:#96b5b4;">arg</span><span>(message)
+</span><span>            .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Failed to execute espeak on Linux</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        eprintln!(&quot;</span><span style="color:#a3be8c;">Unsupported operating system for TTS</span><span>&quot;);
+</span><span>    }
+</span><span>    Ok(())
+</span><span>}
+</span></code></pre>
+<ul>
+<li>
+<p>On macOS, it uses the <code>say</code> command (built-in / ships by default with macOS). For Windows, it uses PowerShell to speak the message. And on Linux, it uses <code>espeak</code>. Note that I mostly care about a Mac solution right now, so I have not tested the Windows + Linux ones yet ...</p>
+</li>
+<li>
+<p><code>cfg!(target_os = &quot;...&quot;)</code> is a Rust macro that checks the target operating system (similar how you can use the <code>platform</code> module in Python). It is a compile-time check, so the code for other operating systems will not be included in the binary.</p>
+</li>
+<li>
+<p>The <code>expect</code> method is used to panic if the command fails. I probably should handle the error more gracefully, I will improve this later.</p>
+</li>
+<li>
+<p><code>println!</code> prints to standard output. To print to standard error, you can use <code>eprintln!</code> and it's good practice to use it for error messages.</p>
+</li>
+<li>
+<p>The return type is <code>Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;</code> to indicate that the function can return an error. The <code>Box&lt;dyn std::error::Error&gt;</code> is a trait object that can hold any type that implements the <code>Error</code> trait. I am seeing this pattern quite a bit in Rust code.</p>
+</li>
+</ul>
+<h2 id="new-command-line-arguments">New command-line arguments</h2>
+<p>The message to speak is a new (Clap) command-line argument:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">DEFAULT_MESSAGE</span><span>: &amp;</span><span style="color:#b48ead;">str </span><span>= &quot;</span><span style="color:#a3be8c;">You set an alarm, time is up!</span><span>&quot;;
+</span><span>...
+</span><span>
+</span><span style="color:#65737e;">/// Message to speak instead of playing an audio file
+</span><span>#[</span><span style="color:#bf616a;">arg</span><span>(short = &#39;M&#39;, long, required = true, default_value = DEFAULT_MESSAGE)]
+</span><span>message: String,
+</span></code></pre>
+<p>And I play it a couple of times, another new command-line argument:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">const </span><span style="color:#d08770;">TIMES_TO_PLAY</span><span>: </span><span style="color:#b48ead;">usize </span><span>= </span><span style="color:#d08770;">3</span><span>;
+</span><span>...
+</span><span>
+</span><span style="color:#65737e;">/// Times to play the alarm sound
+</span><span>#[</span><span style="color:#bf616a;">arg</span><span>(short, long, default_value_t = TIMES_TO_PLAY)]
+</span><span>times: </span><span style="color:#b48ead;">usize</span><span>,
+</span></code></pre>
+<p>I added this loop to play the message multiple times:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">for </span><span>_ in </span><span style="color:#d08770;">0</span><span>..args.times {
+</span><span>    </span><span style="color:#96b5b4;">speak_message</span><span>(&amp;args.message).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>}
+</span></code></pre>
+<p>The nice thing about <code>usize</code> (and typing in general) is that it excludes invalid options.</p>
+<p>For example, if the user enters a negative number, the program will not compile. The <code>usize</code> type is an unsigned integer, meaning that it cannot be negative.</p>
+<h2 id="ranges-in-rust-vs-python">Ranges in Rust (vs Python)</h2>
+<p>The <code>0..N</code> construct is similar to <code>range</code> in Python, where the upper bound is also exclusive. Also in both languages, the lower bound is inclusive. To make the upper bound inclusive, you can use <code>0..=N</code> in Rust. So I could also write <code>1..=args.times</code> to play the message <code>args.times</code> times.</p>
+<p>You can also use <code>std::iter::repeat</code> here I learned:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>std::iter::repeat(()).</span><span style="color:#96b5b4;">take</span><span>(args.times).</span><span style="color:#96b5b4;">for_each</span><span>(|_| {
+</span><span>    </span><span style="color:#96b5b4;">speak_message</span><span>(&amp;args.message).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>});
+</span></code></pre>
+<p>But that seems more verbose and complicated than the more concise and readable <code>for</code> loop so I stuck with that.</p>
+<p>So running the program like this it will say &quot;Wake up&quot; 3 times after 3 seconds:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run -- -M &quot;</span><span style="color:#a3be8c;">Wake up</span><span>&quot; -s 3
+</span><span style="color:#65737e;"># says &quot;Wake up&quot; three times
+</span></code></pre>
+<p>Why 3 times? By not specifying the number of times, it will default to 3 (see the <code>TIMES_TO_PLAY</code> constant).</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I like the current 0.3.0 (available on crates.io) better than the previous ones, where I was playing an alarm file. This had the added complexity of downloading and playing an audio file.</p>
+<p>The text-to-speech feature is less code relatively and actually tells the user what the alarm is about. The only thing is compatibility, I need to test it on Windows and Linux still ...</p>
+<p>As usual, by building things I've learned more about interesting Rust features and idioms. I am also getting more comfortable with the language and its ecosystem. 😍 📈</p>
+<p>I will probably use this project to write some more posts about 1. code structuring (modularizing your code), 2. testing and 3. documentation. Stay tuned! 🚀</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/python-builtins-rust-chaining/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Python Built-ins vs. Rust method chaining (and how it works)</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/linting-with-clippy/">
+                            <span class="button__text">Linting your Rust code with Clippy</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

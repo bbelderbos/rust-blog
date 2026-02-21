@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Enhancing Pybites Search caching using serde_json | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Enhancing Pybites Search caching using serde_json | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/pybites-search-caching-serde-json/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Enhancing Pybites Search caching using serde_json | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/pybites-search-caching-serde-json/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/pybites-search-caching-serde-json/">Enhancing Pybites Search caching using serde_json</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-07
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>I made a <a href="/pybites-search-in-rust">Pybites search command-line tool</a> the other day, only to find out that the caching was in-memory which was not very useful for a CLI tool.</p>
+<p>So I decided to add caching manually to it using <code>serde_json</code>. Here's how I did it (with the help of ChatGPT).</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">save_to_cache</span><span>(</span><span style="color:#bf616a;">items</span><span>: &amp;Vec&lt;Item&gt;) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_path = </span><span style="color:#96b5b4;">get_cache_file_path</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_data = CacheData {
+</span><span>        timestamp: SystemTime::now().</span><span style="color:#96b5b4;">duration_since</span><span>(</span><span style="color:#d08770;">UNIX_EPOCH</span><span>)?.</span><span style="color:#96b5b4;">as_secs</span><span>(),
+</span><span>        items: items.</span><span style="color:#96b5b4;">clone</span><span>(),
+</span><span>    };
+</span><span>    </span><span style="color:#b48ead;">let</span><span> serialized = serde_json::to_string(&amp;cache_data)?;
+</span><span>    fs::write(cache_path, serialized)?;
+</span><span>    Ok(())
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">load_from_cache</span><span>(</span><span style="color:#bf616a;">cache_duration</span><span>: </span><span style="color:#b48ead;">u64</span><span>) -&gt; Result&lt;Vec&lt;Item&gt;, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_path = </span><span style="color:#96b5b4;">get_cache_file_path</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> data = fs::read_to_string(cache_path)?;
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cache_data: CacheData = serde_json::from_str(&amp;data)?;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> current_time = SystemTime::now().</span><span style="color:#96b5b4;">duration_since</span><span>(</span><span style="color:#d08770;">UNIX_EPOCH</span><span>)?.</span><span style="color:#96b5b4;">as_secs</span><span>();
+</span><span>    </span><span style="color:#b48ead;">if</span><span> current_time - cache_data.timestamp &lt;= cache_duration {
+</span><span>        Ok(cache_data.items)
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        Err(&quot;</span><span style="color:#a3be8c;">Cache expired</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>())
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Deserialize, Serialize)]
+</span><span style="color:#b48ead;">struct </span><span>CacheData {
+</span><span>    </span><span style="color:#bf616a;">timestamp</span><span>: </span><span style="color:#b48ead;">u64</span><span>,
+</span><span>    </span><span style="color:#bf616a;">items</span><span>: Vec&lt;Item&gt;,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">get_cache_file_path</span><span>() -&gt; PathBuf {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> path = </span><span style="color:#96b5b4;">home_dir</span><span>().</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">Could not find home directory</span><span>&quot;);
+</span><span>    path.</span><span style="color:#96b5b4;">push</span><span>(</span><span style="color:#d08770;">CACHE_FILE_NAME</span><span>);
+</span><span>    path
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/bbelderbos/pybites-search/blob/main/src/main.rs">Full code</a></p>
+<ul>
+<li>I added a <code>CacheData</code> struct to hold the timestamp and the items.</li>
+<li>I added a <code>save_to_cache</code> function to save the items to a file (using the <code>CACHE_FILE_NAME</code> constant to define the file name).</li>
+<li>I added a <code>load_from_cache</code> function to load the items from a file with a cache duration check.</li>
+<li>I added a <code>get_cache_file_path</code> function to get the path to the cache file (using the <code>home_dir</code> function from the <code>dirs</code> crate).</li>
+<li>The cache duration is set to 24 hours by default (<code>DEFAULT_CACHE_DURATION</code> constant) but can be overridden by setting the <code>CACHE_DURATION</code> environment variable. I like how you can chain methods in Rust, it's very concise and readable 😍 📈</li>
+</ul>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>    </span><span style="color:#b48ead;">let</span><span> cache_duration = env::var(&quot;</span><span style="color:#a3be8c;">CACHE_DURATION</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">ok</span><span>()
+</span><span>        .</span><span style="color:#96b5b4;">and_then</span><span>(|</span><span style="color:#bf616a;">v</span><span>| v.</span><span style="color:#96b5b4;">parse</span><span>().</span><span style="color:#96b5b4;">ok</span><span>())
+</span><span>        .</span><span style="color:#96b5b4;">unwrap_or</span><span>(</span><span style="color:#d08770;">DEFAULT_CACHE_DURATION</span><span>);
+</span></code></pre>
+<p>Now it works well: the items are saved to the cache file and loaded from it till the cache expires. Apart from the first run, when the cache is created, the search results are now almost instant!</p>
+<p>First install the crate (see <a href="/shipped-first-crate">my previous article</a> how to publish Rust code to crates.io):</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo install pybites-search
+</span></code></pre>
+<p>Then run it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time psearch pixi
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">[podcast] </span><span style="color:#65737e;">#141 - Wolf Vollprecht: Making Conda More Poetic With Pixi
+</span><span style="color:#bf616a;">https://www.pybitespodcast.com/14040203/14040203-141-wolf-vollprecht-making-conda-more-poetic-with-pixi
+</span><span>
+</span><span style="color:#bf616a;">psearch</span><span> pixi  0.06s user 0.06s system 5% cpu 2.323 total
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> time psearch pixi
+</span><span style="color:#bf616a;">...
+</span><span>
+</span><span style="color:#bf616a;">[podcast] </span><span style="color:#65737e;">#141 - Wolf Vollprecht: Making Conda More Poetic With Pixi
+</span><span style="color:#bf616a;">https://www.pybitespodcast.com/14040203/14040203-141-wolf-vollprecht-making-conda-more-poetic-with-pixi
+</span><span>
+</span><span style="color:#bf616a;">psearch</span><span> pixi  0.01s user 0.01s system 82% cpu 0.018 total
+</span></code></pre>
+<p>After the caching it's almost instant!</p>
+<p>I compared it to <a href="https://pypi.org/project/pybites-search/">our Python search tool</a> and it's now faster than that one:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time search all pixi
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">search</span><span> all pixi  0.33s user 0.06s system 96% cpu 0.410 total
+</span></code></pre>
+<p>That's like 20x faster. 🤯</p>
+<p>But that might not be fair, because it uses requests-cache with sqlite and I also started a new API endpoint on our platform specially for the Rust search tool.</p>
+<p>So I had ChatGPT translate the Rust code <a href="https://gist.github.com/pybites/9717243b4d573ffa4e6f5ff987f22e2f">to Python</a> and after a few Pythonic tweaks and fixes it was faster and more comparable to the Rust tool:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> time python script.py pixi
+</span><span style="color:#bf616a;">...
+</span><span style="color:#bf616a;">python</span><span> script.py pixi  0.18s user 0.03s system 98% cpu 0.214 total
+</span></code></pre>
+<p>That's faster but not as fast as the Rust tool. 🚀😎</p>
+<h2 id="practice-this">Practice This</h2>
+<p>This post uses <code>serde_json</code> for serialization and deserialization. Try the <a href="https://rustplatform.com/json-serialization">JSON Serialization</a> exercise on the Pybites Rust Platform to practice these patterns.</p>
+<hr />
+<p>I still have a lot of Rust fundamentals to learn, but by building practical tools I am learning much more, faster and seeing results like these is way more fun and gratifying than only studying or even doing exercises.</p>
+<p>So if you're learning Rust or any other language, I recommend building real-world tools with it. It really works! 🛠️</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/shipped-first-crate/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">How to ship code to crates.io and automate it with GitHub Actions</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/namedtuple-in-rust-struct/">
+                            <span class="button__text">Does Rust have a similar NamedTuple type?</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

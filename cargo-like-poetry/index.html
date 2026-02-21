@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Rust Cargo is a lot like Python Poetry 😍 | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Rust Cargo is a lot like Python Poetry 😍 | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/cargo-like-poetry/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Rust Cargo is a lot like Python Poetry 😍 | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/cargo-like-poetry/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/cargo-like-poetry/">Rust Cargo is a lot like Python Poetry 😍</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-03
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>When you start working in Rust, you'll quickly learn about Cargo and love it!</p>
+<p>It's a package manager and build system that helps you manage your Rust projects.</p>
+<p>Coming from Python, I found it very similar to Poetry, <a href="https://www.youtube.com/watch?v=G-OAVLBFxbw">which is a great tool as well</a>).</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Dependency management: <code>Cargo.toml</code></li>
+<li>Virtual environments: <code>Cargo.toml</code> and <code>Cargo.lock</code></li>
+<li>Lock files: <code>Cargo.lock</code></li>
+<li>Build system: <code>cargo build</code>, <code>cargo run</code>, <code>cargo test</code>, <code>cargo doc</code></li>
+<li>Publishing to crates.io: <code>cargo publish</code></li>
+</ul>
+<h2 id="cargo-vs-poetry-commands-cheat-sheet">Cargo vs Poetry Commands Cheat Sheet</h2>
+<p>Here's a quick comparison of some common commands in Cargo and Poetry. Notice how similar they are! 😎</p>
+<table><thead><tr><th>Action</th><th>Cargo Command</th><th>Poetry Command</th></tr></thead><tbody>
+<tr><td>Initialize a project</td><td><code>cargo new project_name</code></td><td><code>poetry new project_name</code></td></tr>
+<tr><td>Initialize in current dir</td><td><code>cargo init</code></td><td><code>poetry init</code></td></tr>
+<tr><td>Add a dependency</td><td><code>cargo add dependency_name</code></td><td><code>poetry add dependency_name</code></td></tr>
+<tr><td>Remove a dependency</td><td><code>cargo remove dependency_name</code></td><td><code>poetry remove dependency_name</code></td></tr>
+<tr><td>Update dependencies</td><td><code>cargo update</code></td><td><code>poetry update</code></td></tr>
+<tr><td>List dependencies</td><td><code>cargo tree</code></td><td><code>poetry show --tree</code></td></tr>
+<tr><td>Build the project</td><td><code>cargo build</code></td><td><code>poetry build</code></td></tr>
+<tr><td>Run the project</td><td><code>cargo run</code></td><td><code>poetry run python your_script.py</code></td></tr>
+<tr><td>Run tests</td><td><code>cargo test</code></td><td><code>poetry run pytest</code> (requires pytest)</td></tr>
+<tr><td>Generate documentation</td><td><code>cargo doc</code></td><td>Not built-in, use a tool liked Sphinx</td></tr>
+<tr><td>Build release binary</td><td><code>cargo build --release</code></td><td><code>poetry build</code> (for packaging)</td></tr>
+<tr><td>Run release binary</td><td><code>cargo run --release</code></td><td>Not directly supported</td></tr>
+<tr><td>Format code</td><td><code>cargo fmt</code></td><td><code>poetry run black .</code> (requires black)</td></tr>
+<tr><td>Lint code</td><td><code>cargo clippy</code></td><td><code>poetry run flake8 .</code> (requires flake8)</td></tr>
+</tbody></table>
+<p>One cool thing I noticed is that generating docs and testing is built-in in Cargo, while in Python you need to use external tools like Sphinx and pytest.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>If you love Poetry, you'll love Cargo too! They are both great tools for managing your projects and dependencies.</p>
+<p>Funny enough, in Python I actually stopped using <code>poetry</code> in favor of <code>venv</code> and <code>pip</code> because I felt this was faster and all I needed. But in Rust so far I feel Cargo is more integrated and I am using it more (well, don't have much choice, have I? 😅).</p>
+<p>I think it's mainly because I don't have to deal with virtual environments in Rust, which is a big plus. Also it infers the binary name from the project name, which is nice. 📈</p>
+<p>This post was just to quickly compare Cargo and Poetry and show you how similar they are. I hope you found it helpful! 😊</p>
+<p>I am sure I will do more in-depth posts on Cargo in the future. Stay tuned! 🚀</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/blog-with-zola/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">How to blog with Zola, a Rust-based static site generator</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/rust-in-python-pyo3-maturin/">
+                            <span class="button__text">How to run Rust in Python with PyO3 and Maturin</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

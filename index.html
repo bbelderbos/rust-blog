@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+
+    <meta property="og:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta property="og:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsbit.es/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="Documenting the journey of a Pythonista learning Rust with bite-sized posts.">
+    <meta name="twitter:title" content="Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+        <div class="posts">
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/adding-auth-to-an-api/">Adding API Key Authentication to a Rust CLI</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-21
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Our <a href="https://github.com/PyBites-Open-Source/pybites_rust">exercise downloader</a> started as a simple tool that fetched free exercises from an API.</p>
+<p>When we added <a href="https://rustplatform.com">premium exercises</a> behind authentication this week, I needed to add API key support — without breaking the free tier experience.</p>
+<h2 id="the-design">The Design</h2>
+<p>The requirements were straightforward:</p>
+<ul>
+<li>No API key? Download free exercises (existing behavior, unchanged)</li>
+<li>API key set? Send it as a header, get all exercises</li>
+<li>Key comes from an environment variable (<code>PYBITES_API_KEY</code>)</li>
+</ul>
+<p>No config files, no interactive prompts, no flags. Just an env var.</p>
+<h2 id="reading-the-key">Reading the Key</h2>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::env;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> api_key = env::var(&quot;</span><span style="color:#a3be8c;">PYBITES_API_KEY</span><span>&quot;).</span><span style="color:#96b5b4;">ok</span><span>();
+</span></code></pre>
+<p><code>env::var</code> returns <code>Result&lt;String, VarError&gt;</code>. Calling <code>.ok()</code> converts it to <code>Option&lt;String&gt;</code> — <code>Some(&quot;the-key&quot;)</code> if set, <code>None</code> if not. No error handling needed because a missing key is a valid state, not an error.</p>
+<p>Coming from Python where you'd write <code>os.environ.get(&quot;KEY&quot;)</code> and get <code>None</code> back, I found this two-step dance surprising at first. But it makes sense — Rust forces you to acknowledge that reading an env var can fail, then lets you explicitly opt into treating &quot;missing&quot; as <code>None</code> (related exercise: <a href="https://rustplatform.com/option-handling">Option Handling</a>).</p>
+<h2 id="conditional-header">Conditional Header</h2>
+<p>The <code>build_request</code> function attaches the header only when a key exists:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">build_request</span><span>(
+</span><span>    </span><span style="color:#bf616a;">client</span><span>: &amp;reqwest::blocking::Client,
+</span><span>    </span><span style="color:#bf616a;">url</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>,
+</span><span>    </span><span style="color:#bf616a;">api_key</span><span>: Option&lt;&amp;</span><span style="color:#b48ead;">str</span><span>&gt;,
+</span><span>) -&gt; reqwest::blocking::RequestBuilder {
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> request = client.</span><span style="color:#96b5b4;">get</span><span>(url);
+</span><span>    </span><span style="color:#b48ead;">if let </span><span>Some(key) = api_key {
+</span><span>        request = request.</span><span style="color:#96b5b4;">header</span><span>(&quot;</span><span style="color:#a3be8c;">X-API-Key</span><span>&quot;, key);
+</span><span>    }
+</span><span>    request
+</span><span>}
+</span></code></pre>
+<p>The function takes <code>Option&lt;&amp;str&gt;</code> rather than <code>Option&lt;String&gt;</code> — the caller passes <code>api_key.as_deref()</code> to borrow rather than move the value. This keeps ownership with <code>main()</code> so the key can be used elsewhere (like in status messages).</p>
+<p>I initially passed <code>Option&lt;String&gt;</code> and hit a &quot;value used after move&quot; error. In Python you never think about this — everything is a reference. In Rust, I learned to reach for borrows (<code>&amp;str</code>) by default and only pass owned data when the function needs to keep it (learn about Ownership and Borrowing in <a href="https://rustplatform.com/track/ownership/">our exercise track</a>).</p>
+<h2 id="user-feedback">User Feedback</h2>
+<p>A small touch that matters in CLIs: tell the user what mode they're in.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">auth_status_message</span><span>(</span><span style="color:#bf616a;">api_key</span><span>: &amp;Option&lt;String&gt;) -&gt; &amp;</span><span style="color:#b48ead;">&#39;static str </span><span>{
+</span><span>    </span><span style="color:#b48ead;">if</span><span> api_key.</span><span style="color:#96b5b4;">is_some</span><span>() {
+</span><span>        &quot;</span><span style="color:#a3be8c;">Authenticating with API key</span><span>&quot;
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        &quot;</span><span style="color:#a3be8c;">No API key set (PYBITES_API_KEY), downloading free exercises only</span><span>&quot;
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>The message includes the env var name so users know exactly what to set if they want premium exercises.</p>
+<p>One thing I learned here: idiomatic Rust prefers <code>Option&lt;&amp;str&gt;</code> over <code>&amp;Option&lt;String&gt;</code> in function signatures (clippy will even flag it). A cleaner version would be:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">auth_status_message</span><span>(</span><span style="color:#bf616a;">api_key</span><span>: Option&lt;&amp;</span><span style="color:#b48ead;">str</span><span>&gt;) -&gt; &amp;</span><span style="color:#b48ead;">&#39;static str </span><span>{
+</span><span>    </span><span style="color:#b48ead;">if</span><span> api_key.</span><span style="color:#96b5b4;">is_some</span><span>() {
+</span><span>        &quot;</span><span style="color:#a3be8c;">Authenticating with API key</span><span>&quot;
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        &quot;</span><span style="color:#a3be8c;">No API key set (PYBITES_API_KEY), downloading free exercises only</span><span>&quot;
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>The caller would pass <code>api_key.as_deref()</code> — the same pattern we used in <code>build_request</code>.</p>
+<h2 id="testing-without-a-server">Testing Without a Server</h2>
+<p>I learned that you don't need to make HTTP requests to test request construction. Build the request, inspect it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">test</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_build_request_without_api_key</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> client = reqwest::blocking::Client::new();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> request = </span><span style="color:#96b5b4;">build_request</span><span>(&amp;client, &quot;</span><span style="color:#a3be8c;">https://example.com/api/</span><span>&quot;, None);
+</span><span>    </span><span style="color:#b48ead;">let</span><span> built = request.</span><span style="color:#96b5b4;">build</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    assert!(built.</span><span style="color:#96b5b4;">headers</span><span>().</span><span style="color:#96b5b4;">get</span><span>(&quot;</span><span style="color:#a3be8c;">X-API-Key</span><span>&quot;).</span><span style="color:#96b5b4;">is_none</span><span>());
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">test</span><span>]
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">test_build_request_with_api_key</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> client = reqwest::blocking::Client::new();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> request = </span><span style="color:#96b5b4;">build_request</span><span>(
+</span><span>        &amp;client,
+</span><span>        &quot;</span><span style="color:#a3be8c;">https://example.com/api/</span><span>&quot;,
+</span><span>        Some(&quot;</span><span style="color:#a3be8c;">test-key-123</span><span>&quot;),
+</span><span>    );
+</span><span>    </span><span style="color:#b48ead;">let</span><span> built = request.</span><span style="color:#96b5b4;">build</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    assert_eq!(
+</span><span>        built.</span><span style="color:#96b5b4;">headers</span><span>().</span><span style="color:#96b5b4;">get</span><span>(&quot;</span><span style="color:#a3be8c;">X-API-Key</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">to_str</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>(),
+</span><span>        &quot;</span><span style="color:#a3be8c;">test-key-123</span><span>&quot;
+</span><span>    );
+</span><span>}
+</span></code></pre>
+<p><code>RequestBuilder::build()</code> gives you the final <code>Request</code> object without sending it. You can assert on URL, method, headers — everything except the actual response.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul>
+<li>Use <code>env::var(&quot;KEY&quot;).ok()</code> to get an <code>Option&lt;String&gt;</code> — missing env vars aren't errors when they're optional</li>
+<li><code>Option&lt;&amp;str&gt;</code> in function signatures avoids unnecessary ownership transfer</li>
+<li><code>RequestBuilder::build()</code> lets you test HTTP request construction without making network calls</li>
+<li>Always tell the user what mode the CLI is operating in</li>
+</ul>
+<h2 id="the-open-source-side">The Open Source Side</h2>
+<p>This feature came out of iterating on the tool together with <a href="https://github.com/markgreene74">Giuseppe Cunsolo</a>, who originally built the CLI downloader. We added the auth support, full test coverage, and a CI gate that fails below 80% coverage (using <a href="https://github.com/xd009642/tarpaulin">tarpaulin</a>). Then we published it to <a href="https://crates.io">crates.io</a> so you can install it with a single command instead of cloning a repo.</p>
+<p>It reminded me how much you learn from open source collaboration — and how nice the Rust tooling is (no wonder <a href="https://docs.astral.sh/uv/">uv</a> got its inspiration from Cargo).</p>
+<h2 id="try-it-yourself">Try It Yourself</h2>
+<p>If you have a CLI that talks to an API, try adding optional authentication. The pattern is always the same: env var to <code>Option</code>, conditional header, clear status message.</p>
+<hr />
+<p>If you're a Pythonista curious about Rust, you'll feel right at home — <code>Option</code> is like Python's <code>Optional</code>, pattern matching replaces your <code>if/else</code> chains, and Cargo works like the beloved uv. Our <a href="https://rustplatform.com">exercises at rustplatform.com</a> are designed with that Python-to-Rust bridging in mind.</p>
+<p>Use the <a href="https://github.com/PyBites-Open-Source/pybites_rust">exercise downloader</a> to code locally — it's a real-world Rust CLI you can learn from too:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install pybites-rust-download
+</span><span style="color:#65737e;"># free exercises
+</span><span style="color:#bf616a;">pybites-rust-download
+</span><span style="color:#65737e;"># premium exercises with API key
+</span><span style="color:#bf616a;">PYBITES_API_KEY</span><span>=</span><span style="color:#a3be8c;">your_key </span><span style="color:#bf616a;">pybites-rust-download
+</span></code></pre>
+<p>Happy coding!</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/rust-no-none-crashes/">Rust Makes None.attribute Crashes Impossible — Your Code Won&#x27;t Even Compile</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-19
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Every Python developer has seen this traceback:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>AttributeError: &#39;NoneType&#39; object has no attribute &#39;name&#39;
+</span></code></pre>
+<p>The problem is that tests might miss this so it shows up in production, and that could be at 2 am in the morning.</p>
+<p>The pattern that causes it is everywhere:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>):
+</span><span>    </span><span style="color:#b48ead;">return </span><span>db.</span><span style="color:#bf616a;">get</span><span>(user_id)  </span><span style="color:#65737e;"># might return None
+</span><span>
+</span><span>user = </span><span style="color:#bf616a;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>)
+</span><span style="color:#96b5b4;">print</span><span>(user.name)  </span><span style="color:#65737e;"># boom
+</span></code></pre>
+<p>Nothing in Python warns you that <code>find_user</code> might return <code>None</code>. No type error, no warning, no compile-time check. The code looks perfectly fine — until it isn't.</p>
+<p>Tony Hoare, who invented null references, called it his <a href="https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/">&quot;billion-dollar mistake&quot;</a>. Every language that has implicit nulls inherits this problem. Python included.</p>
+<h2 id="rust-refuses-to-compile-the-bug">Rust refuses to compile the bug</h2>
+<p>Rust does have a None scenario, but it's handled differently. It has <code>Option&lt;T&gt;</code> — an enum with exactly two variants:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">enum </span><span>Option&lt;T&gt; {
+</span><span>    Some(T),  </span><span style="color:#65737e;">// a value is present
+</span><span>    None,     </span><span style="color:#65737e;">// no value
+</span><span>}
+</span></code></pre>
+<p>When a function might not have a value to return, it says so in its type signature:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>: </span><span style="color:#b48ead;">u64</span><span>) -&gt; Option&lt;User&gt; {
+</span><span>    db.</span><span style="color:#96b5b4;">get</span><span>(user_id)
+</span><span>}
+</span></code></pre>
+<p>Fair enough, Pythonistas certainly want to add type hints to express this too:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>: int) -&gt; Optional[User]:
+</span><span>    </span><span style="color:#b48ead;">return </span><span>db.</span><span style="color:#bf616a;">get</span><span>(user_id)
+</span></code></pre>
+<p>Or more modern syntax:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">find_user</span><span>(</span><span style="color:#bf616a;">user_id</span><span>: int) -&gt; User | </span><span style="color:#d08770;">None</span><span>:
+</span><span>    </span><span style="color:#b48ead;">return </span><span>db.</span><span style="color:#bf616a;">get</span><span>(user_id)
+</span></code></pre>
+<p>But here is the key difference: where in Python you're relying on tooling (mypy, ty) to catch this, in Rust using the result type without handling the <code>None</code> case, <strong>the code does not compile</strong>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> user = </span><span style="color:#96b5b4;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>);
+</span><span>println!(&quot;</span><span style="color:#d08770;">{}</span><span>&quot;, user.name);  </span><span style="color:#65737e;">// compile error: Option&lt;User&gt; has no field `name`
+</span></code></pre>
+<p>The compiler forces you to acknowledge that the value might not be there:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">match </span><span style="color:#96b5b4;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>) {
+</span><span>    Some(user) =&gt; println!(&quot;</span><span style="color:#d08770;">{}</span><span>&quot;, user.name),
+</span><span>    None =&gt; println!(&quot;</span><span style="color:#a3be8c;">User not found</span><span>&quot;),
+</span><span>}
+</span></code></pre>
+<p>This means no <code>AttributeError</code> and no unexpected runtime crash. The bug literally cannot exist in the compiled program.</p>
+<h2 id="it-s-not-just-match-statements">It's not just match statements</h2>
+<p>If <code>match</code> on every <code>Option</code> sounds tedious, it is — and Rust has ergonomic shortcuts. The <code>.map()</code> combinator transforms the inner value while keeping the <code>Option</code> wrapper:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> name: Option&lt;String&gt; = Some(&quot;</span><span style="color:#a3be8c;">alice</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>());
+</span><span style="color:#b48ead;">let</span><span> upper = name.</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">n</span><span>| n.</span><span style="color:#96b5b4;">to_uppercase</span><span>());
+</span><span style="color:#65737e;">// Some(&quot;ALICE&quot;)
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> empty: Option&lt;String&gt; = None;
+</span><span style="color:#b48ead;">let</span><span> upper = empty.</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">n</span><span>| n.</span><span style="color:#96b5b4;">to_uppercase</span><span>());
+</span><span style="color:#65737e;">// None — the closure never runs, no crash
+</span></code></pre>
+<p>This is an elegant way to express Python's <code>x.upper() if x is not None else None</code> which might feel a bit clunky at times.</p>
+<p>There's also <code>.unwrap_or()</code> for defaults, <code>.is_some()</code> for checks, and <code>if let</code> for quick pattern matches. The full API has <a href="https://doc.rust-lang.org/std/option/enum.Option.html">dozens of combinators</a> — all with the advantage of compile-time safety.</p>
+<h2 id="what-this-means-in-practice">What this means in practice</h2>
+<p>Think about how many defensive checks you write in Python:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>user = </span><span style="color:#bf616a;">find_user</span><span>(</span><span style="color:#d08770;">42</span><span>)
+</span><span style="color:#b48ead;">if </span><span>user is not </span><span style="color:#d08770;">None</span><span>:
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(user.name)
+</span><span>
+</span><span>config = </span><span style="color:#bf616a;">load_config</span><span>(&quot;</span><span style="color:#a3be8c;">app</span><span>&quot;)
+</span><span style="color:#b48ead;">if </span><span>config is not </span><span style="color:#d08770;">None</span><span>:
+</span><span>    </span><span style="color:#bf616a;">apply_settings</span><span>(config)
+</span></code></pre>
+<p>Each <code>is not None</code> check exists because the language can't guarantee the value is there. You're doing the compiler's job manually — and across a larger codebase, it's easy to miss one.</p>
+<p>In Rust, the type system tracks presence and absence through every function call, every transformation, every return value. If you forget to handle a <code>None</code>, you find out immediately — in your editor, not your error logs.</p>
+<p>This isn't just theory. It's the reason Rust programs don't have an entire class of bugs right out of the box.</p>
+<h2 id="try-it-yourself">Try it yourself</h2>
+<p>We built a hands-on exercise that lets you practice this pattern. You'll implement three functions that return <code>Option&lt;T&gt;</code> — finding values in slices, handling division by zero, and extracting fields from optional structs.</p>
+<p><strong><a href="https://rustplatform.com/option-handling">Option Handling</a></strong></p>
+<p>I hope this gives you a feel for what it's like to write safer code.</p>
+<hr />
+<p><em>If you're a Python developer curious about Rust, our <a href="https://rustplatform.com">Rust Platform</a> teaches Rust concepts through small, focused exercises — each one bridging what you already know in Python to how Rust does it differently (and often better).</em></p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/rust-iterators-over-loops-one-function-that-shows-why/">Rust iterators over loops: one function that shows why</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-16
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Most developers reaching for Rust write their first <code>for</code> loop within minutes. But Rust's iterator methods let you express the same logic in fewer lines, with less room for bugs. One small function shows the difference clearly.</p>
+<h2 id="the-imperative-instinct">The Imperative Instinct</h2>
+<p>When asked to sum a slice of integers, the instinct is a classic accumulator loop:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">sum_slice</span><span>(</span><span style="color:#bf616a;">v</span><span>: &amp;[</span><span style="color:#b48ead;">i32</span><span>]) -&gt; </span><span style="color:#b48ead;">i32 </span><span>{
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> total = </span><span style="color:#d08770;">0</span><span>;
+</span><span>    </span><span style="color:#b48ead;">for</span><span> item in v {
+</span><span>        total += item;
+</span><span>    }
+</span><span>    total
+</span><span>}
+</span></code></pre>
+<p>A mutable variable, an explicit loop, and a trailing return. It works, but it forces the reader to trace state through the body to understand intent.</p>
+<h2 id="the-functional-alternative">The Functional Alternative</h2>
+<p>Here's the same logic using Rust's iterator combinators:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">sum_slice</span><span>(</span><span style="color:#bf616a;">v</span><span>: &amp;[</span><span style="color:#b48ead;">i32</span><span>]) -&gt; </span><span style="color:#b48ead;">i32 </span><span>{
+</span><span>    v.</span><span style="color:#96b5b4;">iter</span><span>().</span><span style="color:#96b5b4;">sum</span><span>()
+</span><span>}
+</span></code></pre>
+<p>That's it. One line that reads almost like English: <em>iterate over the slice, sum everything.</em></p>
+<p>No mutable accumulator. No explicit loop. No room for bugs.</p>
+<h2 id="why-this-works">Why This Works</h2>
+<p>Rust's <code>Iterator</code> trait provides a rich set of composable methods.</p>
+<p><strong><code>iter().sum()</code></strong> works because <code>sum()</code> is a consuming adaptor. It takes ownership of the iterator, accumulates every element using the <code>Sum</code> trait, and returns the result. The type system infers <code>i32</code> from the function signature, so you don't even need a turbofish (<code>::&lt;Type&gt;</code> annotation). If the compiler couldn't infer the type, you'd write <code>v.iter().sum::&lt;i32&gt;()</code> instead.</p>
+<p>The <code>Sum</code> trait is more powerful than it looks. It's also implemented for <code>Option&lt;T&gt;</code> and <code>Result&lt;T, E&gt;</code>, which means you can sum a list that might contain missing or failed values — no manual <code>if</code> checks needed:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> v = vec![Some(</span><span style="color:#d08770;">1</span><span>), Some(</span><span style="color:#d08770;">2</span><span>), None];
+</span><span style="color:#b48ead;">let</span><span> total: Option&lt;</span><span style="color:#b48ead;">i32</span><span>&gt; = v.</span><span style="color:#96b5b4;">into_iter</span><span>().</span><span style="color:#96b5b4;">sum</span><span>(); </span><span style="color:#65737e;">// Returns None
+</span></code></pre>
+<p>If all elements are <code>Some(n)</code>, you get <code>Some(total)</code>. If <em>any</em> element is <code>None</code>, the whole result is <code>None</code>. In many languages, this would require a messy loop with null checks.</p>
+<h2 id="zero-cost-abstractions">Zero-Cost Abstractions</h2>
+<p>In Python or JavaScript, chaining higher-order functions like <code>map</code> and <code>filter</code> typically allocates intermediate collections at each step. In Rust, it doesn't. Rust iterators use a <em>pull</em> model — nothing happens until something consumes the chain. The compiler inlines the entire pipeline and optimizes it into a single tight loop, the same machine code you'd get from writing the <code>for</code> loop by hand.</p>
+<p>This is what Rust means by <em>zero-cost abstractions</em>: you don't pay a runtime price for the higher-level expression. No heap allocations for intermediate results, no virtual dispatch, no hidden overhead. The abstraction exists at compile time and disappears in the binary.</p>
+<p>In fact, the iterator version can sometimes be <em>faster</em> than a hand-written loop. The compiler may apply SIMD (Single Instruction, Multiple Data) optimizations to <code>iter().sum()</code>, summing multiple numbers in a single CPU instruction — an optimization that's harder to trigger with a manual accumulator loop.</p>
+<p>That's the deal Rust offers — write the clearer version and trust the compiler to make it at least as fast, sometimes faster.</p>
+<h2 id="when-to-reach-for-iterators">When to Reach for Iterators</h2>
+<p>Iterators shine when the operation maps to a well-known pattern:</p>
+<ul>
+<li><strong>Summing</strong>: <code>iter().sum()</code></li>
+<li><strong>Transforming</strong>: <code>iter().map(f).collect()</code></li>
+<li><strong>Filtering</strong>: <code>iter().filter(p).collect()</code></li>
+<li><strong>Mutating in place</strong>: <code>iter_mut().for_each(f)</code></li>
+<li><strong>Finding</strong>: <code>iter().find(p)</code></li>
+<li><strong>Checking conditions</strong>: <code>iter().all(p)</code> / <code>iter().any(p)</code> (just like Python's <a href="https://docs.python.org/3/library/functions.html#all"><code>all()</code> and <code>any()</code></a>, but as iterator methods instead of free functions)</li>
+</ul>
+<p>If your loop body does one of these things, the iterator version is almost always clearer.</p>
+<p>That said, a <code>for</code> loop is still the right choice when the logic is highly stateful, involves complex early breaks, or doesn't map cleanly to a single combinator. Iterators replace boilerplate loops, not all loops.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul>
+<li>Rust iterators express intent directly, removing boilerplate state management</li>
+<li><code>iter()</code> borrows, <code>iter_mut()</code> borrows mutably, <code>into_iter()</code> takes ownership — pick the one that matches your access pattern (see <a href="/ownership-and-borrowing/">Ownership and Borrowing</a> for a refresher)</li>
+<li>Zero-cost abstractions mean you get clarity without sacrificing performance</li>
+<li>One-liner iterator chains are not &quot;clever code&quot; — they're idiomatic Rust</li>
+</ul>
+<h2 id="practice-this">Practice This</h2>
+<p>Try the <a href="https://rustplatform.com/vectors-and-slices">Vectors and Slices exercise on Pybites Rust Platform</a> and see how far you can get without writing a single <code>for</code> loop.</p>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/your-first-rust-function/">Your first Rust function (from a Python perspective)</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-15
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Here's a Python function:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">greet</span><span>() -&gt; str:
+</span><span>    </span><span style="color:#b48ead;">return </span><span>&quot;</span><span style="color:#a3be8c;">Hello, Rustacean!</span><span>&quot;
+</span></code></pre>
+<p>Here's the Rust equivalent:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">greet</span><span>() -&gt; String {
+</span><span>    &quot;</span><span style="color:#a3be8c;">Hello, Rustacean!</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>()
+</span><span>}
+</span></code></pre>
+<p>Four differences, all visible in three lines:</p>
+<p><strong>1. <code>fn</code> instead of <code>def</code>.</strong> Cosmetic, easy.</p>
+<p><strong>2. <code>-&gt; String</code> is required.</strong> Python type hints are optional documentation. Rust return types are mandatory — the compiler uses them.</p>
+<p><strong>3. No <code>return</code> keyword.</strong> The last expression (without a semicolon) is the return value. Add a semicolon and it becomes a statement that returns nothing — a common gotcha.</p>
+<p><strong>4. <code>String</code> vs <code>str</code>.</strong> Python has one string type. Rust has two: <code>&amp;str</code> (borrowed slice, like a read-only view) and <code>String</code> (owned, heap-allocated). The literal <code>&quot;Hello&quot;</code> is a <code>&amp;str</code>. <code>.to_string()</code> converts it to an owned <code>String</code>.</p>
+<p>That fourth point is the one that will take the longest to internalize. For now, just remember: Rust has two string types, and you need to choose the right one for your function's return type: literals are <code>&amp;str</code>, owned data is <code>String</code>, and <code>.to_string()</code> bridges them.</p>
+<h2 id="practice-this">Practice this</h2>
+<p>Try these exercises on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/hello-rustacean">Hello, Rustacean!</a> — your first Rust function, returning a String</li>
+<li><a href="https://rustplatform.com/functions-and-return-values">Functions and Return Values</a> — practice <code>fn</code>, return types, and implicit returns</li>
+<li><a href="https://rustplatform.com/strings-and-slices">Strings and Slices</a> — get comfortable with <code>&amp;str</code> vs <code>String</code></li>
+</ul>
+
+        </div>
+
+                </div>
+            
+                <div class="post on-list">
+                    
+    <h1 class="post-title"><a href="https://rsbit.es/writing-a-rust-code-validation-api/">Writing a Rust code validation API</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-07-12
+        </span>
+
+    </div>
+
+    
+
+
+                    <div class="post-content">
+            <p>Today I managed to add support for Rust exercises <a href="https://codechalleng.es/">on our platform</a>. I struggled with getting <code>cargo test</code> to work on AWS Lambda for a week (talking about <a href="https://pybit.activehosted.com/social/918317b57931b6b7a7d29490fe5ec9f9.509">tunnel vision</a>), so it was time to pivot to a different approach.</p>
+<p>It turns out that I needed a bit more resource power and Heroku did it for me. So I dropped AWS Gateway API + AWS Lambda (what we normally use to validate coding exercises) and wrote my first Rust API to run tests on code.</p>
+<p>The final version is a bit more involved, because it gets the code from our platform's API. To keep it simple, I omitted this part here.</p>
+<h2 id="using-axtix-web-to-build-an-api">Using Axtix-web to build an API</h2>
+<p>Here is the code:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+</span><span style="color:#b48ead;">use </span><span>serde::{Deserialize, Serialize};
+</span><span style="color:#b48ead;">use </span><span>std::env;
+</span><span style="color:#b48ead;">use </span><span>std::fs;
+</span><span style="color:#b48ead;">use </span><span>std::io::Write;
+</span><span style="color:#b48ead;">use </span><span>std::process::Command;
+</span><span style="color:#b48ead;">use </span><span>tempfile::tempdir;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Deserialize)]
+</span><span style="color:#b48ead;">struct </span><span>Request {
+</span><span>    </span><span style="color:#bf616a;">user_code</span><span>: String,
+</span><span>    </span><span style="color:#bf616a;">test_code</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Serialize)]
+</span><span style="color:#b48ead;">struct </span><span>Response {
+</span><span>    </span><span style="color:#bf616a;">success</span><span>: </span><span style="color:#b48ead;">bool</span><span>,
+</span><span>    </span><span style="color:#bf616a;">output</span><span>: String,
+</span><span>}
+</span><span>
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">execute_code</span><span>(</span><span style="color:#bf616a;">req</span><span>: web::Json&lt;Request&gt;, </span><span style="color:#bf616a;">http_req</span><span>: HttpRequest) -&gt; impl Responder {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> api_key = env::var(&quot;</span><span style="color:#a3be8c;">API_KEY</span><span>&quot;).</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">API_KEY not set</span><span>&quot;);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">if let </span><span>Some(key) = http_req.</span><span style="color:#96b5b4;">headers</span><span>().</span><span style="color:#96b5b4;">get</span><span>(&quot;</span><span style="color:#a3be8c;">x-api-key</span><span>&quot;) {
+</span><span>        </span><span style="color:#b48ead;">if</span><span> key.</span><span style="color:#96b5b4;">to_str</span><span>().</span><span style="color:#96b5b4;">unwrap_or</span><span>(&quot;&quot;) != api_key {
+</span><span>            </span><span style="color:#b48ead;">return </span><span>HttpResponse::Unauthorized().</span><span style="color:#96b5b4;">body</span><span>(&quot;</span><span style="color:#a3be8c;">Invalid API key</span><span>&quot;);
+</span><span>        }
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        </span><span style="color:#b48ead;">return </span><span>HttpResponse::Unauthorized().</span><span style="color:#96b5b4;">body</span><span>(&quot;</span><span style="color:#a3be8c;">Missing API key</span><span>&quot;);
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> user_code = &amp;req.user_code;
+</span><span>    </span><span style="color:#b48ead;">let</span><span> test_code = &amp;req.test_code;
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> dir = </span><span style="color:#96b5b4;">tempdir</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> dir_path = dir.</span><span style="color:#96b5b4;">path</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> main_path = dir_path.</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">src/main.rs</span><span>&quot;);
+</span><span>    fs::create_dir_all(main_path.</span><span style="color:#96b5b4;">parent</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>()).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> main_file = fs::File::create(&amp;main_path).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    main_file
+</span><span>        .</span><span style="color:#96b5b4;">write_all</span><span>(
+</span><span>            format!(
+</span><span>                </span><span style="color:#b48ead;">r</span><span>#</span><span style="color:#a3be8c;">&quot;
+</span><span style="color:#a3be8c;">            </span><span style="color:#d08770;">{}
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">            #[cfg(test)]
+</span><span style="color:#a3be8c;">            mod tests </span><span style="color:#96b5b4;">{{
+</span><span style="color:#a3be8c;">                use super::*;
+</span><span style="color:#a3be8c;">                </span><span style="color:#d08770;">{}
+</span><span style="color:#a3be8c;">            </span><span style="color:#96b5b4;">}}
+</span><span style="color:#a3be8c;">            </span><span>&quot;#,
+</span><span>                user_code, test_code
+</span><span>            )
+</span><span>            .</span><span style="color:#96b5b4;">as_bytes</span><span>(),
+</span><span>        )
+</span><span>        .</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> cargo_toml_path = dir_path.</span><span style="color:#96b5b4;">join</span><span>(&quot;</span><span style="color:#a3be8c;">Cargo.toml</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">let mut</span><span> cargo_toml_file = fs::File::create(cargo_toml_path).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    cargo_toml_file
+</span><span>        .</span><span style="color:#96b5b4;">write_all</span><span>(
+</span><span>            </span><span style="color:#b48ead;">br</span><span>#</span><span style="color:#a3be8c;">&quot;
+</span><span style="color:#a3be8c;">        [package]
+</span><span style="color:#a3be8c;">        name = &quot;temp_project&quot;
+</span><span style="color:#a3be8c;">        version = &quot;0.1.0&quot;
+</span><span style="color:#a3be8c;">        edition = &quot;2021&quot;
+</span><span style="color:#a3be8c;">
+</span><span style="color:#a3be8c;">        [dependencies]
+</span><span style="color:#a3be8c;">        </span><span>&quot;#,
+</span><span>        )
+</span><span>        .</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output = Command::new(&quot;</span><span style="color:#a3be8c;">cargo</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">arg</span><span>(&quot;</span><span style="color:#a3be8c;">test</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">current_dir</span><span>(dir_path)
+</span><span>        .</span><span style="color:#96b5b4;">output</span><span>()
+</span><span>        .</span><span style="color:#96b5b4;">expect</span><span>(&quot;</span><span style="color:#a3be8c;">failed to execute cargo test</span><span>&quot;);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> success = output.status.</span><span style="color:#96b5b4;">success</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> output_str = String::from_utf8_lossy(&amp;output.stdout).</span><span style="color:#96b5b4;">to_string</span><span>()
+</span><span>        + String::from_utf8_lossy(&amp;output.stderr).</span><span style="color:#96b5b4;">as_ref</span><span>();
+</span><span>
+</span><span>    dir.</span><span style="color:#96b5b4;">close</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> response = Response {
+</span><span>        success,
+</span><span>        output: output_str,
+</span><span>    };
+</span><span>
+</span><span>    HttpResponse::Ok().</span><span style="color:#96b5b4;">json</span><span>(response)
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">actix_web</span><span>::</span><span style="color:#bf616a;">main</span><span>]
+</span><span>async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() -&gt; std::io::Result&lt;()&gt; {
+</span><span>    HttpServer::new(|| App::new().</span><span style="color:#96b5b4;">route</span><span>(&quot;</span><span style="color:#a3be8c;">/execute</span><span>&quot;, web::post().</span><span style="color:#96b5b4;">to</span><span>(execute_code)))
+</span><span>        .</span><span style="color:#96b5b4;">bind</span><span>(&quot;</span><span style="color:#a3be8c;">0.0.0.0:8080</span><span>&quot;)?
+</span><span>        .</span><span style="color:#96b5b4;">run</span><span>()
+</span><span>        .await
+</span><span>}
+</span></code></pre>
+<p>Dependencies used (in <code>Cargo.toml</code>):</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">actix-web </span><span>= &quot;</span><span style="color:#a3be8c;">4.0.0</span><span>&quot;
+</span><span style="color:#bf616a;">serde </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">derive</span><span>&quot;] }
+</span><span style="color:#bf616a;">serde_json </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;
+</span><span style="color:#bf616a;">tempfile </span><span>= &quot;</span><span style="color:#a3be8c;">3.2</span><span>&quot;
+</span></code></pre>
+<p>Some highlights:</p>
+<ul>
+<li>
+<p><code>Request</code> and <code>Response</code> are the structs for the request and response bodies.</p>
+</li>
+<li>
+<p>Making an API is relatively simple with the <code>actix-web</code> crate. The <code>main</code> function starts an HTTP server that listens on port 8080. I did have to make the port configurable with an environment variable for Heroku, but I omitted this part from the code for this post.</p>
+</li>
+<li>
+<p><code>execute_code</code> is the handler for the <code>/execute</code> endpoint. It receives the code and tests, writes them to a temporary file, and runs <code>cargo test</code> on it. For this to work, the code and tests are concatenated into a single file and we write a <code>Cargo.toml</code> file with the base metadata.</p>
+</li>
+<li>
+<p>The code is written to a temporary directory using the <code>tempfile</code> crate.</p>
+</li>
+<li>
+<p>To make it a bit more secure, I added an API key check. If the API key is missing or invalid, the API returns an unauthorized response.</p>
+</li>
+</ul>
+<p>Here is <a href="https://github.com/bbelderbos/rust_api_demo">the repo</a> if you want to play with it yourself.</p>
+<h2 id="testing-the-api">Testing the API</h2>
+<p>As you can see in the README I added two test examples of a good vs failing test:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> ./test-ok.sh abc
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">success</span><span>&quot;</span><span style="color:#bf616a;">:true,</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">:</span><span>&quot;</span><span style="color:#a3be8c;">\nrunning 1 test\ntest tests::test_add ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Compiling temp_project v0.1.0 (/private/var/folders/jl/cfhvw0nj11n1496hk7vqhw_r0000gn/T/.tmp1Y5KyV)\n    Finished `</span><span style="color:#bf616a;">test</span><span style="color:#a3be8c;">` profile [unoptimized + debuginfo] target(s) in 0.29s\n     Running unittests src/main.rs (target/debug/deps/temp_project-b55de88e432be2f2)\n</span><span>&quot;}%
+</span><span>
+</span><span style="color:#bf616a;">$</span><span> ./test-fail.sh abc
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">success</span><span>&quot;</span><span style="color:#bf616a;">:false,</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">:</span><span>&quot;</span><span style="color:#a3be8c;">\nrunning 1 test\ntest tests::test_add ... FAILED\n\nfailures:\n\n---- tests::test_add stdout ----\nthread &#39;tests::test_add&#39; panicked at src/main.rs:7:41:\nassertion `</span><span style="color:#bf616a;">left</span><span style="color:#a3be8c;"> == right` failed\n  left: -1\n right: 5\nnote: run with `</span><span style="color:#bf616a;">RUST_BACKTRACE</span><span>=</span><span style="color:#a3be8c;">1` environment variable to display a backtrace\n\n\nfailures:\n    tests::test_add\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Compiling temp_project v0.1.0 (/private/var/folders/jl/cfhvw0nj11n1496hk7vqhw_r0000gn/T/.tmpKXOHmY)\n    Finished `</span><span style="color:#bf616a;">test</span><span style="color:#a3be8c;">` profile [unoptimized + debuginfo] target(s) in 0.27s\n     Running unittests src/main.rs (target/debug/deps/temp_project-b55de88e432be2f2)\nerror: test failed, to rerun pass `</span><span style="color:#bf616a;">--bin</span><span style="color:#a3be8c;"> temp_project`\n</span><span>&quot;}%
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>As a nice side effect of wanting to support Rust exercises on our platform, I learned how to build a simple API in Rust.</p>
+<p>As mentioned I deployed it to Heroku, for which I had to use Docker to build the image, and then push it to Heroku's container registry. I will detail that in a follow up post ...</p>
+
+        </div>
+
+                </div>
+            <div class="pagination">
+                <div class="pagination__buttons">
+                    <span class="button next">
+                        <a href="https://rsbit.es/page/2/">
+                            <span class="button__text">Older posts</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

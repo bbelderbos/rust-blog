@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>From script to library in Rust | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="From script to library in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/from-script-to-library-in-rust/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="From script to library in Rust | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/from-script-to-library-in-rust/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/from-script-to-library-in-rust/">From script to library in Rust</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-29
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>In Rust you can write a script or a library. Turning your code into the latter is useful when you want to reuse the code in the script in other projects.</p>
+<p>Compare it to a script vs a package in Python. In Python you can write a script and then turn it into a package by adding an <code>__init__.py</code> file. In Rust you can write a script and then turn it into a library by moving the code into a library project. Let's see how to do this ...</p>
+<h2 id="writing-a-script">Writing a script</h2>
+<p>Let's start by writing the simplest script that prints a greeting to the console. And a main function that calls the <code>hello</code> function with a name:</p>
+<p>Create a new project called <code>project</code>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new project
+</span></code></pre>
+<p>And edit the <code>src/main.rs</code> file to contain the following code:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#96b5b4;">hello</span><span>(&quot;</span><span style="color:#a3be8c;">Alice</span><span>&quot;);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">hello</span><span>(</span><span style="color:#bf616a;">name</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, name);
+</span><span>}
+</span></code></pre>
+<p>This script defines a <code>hello</code> function that takes a name as an argument and prints a greeting to the console. The <code>main</code> function calls the <code>hello</code> function with the name &quot;Alice&quot; (no command line arguments, this is for example's sake).</p>
+<h2 id="turning-the-script-into-a-library">Turning the script into a library</h2>
+<p>To turn the script into a library, we need to create a new library project and move the code from the script into the library. We can do this by running the following commands:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> new</span><span style="color:#bf616a;"> --lib</span><span> my_library
+</span><span style="color:#bf616a;">mv</span><span> project/src/main.rs my_library/src/lib.rs
+</span></code></pre>
+<p>The <code>--lib</code> flag tells Cargo to create a library project instead of a binary project.</p>
+<p>This will create a new library project called <code>my_library</code> and move the code from the script into the library. The <code>lib.rs</code> file is the entry point for the library, and it contains the code that will be executed when the library is used.</p>
+<h2 id="using-the-library">Using the library</h2>
+<p>To use the library in the first project, we need to add it as a dependency in the <code>Cargo.toml</code> file of the project. We can do this by adding the following line to the <code>Cargo.toml</code> file of the project:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">my_library </span><span>= { </span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">../my_library</span><span>&quot; }
+</span></code></pre>
+<p>Normally you would list one or more crates from crates.io in the <code>dependencies</code> section, but in this case we are using a relative path to the library project.</p>
+<p>We can now use the library in the project by importing it and calling the hello function. Create <code>main.rs</code> again (it was previously moved to the library) under <code>src</code> in the project and add the following code to it:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use</span><span> my_library;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    my_library::hello(&quot;</span><span style="color:#a3be8c;">Tim</span><span>&quot;);
+</span><span>}
+</span></code></pre>
+<p>The path works, because <a href="/rust-analyzer-ale-errors-while-coding">ALE</a> complains about the next thing:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">src/main.rs</span><span>|</span><span style="color:#bf616a;">4</span><span> col 17-21 error| </span><span style="color:#bf616a;">E0603:</span><span> function `</span><span style="color:#bf616a;">hello</span><span>` is private private function
+</span></code></pre>
+<p>Rust makes functions private by default. So back in the library I need to make the function public explicitly by adding <code>pub</code> in front of it in <code>lib.rs</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">hello</span><span>(</span><span style="color:#bf616a;">name</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>) {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">Hello, </span><span style="color:#d08770;">{}</span><span style="color:#a3be8c;">!</span><span>&quot;, name);
+</span><span>}
+</span></code></pre>
+<p>And then it works:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run</span><span style="color:#bf616a;"> -q
+</span><span style="color:#bf616a;">warning:</span><span> function `</span><span style="color:#bf616a;">main</span><span>` is never used
+</span><span> </span><span style="color:#bf616a;">--</span><span>&gt; /Users/pybob/code/rust/lib-example/my_library/src/lib.rs:1:4
+</span><span>  |
+</span><span style="color:#bf616a;">1 </span><span>| </span><span style="color:#bf616a;">fn</span><span> main() {
+</span><span>  |    </span><span style="color:#bf616a;">^^^^
+</span><span>  |
+</span><span>  = </span><span style="color:#bf616a;">note: </span><span>`</span><span style="color:#bf616a;">#[warn</span><span>(dead_code)</span><span style="color:#bf616a;">]</span><span>` on by default
+</span><span>
+</span><span style="color:#bf616a;">Hello,</span><span> Tim!
+</span></code></pre>
+<p>I do get this warning that the <code>main</code> function in the library is never used, which makes sense, because unlike a binary project, the library is not an executable. Therefor I can remove the <code>main</code> function from the library, no more warnings:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo run</span><span style="color:#bf616a;"> -q
+</span><span style="color:#bf616a;">Hello,</span><span> Tim!
+</span></code></pre>
+<p>Similar to Python where you can do <code>import pathlib</code> as well as <code>from pathlib import Path</code>, you can do the same in Rust. You can import the whole library with <code>use my_library;</code> or just the <code>hello</code> function with <code>use my_library::hello;</code>.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>my_library::hello;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#96b5b4;">hello</span><span>(&quot;</span><span style="color:#a3be8c;">Tim</span><span>&quot;);
+</span><span>}
+</span></code></pre>
+<p>And that'll work equally well.</p>
+<p>Sometimes people opt for the first option, because it's more explicit where the function comes from (<code>my_library::hello</code> vs <code>hello</code>). But in this case it's a bit overkill, because there's only one function in the library.</p>
+<h2 id="practice-this">Practice This</h2>
+<p>Practice modules and visibility on the Pybites Rust Platform:</p>
+<ul>
+<li><a href="https://rustplatform.com/module-basics">Module Basics</a></li>
+<li><a href="https://rustplatform.com/visibility-rules">Visibility Rules</a></li>
+<li><a href="https://rustplatform.com/use-and-paths">Use and Paths</a></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>We learned how to make a library as opposed to a script (binary) in Rust (which is what I have mostly done up until this point). This is useful when you want to reuse the code in the script in other projects.</p>
+<p>We also learned how to use the library in another project and the fact that Rust makes module functions private by default (another example where it's more strict than Python!)</p>
+<p>This is a good thing because it forces you to think about what you want to expose to the outside world.</p>
+<p>We also learned about the two ways to import functions from a library: importing the whole library or just the function you need. And lastly the fact that libraries don't have a <code>main</code> function, because they are not executables.</p>
+<p>Now you know how to write libraries in Rust so you can write code that is easier to reuse and maintain. 😍 🎉 📈</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/25-days-learning-rust-takeaways/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">25 days of learning Rust: what worked + takeaways</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/testing-in-rust/">
+                            <span class="button__text">How to write unit tests in Rust</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

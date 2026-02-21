@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Linting your Rust code with Clippy | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Linting your Rust code with Clippy | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/linting-with-clippy/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Linting your Rust code with Clippy | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/linting-with-clippy/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Excercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/linting-with-clippy/">Linting your Rust code with Clippy</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2024-06-22
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>In Python you often use flake8, pyflakes and/or ruff to lint your code. In Rust, you can use Clippy.</p>
+<p>Clippy is a collection of lints to catch common mistakes and improve your Rust code. Let's try it out on <a href="/pybites-search-in-rust">Pybites Search</a>.</p>
+<h2 id="installing-and-running-clippy">Installing and running Clippy</h2>
+<p>First make sure you install Clippy:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> rustup component add clippy
+</span></code></pre>
+<p>Next you can invoke it in any project through Cargo:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo clippy
+</span></code></pre>
+<p>Running this in the Pybites search project we get:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">√</span><span> search (main) </span><span style="color:#bf616a;">$</span><span> cargo clippy
+</span><span>    </span><span style="color:#bf616a;">Checking</span><span> pybites-search v0.6.0 (/Users/pybob/code/rust/search)
+</span><span style="color:#bf616a;">warning:</span><span> writing `&amp;</span><span style="color:#bf616a;">Vec</span><span>` instead of `&amp;</span><span style="color:#bf616a;">[_]</span><span>` involves a new object where a slice will do
+</span><span>   </span><span style="color:#bf616a;">--</span><span>&gt; src/main.rs:108:25
+</span><span>    |
+</span><span style="color:#bf616a;">108 </span><span>| </span><span style="color:#bf616a;">fn</span><span> save_to_cache(items: &amp;</span><span style="color:#bf616a;">Vec</span><span>&lt;Item&gt;) </span><span style="color:#bf616a;">-</span><span>&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>    |                         ^^^^^^^^^^
+</span><span>    |
+</span><span>    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#ptr_arg
+</span><span>    = note: `</span><span style="color:#bf616a;">#[warn</span><span>(clippy::ptr_arg)</span><span style="color:#bf616a;">]</span><span>` on by default
+</span><span>help: change this to
+</span><span>    |
+</span><span>108 </span><span style="color:#bf616a;">~</span><span> fn save_to_cache(items: &amp;</span><span style="color:#b48ead;">[</span><span>Item</span><span style="color:#b48ead;">]</span><span>) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span>109 |     let cache_path = get_cache_file_path();
+</span><span>110 |     let cache_data = CacheData {
+</span><span>111 |         timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
+</span><span>112 </span><span style="color:#bf616a;">~</span><span>         items: items.to_owned(),
+</span><span>    |
+</span><span>
+</span><span>warning: `</span><span style="color:#bf616a;">pybites-search</span><span>` (bin &quot;</span><span style="color:#a3be8c;">psearch</span><span>&quot;) generated 1 warning
+</span><span>    Finished `</span><span style="color:#bf616a;">dev</span><span>` profile </span><span style="color:#b48ead;">[</span><span>unoptimized + debuginfo</span><span style="color:#b48ead;">]</span><span> target(s) in 1.16s
+</span></code></pre>
+<p>The warning is about using <code>&amp;Vec</code> instead of <code>&amp;[_]</code>. The fix is to change the function signature to <code>fn save_to_cache(items: &amp;[Item]) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {</code> (and <code>items.clone()</code> to <code>items.to_vec()</code> in the function body).</p>
+<p>It's useful to check out <a href="https://rust-lang.github.io/rust-clippy/master/index.html#/ptr_arg">the associated link</a> where we can read about the why:</p>
+<blockquote>
+<p>Requiring the argument to be of the specific size makes the function less useful for no benefit; slices in the form of &amp;[T] or &amp;str usually suffice and can be obtained from other types, too.</p>
+</blockquote>
+<p>And a suggested fix:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>fn foo(&amp;Vec&lt;u32&gt;) { .. }
+</span><span>
+</span><span>// use instead:
+</span><span>
+</span><span>fn foo(&amp;[u32]) { .. }
+</span></code></pre>
+<p>Note this is a warning, not an error, you can still compile and run your code.</p>
+<p>But it's good practice to fix these warnings to improve the quality of your code. 🦀 🧹</p>
+<h2 id="running-clippy-on-another-project">Running Clippy on another project</h2>
+<p>Let's run it on <a href="/resizing-images">the resize-images project</a>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">warning:</span><span> the borrowed expression implements the required traits
+</span><span>  </span><span style="color:#bf616a;">--</span><span>&gt; src/main.rs:54:105
+</span><span>   |
+</span><span style="color:#bf616a;">54 </span><span>|                 </span><span style="color:#96b5b4;">let</span><span> output_path = Path::new(&amp;output_dir).join(path.file_stem().unwrap()).with_extension(&amp;extension);
+</span><span>   |                                                                                                         </span><span style="color:#bf616a;">^^^^^^^^^^</span><span> help: change this to: `</span><span style="color:#bf616a;">extension</span><span>`
+</span><span>   |
+</span><span>   = </span><span style="color:#bf616a;">help:</span><span> for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrows_for_generic_args
+</span><span>   = </span><span style="color:#bf616a;">note: </span><span>`</span><span style="color:#bf616a;">#[warn</span><span>(clippy::needless_borrows_for_generic_args)</span><span style="color:#bf616a;">]</span><span>` on by default
+</span><span>
+</span><span style="color:#bf616a;">warning: </span><span>`</span><span style="color:#bf616a;">resize-images</span><span>` (bin &quot;</span><span style="color:#a3be8c;">resize-images</span><span>&quot;) </span><span style="color:#bf616a;">generated</span><span> 1 warning (run `</span><span style="color:#bf616a;">cargo</span><span> clippy</span><span style="color:#bf616a;"> --fix --bin </span><span>&quot;</span><span style="color:#a3be8c;">resize-images</span><span>&quot;` to apply 1 suggestion)
+</span><span>    </span><span style="color:#bf616a;">Finished </span><span>`</span><span style="color:#bf616a;">dev</span><span>` profile </span><span style="color:#b48ead;">[</span><span>unoptimized + debuginfo</span><span style="color:#b48ead;">]</span><span> target(s) </span><span style="color:#bf616a;">in</span><span> 6.81s
+</span></code></pre>
+<p>This time it's about a needless borrow for generic args. The fix is to remove the <code>&amp;</code> from <code>with_extension(&amp;extension)</code>.</p>
+<p>Again <a href="https://rust-lang.github.io/rust-clippy/master/index.html#/needless_borrows_for_generic_args">the help link</a> explains why:</p>
+<blockquote>
+<p>Suggests that the receiver of the expression borrows the expression.</p>
+</blockquote>
+<p>And shows an example + fix:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">f</span><span>(_: impl AsRef&lt;</span><span style="color:#b48ead;">str</span><span>&gt;) {}
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> x = &quot;</span><span style="color:#a3be8c;">foo</span><span>&quot;;
+</span><span style="color:#96b5b4;">f</span><span>(&amp;x);
+</span><span>
+</span><span style="color:#65737e;">// use instead:
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">f</span><span>(_: impl AsRef&lt;</span><span style="color:#b48ead;">str</span><span>&gt;) {}
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> x = &quot;</span><span style="color:#a3be8c;">foo</span><span>&quot;;
+</span><span style="color:#96b5b4;">f</span><span>(x);
+</span></code></pre>
+<h2 id="auto-fixing-clippy-warnings">Auto-fixing Clippy warnings</h2>
+<p>You can also auto-fix Clippy warnings with <code>cargo clippy --fix</code>. This will apply the suggestions it has for you. It's a great way to quickly clean up your code.</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> cargo clippy</span><span style="color:#bf616a;"> --fix
+</span></code></pre>
+
+  
+  
+    
+    
+  
+  <img src="https://rsbit.es/images/clippy-autofix.png" alt="Example of clippy autofixing an error" class="center" style="border-radius: 8px;" decoding="async" loading="lazy"/>
+
+<h2 id="running-clippy-as-part-of-pre-commit">Running Clippy as part of pre-commit</h2>
+<p>You can run Clippy as part of your pre-commit hooks. This way you can't commit code with Clippy warnings.</p>
+<p><em>If you're new to pre-commit, check out my video <a href="https://www.youtube.com/watch?v=XFyLzr5Ehf0">here</a></em></p>
+<p>To do this, install the <a href="https://pre-commit.com/">pre-commit</a> tool and add the following to a <code>.pre-commit-config.yaml</code> file in your project (taken from <a href="https://raw.githubusercontent.com/doublify/pre-commit-rust/master/.pre-commit-hooks.yaml">here</a>):</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#bf616a;">repos</span><span>:
+</span><span>  - </span><span style="color:#bf616a;">repo</span><span>: </span><span style="color:#a3be8c;">https://github.com/doublify/pre-commit-rust
+</span><span>    </span><span style="color:#bf616a;">rev</span><span>: </span><span style="color:#a3be8c;">v1.0
+</span><span>    </span><span style="color:#bf616a;">hooks</span><span>:
+</span><span>    - </span><span style="color:#bf616a;">id</span><span>: </span><span style="color:#a3be8c;">fmt
+</span><span>      </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">fmt
+</span><span>      </span><span style="color:#bf616a;">description</span><span>: </span><span style="color:#a3be8c;">Format files with cargo fmt.
+</span><span>      </span><span style="color:#bf616a;">entry</span><span>: </span><span style="color:#a3be8c;">cargo fmt
+</span><span>      </span><span style="color:#bf616a;">language</span><span>: </span><span style="color:#a3be8c;">system
+</span><span>      </span><span style="color:#bf616a;">types</span><span>: [</span><span style="color:#a3be8c;">rust</span><span>]
+</span><span>      </span><span style="color:#bf616a;">args</span><span>: [&quot;</span><span style="color:#a3be8c;">--</span><span>&quot;]
+</span><span>    - </span><span style="color:#bf616a;">id</span><span>: </span><span style="color:#a3be8c;">cargo-check
+</span><span>      </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">cargo check
+</span><span>      </span><span style="color:#bf616a;">description</span><span>: </span><span style="color:#a3be8c;">Check the package for errors.
+</span><span>      </span><span style="color:#bf616a;">entry</span><span>: </span><span style="color:#a3be8c;">cargo check
+</span><span>      </span><span style="color:#bf616a;">language</span><span>: </span><span style="color:#a3be8c;">system
+</span><span>      </span><span style="color:#bf616a;">types</span><span>: [</span><span style="color:#a3be8c;">rust</span><span>]
+</span><span>      </span><span style="color:#bf616a;">pass_filenames</span><span>: </span><span style="color:#d08770;">false
+</span><span>    - </span><span style="color:#bf616a;">id</span><span>: </span><span style="color:#a3be8c;">clippy
+</span><span>      </span><span style="color:#bf616a;">name</span><span>: </span><span style="color:#a3be8c;">clippy
+</span><span>      </span><span style="color:#bf616a;">description</span><span>: </span><span style="color:#a3be8c;">Lint rust sources
+</span><span>      </span><span style="color:#bf616a;">entry</span><span>: </span><span style="color:#a3be8c;">cargo clippy
+</span><span>      </span><span style="color:#bf616a;">language</span><span>: </span><span style="color:#a3be8c;">system
+</span><span>      </span><span style="color:#bf616a;">args</span><span>: [&quot;</span><span style="color:#a3be8c;">--</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">-D</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">warnings</span><span>&quot;]
+</span><span>      </span><span style="color:#bf616a;">types</span><span>: [</span><span style="color:#a3be8c;">rust</span><span>]
+</span><span>      </span><span style="color:#bf616a;">pass_filenames</span><span>: </span><span style="color:#d08770;">false
+</span></code></pre>
+<p>Apart from clippy, this also includes <code>fmt</code> and <code>cargo check</code> hooks.</p>
+<p>Then install the pre-commit hooks:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> pre-commit install
+</span></code></pre>
+<p>Now every time you commit code, Clippy + friends will run and you can't commit code with warnings. 🚫</p>
+<p>To run it on all files retroactively in your project:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> pre-commit run</span><span style="color:#bf616a;"> --all-files
+</span></code></pre>
+<p>I just did that and <a href="https://github.com/bbelderbos/pybites-search/commit/96193766a101dd592fabe0d959167c21e6f9cec5">see here the result</a>.</p>
+<p>Imports are nicely ordered and the code is better formatted. This reminds me a lot of <code>isort</code> and <code>black</code> in Python, where Clippy is more like <code>flake8</code> and <code>pyflakes</code> 🦀 🐍 😍</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Clippy is a great tool to help you write better Rust code. It's easy to install and run. You can even auto-fix warnings. 💪 📈</p>
+<p>There are many more configuration options, check out the <a href="https://rust-lang.github.io/rust-clippy/master/index.html">Clippy lints</a> and <a href="https://github.com/rust-lang/rust-clippy">its GitHub repo</a> for more info.</p>
+<p>It's also convenient to run it as part of pre-commit. This way you can't commit code with warnings. It's a great way to keep your code clean and readable. 🦀 🧹</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/tts-in-rust/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Alarm clock part II - text to speech</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://rsbit.es/constant-hashmap-lookup/">
+                            <span class="button__text">Making an immutable hashmap constant</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>
