@@ -177,6 +177,14 @@ A dedicated article to follow on this topic...
 2. **Performance**: Iterators in Rust are lazy and can be highly optimized by the compiler. Operations are performed only when needed.
 3. **Extensibility**: By implementing the `Iterator` trait for custom types, you can leverage all the powerful methods available on iterators.
 
+## Practice This
+
+Practice iterators on the Pybites Rust Platform:
+
+- [Iterator Basics](https://rustplatform.com/iterator-basics)
+- [Map and Filter](https://rustplatform.com/map-and-filter)
+- [Iterator Chaining](https://rustplatform.com/iterator-chaining)
+
 ## Conclusion
 
 So what are Python's robust and performant built-ins in Rust? You'll often find them as methods on iterator types, allowing you to chain operations together in a fluent and efficient manner. 😍 📈

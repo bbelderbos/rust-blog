@@ -32,4 +32,8 @@ That fourth point is the one that will take the longest to internalize. For now,
 
 ## Practice this
 
-Try the [Hello, Rustacean! exercise on Pybites Rust Platform](https://rustplatform.com/hello-rustacean) — your first Rust function, returning a String.
+Try these exercises on the Pybites Rust Platform:
+
+- [Hello, Rustacean!](https://rustplatform.com/hello-rustacean) — your first Rust function, returning a String
+- [Functions and Return Values](https://rustplatform.com/functions-and-return-values) — practice `fn`, return types, and implicit returns
+- [Strings and Slices](https://rustplatform.com/strings-and-slices) — get comfortable with `&str` vs `String`

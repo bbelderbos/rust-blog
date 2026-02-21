@@ -221,6 +221,10 @@ This is exactly what I did when I was interrailing around Europe in my early 20s
 
 The same is true for programming. Yes, you need to read the docs and books to grasp fundamentals, but above all you need to get into the trenches and write a lot of code, ideally in the context of building real-world projects. It's where things start to click and you start to see the bigger picture. It's also way more fun!
 
+## Practice This
+
+This project uses `serde` for JSON deserialization. Try the [JSON Serialization](https://rustplatform.com/json-serialization) exercise on the Pybites Rust Platform to practice working with `serde` and `serde_json`.
+
 ---
 
 If you enjoy this content hit me up on [X](https://twitter.com/bbelderbos). I'm always up for a chat about programming. I also coach developers, so if you need help with your coding journey let me now, I can help you with this. 🚀

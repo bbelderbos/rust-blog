@@ -139,6 +139,15 @@ fn main() {
 
 __Note__: _This is for example's sake. I don't like mutating outer scope data inside functions. A more functional approach would be to return the modified data._
 
+## Practice This
+
+Practice these concepts on the Pybites Rust Platform:
+
+- [Ownership and Borrowing](https://rustplatform.com/ownership-and-borrowing)
+- [Move Semantics](https://rustplatform.com/move-semantics)
+- [Shared References](https://rustplatform.com/shared-references)
+- [Mutable References](https://rustplatform.com/mutable-references)
+
 ## Conclusion
 
 Understanding ownership and borrowing is a key concept in Rust. It can be frustrating at first, but it's a powerful feature that helps prevent bugs and makes your code more reliable. Rust achieves a balance between performance and safety, leveraging its strict ownership model to prevent common programming errors while still being highly performant.

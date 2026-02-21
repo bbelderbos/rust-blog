@@ -112,6 +112,10 @@ python script.py pixi  0.18s user 0.03s system 98% cpu 0.214 total
 
 That's faster but not as fast as the Rust tool. 🚀😎
 
+## Practice This
+
+This post uses `serde_json` for serialization and deserialization. Try the [JSON Serialization](https://rustplatform.com/json-serialization) exercise on the Pybites Rust Platform to practice these patterns.
+
 ---
 I still have a lot of Rust fundamentals to learn, but by building practical tools I am learning much more, faster and seeing results like these is way more fun and gratifying than only studying or even doing exercises.
 

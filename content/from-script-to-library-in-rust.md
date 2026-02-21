@@ -115,6 +115,14 @@ And that'll work equally well.
 
 Sometimes people opt for the first option, because it's more explicit where the function comes from (`my_library::hello` vs `hello`). But in this case it's a bit overkill, because there's only one function in the library.
 
+## Practice This
+
+Practice modules and visibility on the Pybites Rust Platform:
+
+- [Module Basics](https://rustplatform.com/module-basics)
+- [Visibility Rules](https://rustplatform.com/visibility-rules)
+- [Use and Paths](https://rustplatform.com/use-and-paths)
+
 ## Conclusion
 
 We learned how to make a library as opposed to a script (binary) in Rust (which is what I have mostly done up until this point). This is useful when you want to reuse the code in the script in other projects.

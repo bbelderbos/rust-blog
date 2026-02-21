@@ -168,6 +168,10 @@ The `greet(&self)` method is an instance method that takes an immutable referenc
 
 The _reference_ part here touches upon the concept of _ownership_ and _borrowing_ in Rust. _Ownership_ is a big and important concept in Rust, and I'll cover it here more in detail when I have a better understanding of it ...
 
+## Practice This
+
+Try the [Basic Structs](https://rustplatform.com/basic-structs) and [Variables and Mutability](https://rustplatform.com/variables-and-mutability) exercises on the Pybites Rust Platform.
+
 ## Conclusion
 
 In Rust, you can use a `struct` with named fields to achieve the same thing as a Python `namedtuple`.

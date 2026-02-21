@@ -129,6 +129,13 @@ println!("Debug: {}", is_debug);
 - `.map` is used to convert the string to a boolean.
 - The final `unwrap_or` is used to handle the case where the environment variable is not set or contains an invalid value.
 
+## Practice This
+
+The `.map` and `.unwrap_or` patterns used in this post are core to working with `Option` in Rust. Practice them on the Pybites Rust Platform:
+
+- [Option Handling](https://rustplatform.com/option-handling)
+- [Option Combinators](https://rustplatform.com/option-combinators)
+
 ## Conclusion
 
 Handling environment variables in Rust is straightforward using the `dotenv` crate. This approach keeps your configuration separate from your code, making it easier to manage and secure.

@@ -50,10 +50,12 @@ Rust also has a `static` keyword which is used for global variables, but that's 
 
 In both Python and Rust, you can define enums to group related constants together, but that's a topic for another article too.
 
+## Practice This
+
+Try the [Variables and Mutability](https://rustplatform.com/variables-and-mutability) exercise on the Pybites Rust Platform to practice `let`, `mut`, and `const` in Rust.
+
 ## Conclusion
 
 Both Python and Rust have clear conventions for defining constants. Rust enforces immutability strictly at the language level, while in Python, you can achieve a similar level of strictness by using type hints.
 
 Each language offers tools and conventions that help maintain the integrity of your constants, ensuring reliable and predictable behavior in your programs.
-
-

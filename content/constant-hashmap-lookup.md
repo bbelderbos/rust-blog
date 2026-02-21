@@ -62,6 +62,10 @@ Note that you need to enable the `macros` feature in your `Cargo.toml` file:
 phf = { version = "0.11.2", features = ["macros"] }
 ```
 
+## Practice This
+
+Try the [HashMap Entry API](https://rustplatform.com/hashmap-entry-api) exercise on the Pybites Rust Platform to practice working with HashMaps in Rust.
+
 ## Conclusion
 
 With `phf` you can create a constant hashmap in an efficient way. It is a good fit for cases where you need to look up values by key and you want to enforce immutability. 💡

@@ -70,6 +70,13 @@ def run_cargo_command(temp_dir_path):
 
 - In Python you have to specifically catch the `FileNotFoundError` exception (and fall back to a generic `Exception`), while in Rust, it is handled by the `Err` case of the `match` statement which could include any error that occurs during the execution of the command.
 
+## Practice This
+
+Practice error handling on the Pybites Rust Platform:
+
+- [Result Handling](https://rustplatform.com/result-handling)
+- [Custom Error Types](https://rustplatform.com/custom-error-types)
+
 ## Conclusion
 
 Python's exception handling allows for rapid and flexible development, making it easier to write code quickly. However, this same flexibility can lead to more runtime errors because errors are often detected later (at runtime) and it's easier to overlook proper error handling.
