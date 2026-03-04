@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Start with private first! | Bite‑sized Rust learning, powered by Pybites</title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://rsbit.es/style.css">
+    <link rel="stylesheet" href="https://rsbit.es/color/blue.css">
+
+    <link rel="stylesheet" href="https://rsbit.es/font-hack-subset.css">
+
+    <meta name="description" content="">
+
+    <meta property="og:description" content="">
+    <meta property="og:title" content="Start with private first! | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsbit.es/start-with-private-first/">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:title" content="Start with private first! | Bite‑sized Rust learning, powered by Pybites">
+    <meta property="twitter:domain" content="rsbit.es">
+    <meta property="twitter:url" content="https://rsbit.es/start-with-private-first/">
+
+            
+        <link rel="alternate" type="application/atom+xml" title="RSS" href="https://rsbit.es/atom.xml">
+    
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Bite-sized Rust
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        
+                <nav class="menu">
+            <ul class="menu__inner">
+                <li class="active"><a href="https://rsbit.es">Home</a></li>
+            
+                <li><a href="https://rsbit.es/pages/archive">Archive</a></li>
+            
+                <li><a href="https://rustplatform.com" target="_blank" rel="noopener noreferrer">Exercises</a></li>
+            
+                <li><a href="https://rsbit.es/pages/search">Search</a></li>
+            
+                <li><a href="https://rsbit.es/pages/about">About</a></li>
+            
+                <li><a href="https://github.com/bbelderbos" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://rsbit.es/start-with-private-first/">Start with private first!</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2026-02-24
+        </span>
+
+    </div>
+
+    
+
+        <div class="post-content">
+            <p>Rust and Python make opposite bets about what developers will do with access to internals. Understanding <em>why</em> teaches you something deeper than syntax — it reveals two coherent but competing philosophies about how software should be built.</p>
+<h2 id="the-python-default-open-until-proven-closed">The Python Default: Open Until Proven Closed</h2>
+<p>In Python, everything is public unless you say otherwise. Write a function, a class, a module — it's accessible. The community uses naming conventions (<code>_private</code>, <code>__mangled</code>) to signal intent, but the runtime enforces nothing.</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">BankAccount</span><span style="color:#eff1f5;">:
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#96b5b4;">__init__</span><span>(</span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">balance</span><span>: float):
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.balance = balance       </span><span style="color:#65737e;"># public (by default)
+</span><span>        </span><span style="color:#bf616a;">self</span><span>._owner = &quot;</span><span style="color:#a3be8c;">Alice</span><span>&quot;        </span><span style="color:#65737e;"># &quot;private&quot; by convention
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.__pin = </span><span style="color:#d08770;">1234            </span><span style="color:#65737e;"># name-mangled, but still reachable
+</span><span>
+</span><span>account = </span><span style="color:#bf616a;">BankAccount</span><span>(</span><span style="color:#d08770;">100.0</span><span>)
+</span><span style="color:#96b5b4;">print</span><span>(account.balance)              </span><span style="color:#65737e;"># works
+</span><span style="color:#96b5b4;">print</span><span>(account._owner)               </span><span style="color:#65737e;"># works (just rude)
+</span><span style="color:#96b5b4;">print</span><span>(account._BankAccount__pin)    </span><span style="color:#65737e;"># works (name mangling, not privacy)
+</span></code></pre>
+<p>Python trusts developers. The Zen of Python says <em>&quot;We're all consenting adults here.&quot;</em> The underscore is a handshake, not a lock. This keeps the language flexible and great for prototyping — you can reach in and patch anything, which is exactly what makes Python powerful for testing, debugging, and dynamic metaprogramming.</p>
+<p>Python does offer <code>@property</code> for more controlled access — you can expose a read-only view or add validation on set. But it's opt-in, and only as disciplined as the developer who reaches for it.</p>
+<h2 id="the-rust-default-closed-until-proven-open">The Rust Default: Closed Until Proven Open</h2>
+<p>Rust inverts this completely. Every field, function, struct, and module is <strong>private by default</strong>. You must explicitly opt into visibility with <code>pub</code>. This isn't a style convention — the compiler enforces it.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">mod </span><span>bank {
+</span><span>    </span><span style="color:#b48ead;">pub struct </span><span>BankAccount {
+</span><span>        </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">balance</span><span>: </span><span style="color:#b48ead;">f64</span><span>,   </span><span style="color:#65737e;">// public field
+</span><span>        </span><span style="color:#bf616a;">owner</span><span>: String,      </span><span style="color:#65737e;">// private — inaccessible outside this module
+</span><span>        </span><span style="color:#bf616a;">pin</span><span>: </span><span style="color:#b48ead;">u32</span><span>,           </span><span style="color:#65737e;">// private — compiler error if accessed externally
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">impl </span><span>BankAccount {
+</span><span>        </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span>(</span><span style="color:#bf616a;">balance</span><span>: </span><span style="color:#b48ead;">f64</span><span>, </span><span style="color:#bf616a;">owner</span><span>: &amp;</span><span style="color:#b48ead;">str</span><span>, </span><span style="color:#bf616a;">pin</span><span>: </span><span style="color:#b48ead;">u32</span><span>) -&gt; </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>            BankAccount {
+</span><span>                balance,
+</span><span>                owner: owner.</span><span style="color:#96b5b4;">to_string</span><span>(),
+</span><span>                pin,
+</span><span>            }
+</span><span>        }
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">balance</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; </span><span style="color:#b48ead;">f64 </span><span>{
+</span><span>            </span><span style="color:#bf616a;">self</span><span>.balance
+</span><span>        }
+</span><span>
+</span><span>        </span><span style="color:#65737e;">// Private helper — not part of the public API
+</span><span>        </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">validate_pin</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">attempt</span><span>: </span><span style="color:#b48ead;">u32</span><span>) -&gt; </span><span style="color:#b48ead;">bool </span><span>{
+</span><span>            </span><span style="color:#bf616a;">self</span><span>.pin == attempt
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> account = bank::BankAccount::new(</span><span style="color:#d08770;">100.0</span><span>, &quot;</span><span style="color:#a3be8c;">Alice</span><span>&quot;, </span><span style="color:#d08770;">1234</span><span>);
+</span><span>    println!(&quot;</span><span style="color:#d08770;">{}</span><span>&quot;, account.</span><span style="color:#96b5b4;">balance</span><span>());   </span><span style="color:#65737e;">// works
+</span><span>    </span><span style="color:#65737e;">// println!(&quot;{}&quot;, account.owner);    // compile error: field `owner` is private
+</span><span>    </span><span style="color:#65737e;">// account.validate_pin(1234);       // compile error: method `validate_pin` is private
+</span><span>}
+</span></code></pre>
+<p>There's no workaround. No <code>account._BankAccount__pin</code> escape hatch. The compiler treats private fields as genuinely inaccessible from outside the module.</p>
+<h2 id="two-different-bets">Two Different Bets</h2>
+<p>These aren't arbitrary design choices. Each reflects a deliberate philosophy.</p>
+<p><strong>Python bets on developer judgment.</strong> Trust people to know when not to touch <code>_private</code> things. Make everything reachable because the flexibility is worth the occasional footgun. This pays off in Python's dynamism — monkey-patching, mocking, metaprogramming, and REPL exploration all rely on nothing being truly hidden.</p>
+<p><strong>Rust bets on explicit contracts.</strong> Every <code>pub</code> marker is a promise: <em>&quot;I intend for this to be part of my public API.&quot;</em> Every missing <code>pub</code> is equally intentional: <em>&quot;This is an implementation detail — I reserve the right to change it.&quot;</em> The compiler holds you to those promises.</p>
+<p>The practical impact is significant. In Python you often have to read documentation (or source code) to know if something is &quot;really&quot; public. In Rust, the compiler tells you directly: <code>pub</code> means yes, no annotation means no.</p>
+<h2 id="what-this-means-in-practice">What This Means in Practice</h2>
+<p>When you're writing a Rust library, you start closed and open up deliberately. Your internal helpers, intermediate state, and implementation details stay invisible to callers by default. Refactoring internals doesn't risk breaking users — they couldn't see the internals to begin with.</p>
+<p>Privacy also complements Rust's ownership system. When fields are private, all mutations flow through controlled methods — which gives the borrow checker cleaner invariants to reason about. This is part of what makes Rust's fearless concurrency possible, alongside the ownership and borrowing rules themselves.</p>
+<p>In Python, it's the reverse. You start open and add <code>_</code> as you learn what's an implementation detail. The discipline has to come from the developer, not the tooling.</p>
+<p>Neither approach is wrong. Python's openness is a feature — it enables the dynamic, expressive style Python is loved for. Rust's privacy-by-default is also a feature — it enables fearless refactoring and clearly bounded APIs.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ul>
+<li>In Python, everything is public unless prefixed with <code>_</code> (convention only — not enforced)</li>
+<li>In Rust, everything is private unless marked <code>pub</code> (compiler-enforced)</li>
+<li>Python trusts developer discipline; Rust encodes the contract in the type system</li>
+<li>Rust's <code>pub</code> markers are explicit API surface declarations — marking something public is a deliberate decision</li>
+<li>Python's openness enables powerful dynamic patterns; Rust's privacy enables fearless refactoring</li>
+</ul>
+<h2 id="try-it-yourself">Try It Yourself</h2>
+<p>Take a small Python class you've written and mentally port it to Rust. Ask yourself: which fields and methods would you mark <code>pub</code>? Which would you leave private? That exercise often reveals how much of your &quot;API&quot; is actually implementation detail that you'd rather hide — something Python's defaults let slip through.</p>
+<hr />
+<p><em>Coming from Python and exploring Rust? The privacy model is one of the first things that feels foreign — but once it clicks, you'll start seeing your Python code differently too.</em></p>
+<p>Practice this with a hands-on exercise: <a href="https://rustplatform.com/module-basics">Module Basics on RustPlatform</a></p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Thanks for reading! Reach out to me on X | Fosstodon | LinkedIn: @bbelderbos</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://rsbit.es/adding-auth-to-an-api/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">Adding API Key Authentication to a Rust CLI</span>
+                        </a>
+                    </span>
+                
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2026
+ Bob Belderbos</span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>
